@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Rank the VHH designs on the refold scores from several folding models.
 
-refold-score gives the organizer's own numbers per design: `pass` with a
-justification, `min_ipae` (lower is better), `iptm` and `binder_plddt`, plus how
-far the binding domain moved from the pose it was designed in.
+refold-score gives the organizers' own numbers per design: `pass` with a reason,
+`min_ipae` (lower is better), `iptm` and `binder_plddt`, plus how far the
+binding domain moved from the pose it was designed in.
 
 THE RULE
   Each model gives a percentile for min_ipae (inverted, so high is good). The
-  mean over the models is the binding axis. The models are not mixed: the
-  percentile is computed within a single model run. If the two models disagree,
-  it shows in the spread, and then we do not tell the designs apart.
+  mean over the models is the binding axis. The models are not pooled: the
+  percentile is computed within a single model run. If the two models
+  disagree, it shows in the spread, and then we do not tell the designs apart.
 
   `pass` from the oracle is not a ranking but a threshold: a design that no
-  model lets pass is listed, but flagged.
+  model lets pass is still listed, but flagged.
 
 The output has the same shape as scripts/denovo_rank.py, so
 scripts/denovo_select.py can select from it.
@@ -26,19 +26,33 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import re
 from pathlib import Path
 
 import numpy as np
 
 
-def pairs(items: list[str]) -> dict[str, Path]:
-    out = {}
+def pairs(items: list[str]) -> dict[str, list[Path]]:
+    """model -> all the files for that model. One file per design run."""
+    out: dict[str, list[Path]] = {}
     for item in items:
         name, _, path = item.partition("=")
         if not path:
             raise SystemExit(f"write model=path, not {item!r}")
-        out[name] = Path(path)
+        out.setdefault(name, []).append(Path(path))
     return out
+
+
+def run_prefix(path: Path) -> str:
+    """The first 15 characters of the run id in the path, or an empty string.
+
+    WHY THIS IS NEEDED: each design run numbers its examples from zero, so
+    `her2_vhh_denovo_0` exists in ALL the runs. Without the run in the key,
+    different designs merge into one, and the ranking becomes nonsense.
+    The prefix is the same one design_id uses in candidates_pass.csv.
+    """
+    m = re.search(r"\d{8}T\d{6}Z", str(path))
+    return m.group(0)[:15] if m else ""
 
 
 def num(value) -> float:
@@ -48,13 +62,18 @@ def num(value) -> float:
         return float("nan")
 
 
-def read_metrics(path: Path) -> dict[str, dict]:
-    """query_id -> the row from refold_metrics.csv. Several seeds: keep the best
-    min_ipae, and count how many rows the design has."""
+def read_metrics(path: Path, prefix: str = "") -> dict[str, dict]:
+    """design_id -> the row from refold_metrics.csv.
+
+    design_id is "<run id>-<example_id>" when the prefix is known, so designs
+    from different runs do not collide. Several seeds per design: keep the
+    best min_ipae, and count how many rows the design has.
+    """
     out: dict[str, dict] = {}
     with path.open(newline="") as fh:
         for rec in csv.DictReader(fh):
-            qid = rec["query_id"]
+            qid = f"{prefix}-{rec['query_id']}" if prefix else rec["query_id"]
+            rec["design_id"] = qid
             cur = out.get(qid)
             if cur is None or num(rec.get("min_ipae")) < num(cur.get("min_ipae")):
                 rec["_n"] = (cur or {}).get("_n", 0) + 1
@@ -64,13 +83,20 @@ def read_metrics(path: Path) -> dict[str, dict]:
     return out
 
 
+def read_all(paths: list[Path]) -> dict[str, dict]:
+    """All the runs for one model, merged with the run in the key."""
+    merged: dict[str, dict] = {}
+    for p in paths:
+        merged.update(read_metrics(p, run_prefix(p)))
+    return merged
+
+
 def percentiles(values: dict[str, float], higher_is_better: bool) -> dict[str, float]:
     items = [(k, v) for k, v in values.items() if not math.isnan(v)]
     order = sorted(items, key=lambda kv: kv[1], reverse=not higher_is_better)
     n = len(order)
-    # low min_ipae should give a high percentile. A single design alone has
-    # nothing to be ranked against; it gets 100 and must be read together with
-    # models_scored.
+    # low min_ipae should give a high percentile. A single design has nothing to
+    # be ranked against; it gets 100 and must be read together with models_scored.
     if n == 1:
         return {order[0][0]: 100.0}
     return {k: round(100 * i / (n - 1), 1) for i, (k, _) in enumerate(order)} if n else {}
@@ -85,19 +111,25 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args(argv)
 
-    metrics = {m: read_metrics(p) for m, p in pairs(args.metrics).items()}
-    epi = {}
-    for m, p in pairs(args.epitope).items():
-        with p.open(newline="") as fh:
-            epi[m] = {r["query_id"]: r for r in csv.DictReader(fh)}
+    metrics = {m: read_all(ps) for m, ps in pairs(args.metrics).items()}
+    epi: dict[str, dict] = {}
+    for m, ps in pairs(args.epitope).items():
+        rows: dict[str, dict] = {}
+        for p in ps:
+            prefix = run_prefix(p)
+            with p.open(newline="") as fh:
+                for r in csv.DictReader(fh):
+                    key = f"{prefix}-{r['query_id']}" if prefix else r["query_id"]
+                    rows[key] = r
+        epi[m] = rows
 
     cands: dict[str, dict] = {}
     if args.candidates:
         with args.candidates.open(newline="") as fh:
             for r in csv.DictReader(fh):
-                # design_id is "<run-id>-<example_id>"; refold uses example_id
+                # design_id is "<run id>-<example_id>"; refold uses example_id
                 cands[r["design_id"]] = r
-                cands[r["design_id"].split("-", 1)[-1]] = r
+                cands.setdefault(r["design_id"].split("-", 1)[-1], r)
 
     pct = {m: percentiles({q: num(r.get("min_ipae")) for q, r in rows.items()},
                           higher_is_better=False)
@@ -158,3 +190,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

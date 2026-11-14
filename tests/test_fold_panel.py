@@ -4,7 +4,7 @@ What can go wrong without anyone noticing:
   - the panel is not deterministic, and two models get different sequences
   - trastuzumab is missing, and then none of the numbers mean anything
   - chain B is replaced, but chain C/D or residue_ids are lost
-  - a VH of the wrong length slips through and does not fit the template
+  - a VH with the wrong length slips through and does not fit the template
 """
 
 import csv
@@ -31,7 +31,7 @@ fold_queries = load("fold_queries", "scripts/fold_queries.py")
 # tests that need it are skipped where it is missing.
 needs_data = pytest.mark.skipif(
     not (ROOT / "data" / "trastuzumab_her2_spr_all_768.csv").exists(),
-    reason="The SPR table is not here",
+    reason="the SPR table is not here",
 )
 
 VL = "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
@@ -62,7 +62,7 @@ def row(ident: str, cdrh3: str) -> dict:
     return {"id": ident, "group": "design", "cdrh3": cdrh3, "vh_sequence": vh, "vl_sequence": VL}
 
 
-# ── panel ───────────────────────────────────────────────────────────────────
+# ── the panel ───────────────────────────────────────────────────────────────
 @needs_data
 def test_panel_has_trastuzumab_first_and_is_deterministic():
     a = fold_panel.calibration_panel(12)
@@ -83,14 +83,14 @@ def test_panel_spans_the_whole_affinity_range():
 
 @needs_data
 def test_only_ten_residue_long_loops_are_included():
-    # The template omits exactly ten residues. A shorter loop gives a VH that does not
-    # fit, and would have mixed two geometries in the same comparison.
+    # The template omits exactly ten residues. A shorter loop gives a VH that
+    # doesn't fit, and would have mixed two geometries in the same comparison.
     for p in fold_panel.calibration_panel(400):
         assert len(p["cdrh3"]) == 10, p
 
 
 @needs_data
-def test_each_entry_has_its_own_vh_for_its_cdrh3():
+def test_each_entry_has_its_own_cdrh3_in_its_own_vh():
     for p in fold_panel.calibration_panel(8):
         assert p["cdrh3"] in p["vh_sequence"]
         assert len(p["vh_sequence"]) == len(VH)
@@ -107,7 +107,7 @@ def test_only_chain_b_is_replaced():
     assert out["queries"][0]["query_id"] == "d1"
 
 
-def test_reference_is_not_changed_between_entries():
+def test_reference_is_not_modified_between_entries():
     ref = reference()
     out = fold_queries.build(ref, [row("d1", "APGDGFQIMD"), row("d2", "MGPEPFYAMD")])
     assert ref["queries"][0]["chains"][1]["sequence"] == VH, "the reference was overwritten"
@@ -118,12 +118,12 @@ def test_reference_is_not_changed_between_entries():
 def test_vh_with_wrong_length_is_stopped():
     bad = row("d1", "APGDGFQIMD")
     bad["vh_sequence"] = bad["vh_sequence"][:-3]
-    # The message text gets translated when the code is shared, so we match on the numbers.
+    # The message text is translated when the code is shared, so we match on the numbers.
     with pytest.raises(ValueError, match=r"117.*120"):
         fold_queries.build(reference(), [bad])
 
 
-def test_interface_iptm_takes_only_antibody_against_antigen():
+def test_interface_iptm_counts_only_antibody_against_antigen():
     fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
     # A=0 B=1 (antibody), C=2 D=3 (HER2). Only the four cross pairs should count.
     m = [
@@ -133,11 +133,11 @@ def test_interface_iptm_takes_only_antibody_against_antigen():
         [0.5, 0.5, 0.8, 1.0],
     ]
     out = fold_analyse.interface_iptm({"chain_chain_interface_predicted_tm_score": m})
-    assert out["iptm_ab_ag"] == pytest.approx(0.5), "VH-VL or HER2-internal pair included"
+    assert out["iptm_ab_ag"] == pytest.approx(0.5), "VH-VL or HER2-internal included"
     assert out["iptm_vh_ag"] == pytest.approx(0.5)
 
 
-def test_interface_iptm_is_asymmetric_mean():
+def test_interface_iptm_is_asymmetric_average():
     fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
     m = [
         [1.0, 1.0, 0.2, 0.2],
@@ -150,7 +150,7 @@ def test_interface_iptm_is_asymmetric_mean():
     assert out["iptm_vh_ag"] == pytest.approx(0.6)
 
 
-def test_missing_chain_matrix_gives_no_interface_numbers():
+def test_missing_chain_matrix_gives_no_interface_figures():
     fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
     assert fold_analyse.interface_iptm({"predicted_tm_score": 0.9}) == {}
 
@@ -160,3 +160,32 @@ def test_reference_without_all_chains_is_stopped():
     ref["queries"][0]["chains"] = ref["queries"][0]["chains"][:2]
     with pytest.raises(ValueError, match=r"\['C', 'D'\]"):
         fold_queries.build(ref, [row("d1", "APGDGFQIMD")])
+
+
+# ── which panel belongs to which run ────────────────────────────────────────
+def test_run_points_to_its_own_panel():
+    """Two panels use the same ids for different variants.
+
+    `calib-05` exists in both, but is not the same sequence and not the same KD.
+    If the scores from one run are read against the KDs from another panel, the
+    number comes out wrong without anything failing. That is why the panel
+    follows the run.
+    """
+    fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
+    manifest = {"name": "fold-boltz2-big-s42",
+                "inputs": {"runs/panel-big/queries_all.json": "a" * 64,
+                           "runs/panel-big/panel.csv": "b" * 64}}
+    assert fold_analyse.panel_of(manifest) == "runs/panel-big/panel.csv"
+
+
+def test_panel_as_list_also_works():
+    fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
+    assert fold_analyse.panel_of(
+        {"inputs": ["runs/panel/template.cif", "runs/panel/panel.csv"]}
+    ) == "runs/panel/panel.csv"
+
+
+def test_run_without_panel_gives_no_guess():
+    fold_analyse = load("fold_analyse", "scripts/fold_analyse.py")
+    assert fold_analyse.panel_of({"inputs": {"runs/x/queries.json": "a"}}) is None
+    assert fold_analyse.panel_of({}) is None

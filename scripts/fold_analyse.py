@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Read the scores from the folding runs and answer one question: do they rank affinity?
+"""Read the scores from the fold runs and answer one question: do they rank affinity?
 
-We know the KD for the calibration part of the panel. A folding model that cannot
+We know KD for the calibration part of the panel. A fold model that cannot
 rank the measured variants cannot rank our designs either. That is measured
-here, per model, instead of being assumed.
+here, per model, instead of assumed.
 
     python scripts/fold_analyse.py --runs runs --out results/folding
 """
@@ -81,18 +81,47 @@ def read_predictions(run_dir: Path) -> dict[str, dict]:
     return rows
 
 
-def find_runs(runs_dir: Path) -> dict[str, Path]:
-    """model name -> the folder with predictions, newest run per model."""
-    found: dict[str, Path] = {}
-    for run in sorted(runs_dir.glob("*-fold-*")):
-        manifest = run / "run.json"
-        pred = run / "predictions"
-        if not manifest.exists() or not _prediction_files(pred):
+def panel_of(manifest: dict) -> str | None:
+    """Which panel the run used, read from what the run itself recorded.
+
+    WHY THIS MUST BE READ AND NOT ASSUMED
+      Two panels number the variants the same way — `calib-05` exists in
+      both — but they are different sequences with different KD. If we read
+      the scores from one run against the KDs from another panel, we get a
+      number that looks real and is not. That happened. Now the panel
+      follows the run.
+    """
+    for key in ("inputs", "input"):
+        inputs = manifest.get(key)
+        if isinstance(inputs, dict):
+            names = list(inputs)
+        elif isinstance(inputs, list):
+            names = [str(x) for x in inputs]
+        else:
             continue
-        name = json.loads(manifest.read_text()).get("name", run.name)
-        key = name.replace("fold-", "", 1)
-        found[key] = pred
+        for name in names:
+            if name.endswith("panel.csv"):
+                return name
+    return None
+
+
+def find_runs(runs_dir: Path) -> dict[str, tuple[Path, str | None]]:
+    """model name -> (the folder with predictions, the panel the run used)."""
+    found: dict[str, tuple[Path, str | None]] = {}
+    for run in sorted(runs_dir.glob("*-fold-*")):
+        manifest_path = run / "run.json"
+        pred = run / "predictions"
+        if not manifest_path.exists() or not _prediction_files(pred):
+            continue
+        manifest = json.loads(manifest_path.read_text())
+        key = manifest.get("name", run.name).replace("fold-", "", 1)
+        found[key] = (pred, panel_of(manifest))
     return found
+
+
+def load_panel(path: Path) -> dict[str, dict]:
+    with path.open(newline="") as fh:
+        return {r["id"]: r for r in csv.DictReader(fh)}
 
 
 METRICS = ["iptm_ab_ag", "iptm_vh_ag", "iptm", "ptm", "plddt", "ranking_score"]
@@ -105,21 +134,35 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=Path("results/folding"))
     args = ap.parse_args()
 
-    with args.panel.open(newline="") as fh:
-        panel = {r["id"]: r for r in csv.DictReader(fh)}
-
     runs = find_runs(args.runs)
     if not runs:
-        raise SystemExit(f"found no folding runs in {args.runs}")
+        raise SystemExit(f"found no fold runs in {args.runs}")
+
+    # Each run is read against its own panel. If we fall back to --panel for
+    # a run that used a different one, we say so: the ids collide between
+    # panels, so a silent mix-up gives a number that means nothing.
+    default_panel = load_panel(args.panel)
+    panels: dict[str, dict] = {}
+    for model, (_, panel_rel) in runs.items():
+        if panel_rel and (Path(panel_rel).exists() or (args.runs.parent / panel_rel).exists()):
+            path = Path(panel_rel) if Path(panel_rel).exists() else args.runs.parent / panel_rel
+            panels[model] = load_panel(path)
+        else:
+            if panel_rel and panel_rel != str(args.panel):
+                print(f"  WARNING: {model} used {panel_rel}, which does not exist. Skipping.")
+                continue
+            panels[model] = default_panel
+    runs = {m: v for m, v in runs.items() if m in panels}
 
     args.out.mkdir(parents=True, exist_ok=True)
 
     # ── one long table with everything ───────────────────────────────────────
     long_rows = []
     per_model: dict[str, dict[str, dict]] = {}
-    for model, pred_dir in sorted(runs.items()):
+    for model, (pred_dir, _) in sorted(runs.items()):
         rows = read_predictions(pred_dir)
         per_model[model] = rows
+        panel = panels[model]
         for qid, r in rows.items():
             p = panel.get(qid, {})
             long_rows.append(
@@ -135,6 +178,7 @@ def main() -> int:
     # ── question 1: does the model rank measured affinity? ───────────────────
     calib_lines = []
     for model, rows in sorted(per_model.items()):
+        panel = panels[model]
         ids = [q for q in rows if panel.get(q, {}).get("group") in ("calibration", "baseline")]
         kd = np.array([float(panel[q]["kd_nM"]) for q in ids])
         ok = np.isfinite(kd)
@@ -165,12 +209,13 @@ def main() -> int:
         w.writeheader()
         w.writerows(calib_lines)
 
-    # ── the same variants, ranked with what we had from before ──────────────
-    # Without this we compare folding scores on one sample with edit
-    # distance on another, and then the difference means nothing.
+    # ── the same variants, ranked with what we had from before ───────────────
+    # Without this we compare fold scores on one sample with edit distance
+    # on another, and then the difference means nothing.
     from abx.data import TZ_CDRH3_10  # noqa: PLC0415
     from abx.gate import hamming  # noqa: PLC0415
 
+    panel = default_panel
     calib_ids = [q for q in panel if panel[q]["group"] in ("calibration", "baseline")]
     kd = np.array([float(panel[q]["kd_nM"]) for q in calib_ids])
     ok = np.isfinite(kd)
@@ -227,7 +272,7 @@ def main() -> int:
         w.writeheader()
         w.writerows(agree)
 
-    # ── question 3: how do the designs compare with trastuzumab? ─────────────
+    # ── question 3: how do the designs stand against trastuzumab? ────────────
     base = []
     for model, rows in sorted(per_model.items()):
         tz = rows.get("trastuzumab")
