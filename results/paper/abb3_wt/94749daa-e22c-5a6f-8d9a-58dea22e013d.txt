@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "artifact": {
+        "artifact_id": "1cf990c3-d221-55f3-b26e-f5c6d2ddc809",
+        "compression": "none",
+        "media_type": "text/x-fasta",
+        "sha256": "6255399b84cf7b0dea5b51ac73c3f7e2d607aa2e672b86335aa9825c9e05c5dc",
+        "size_bytes": 235
+      },
+      "name": "sequences",
+      "semantic_type": "antibody-fasta/v1"
+    }
+  ],
+  "manifest_id": "oslo-abodybuilder3-abb3-wt",
+  "schema": "fs2-serve.nebius.ai/scientific-artifact-manifest/v1"
+}

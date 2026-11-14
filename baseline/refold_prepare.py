@@ -17,13 +17,13 @@ import pandas as pd
 
 import common as C
 
+HERE = Path(__file__).resolve().parent
 ap = argparse.ArgumentParser()
 ap.add_argument("--top", type=int, default=12)
 ap.add_argument("--her2-a3m", default=str(HERE / "refold_inputs" / "her2_domIV.a3m"),
                 help="a3m for HER2 domain IV (default: the PDB70 alignment from Nebius msa-search-pdb70, 43 sequences)")
 a = ap.parse_args()
 
-HERE = Path(__file__).resolve().parent
 VH_T = ("EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYC"
         "SR{H3}YWGQGTLVTVSS")
 VL = "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"

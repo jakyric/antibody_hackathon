@@ -1,0 +1,14 @@
+id,cdrh3,jf_abag_msa,jf_of3_msa,jf_opendde_msa,n_trusted_pass,n_all_pass,paratope_kept_mean
+cand09,WYAGTAYGLE,True,True,True,2,3,0.4791666666666667
+cand02,WTGDGWFASD,True,False,True,1,2,0.7708333333333334
+cand01,WLGDGFWATT,True,False,True,1,2,0.7291666666666666
+cand04,WGYTGSDAWD,True,False,True,1,2,0.24999999999999997
+cand07,WGGESSPSYY,True,False,True,1,2,0.22916666666666666
+cand10,YGRDPYDYDA,False,False,True,1,1,0.2708333333333333
+cand03,WGGAGAYTTY,False,False,False,0,0,0.0
+cand05,HGGAGYAAQS,False,False,False,0,0,0.0
+cand06,YRGDYFFAYG,False,False,False,0,0,0.0
+cand08,WVRRAFYNYT,False,False,False,0,0,0.0
+cand11,HRARAWAPLD,False,False,False,0,0,0.0
+cand12,YLDNKRLGVG,False,False,False,0,0,0.0
+cand13,FPSNDRFNSY,False,False,False,0,0,0.0

@@ -1,0 +1,2 @@
+final_rank,id,cdrh3,tier,of3_seeds,of3_ipae,of3_iptm,paratope_kept,aromatics,net_charge,keeps_M107,keeps_DG,liabilities,p_mean,blosum_rank,changed_positions,which
+1,cand09,WYAGTAYGLE,3 of 3 services,3,20.14,0.15,0.48,3,-1,False,False,1,0.91,9,"2,3,4,5,6,8,9,10","OpenDDE-abag,OpenFold3,OpenDDE"

@@ -1,0 +1,12 @@
+{
+ "label": "abb3-p16",
+ "model": "abodybuilder3",
+ "tool": "submit_abodybuilder3",
+ "key": "oslo-abodybuilder3-abb3-p16",
+ "kind": "file",
+ "operation": "predict",
+ "submitted_at": 1794657687.594417,
+ "operation_id": "op-ebb356f6f733e376",
+ "state": "succeeded",
+ "total_seconds": 106
+}

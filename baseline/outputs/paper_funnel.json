@@ -1,0 +1,9 @@
+{
+  "generated": 1000000,
+  "unique": 955689,
+  "cnn_over_0.9": 187893,
+  "after_sequence_filters": 172544,
+  "not_within_2_of_provided": 84059,
+  "and_edit_distance_ge_4": 83845,
+  "sent_to_structure_modelling": 28
+}

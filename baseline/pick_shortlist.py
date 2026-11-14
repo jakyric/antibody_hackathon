@@ -30,10 +30,12 @@ for role in ("positive control", "negative control"):
 cand = of3[of3.role == "candidate"].groupby("id").agg(
     of3_seeds=("recovers", "size"), of3_pass_frac=("recovers", "mean"),
     of3_ipae=("ipae_crystal_contacts", "median"), of3_iptm=("iptm_ab_her2", "median"))
-prim = m[m.service.isin(["jf_abag_msa", "jf_of3_msa", "nebius_boltz2"]) & (m.role == "candidate")]
+PRIM = ["jf_abag_msa", "jf_of3_msa", "nebius_boltz2", "jf_opendde_msa"]  # services whose seed-0 run is counted when present
+prim = m[m.service.isin(PRIM) & (m.role == "candidate")]
+n_services = prim.service.nunique()
 cand["models_recovering"] = prim.groupby("id").recovers.sum()
 cand["which"] = prim[prim.recovers].groupby("id").service.apply(
-    lambda s: ",".join({"jf_abag_msa": "OpenDDE", "jf_of3_msa": "OpenFold3", "nebius_boltz2": "Boltz-2"}[x] for x in sorted(s)))
+    lambda s: ",".join({"jf_abag_msa": "OpenDDE-abag", "jf_of3_msa": "OpenFold3", "nebius_boltz2": "Boltz-2", "jf_opendde_msa": "OpenDDE"}[x] for x in sorted(s)))
 cand["paratope_kept"] = prim.groupby("id")[["W99_kept", "G103_kept", "F104_kept", "Y105_kept"]].mean().mean(axis=1)
 cand = cand.join(rset.set_index("id")[["cdrh3"]]).reset_index()
 cand["cand_no"] = cand.id.str[-2:].astype(int)
@@ -55,7 +57,7 @@ vet = cand[cand.of3_pass_frac == 1.0].copy()
 vet = vet.sort_values(["models_recovering", "arom_flag", "of3_ipae", "paratope_kept", "blosum_rank"],
                       ascending=[False, True, True, False, True]).reset_index(drop=True)
 vet.insert(0, "final_rank", range(1, len(vet) + 1))
-vet["tier"] = np.where(vet.models_recovering == 3, "A: all three services", "B: OpenFold3 + Boltz-2")
+vet["tier"] = [f"{int(n)} of {n_services} services" for n in vet.models_recovering]
 cols = ["final_rank", "id", "cdrh3", "tier", "of3_seeds", "of3_ipae", "of3_iptm", "paratope_kept", "aromatics",
         "net_charge", "keeps_M107", "keeps_DG", "liabilities", "p_mean", "blosum_rank", "changed_positions", "which"]
 vet[cols].round(2).to_csv(C.OUT / C.vname("final_shortlist.csv"), index=False)
