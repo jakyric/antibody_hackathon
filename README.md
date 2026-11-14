@@ -1,8 +1,9 @@
 # `moritz` branch: CDRH3 diversification and refolding screen (HER2 / trastuzumab)
 
-Optimisation-track idea: keep trastuzumab's binding mode but change at least four CDRH3 positions (the minimum for
-CDRH3 identity below 70% under immunum's CDR3 definitions), choosing the positions from data and the substitutions
-with the paper's own BLOSUM-45 recipe, then check the designs by refolding the Fv-HER2 complex on three services.
+Optimisation-track idea: keep trastuzumab's binding mode but change four CDRH3 positions (the VM's `abguard` needs
+at least three, and four also satisfies the PDF's "under 70% CDRH3 identity" reading), choosing the positions from
+data and the substitutions with the paper's own BLOSUM-45 recipe, then check the designs by refolding the Fv-HER2
+complex on three services and with the real `abguard` (see the section below).
 
 ## Headline results
 
@@ -10,9 +11,10 @@ with the paper's own BLOSUM-45 recipe, then check the designs by refolding the F
   and 0.997 (the authors' CNN, re-implemented in numpy) on the authors' clonotype test split. On the paper's SPR
   designs they barely beat "fewer mutations from trastuzumab", but those designs were pre-screened by a CNN from the
   same lineage, so that comparison is range-restricted.
-- **At least 4 CDRH3 changes are needed** if `abguard` uses immunum's CDR3 boundaries (13 residues IMGT, 11 Kabat):
-  3 changes give 77% / 73% identity (fail), 4 give 69% / 64% (pass). The real `abguard` was not available, so
-  `abguard-lite` (immunum numbering, length, cysteines, CDR3 identity) approximates it.
+- **abguard** (the organisers' checker) turned out to be on the team VM, not on the PATH. All 24 refold candidates and
+  all 10 final picks pass it, and the controls are rejected; every candidate sits exactly at its novelty minimum.
+  Its rules differ from the PDF (details below). Our earlier approximation `abguard-lite` (immunum CDR3 identity:
+  3 changes give 77% IMGT / 73% Kabat identity, 4 give 69% / 64%) is superseded and has no prior-art check.
 - **Positions**: only W99, G103, F104, Y105 of the 10 CDRH3 residues touch HER2 in 1N8Z. Choosing positions by the
   worse of the FACS and SPR "does changing this hurt" estimates gives **{2,3,4,8,9}** with contacts excluded and
   **{2,4,5,8,9}** with contacts enabled (G103 enters, G101 leaves).
@@ -38,14 +40,45 @@ Enabling the contact residues gave fewer robust designs (3 of 12 against 7 of 12
 two of the three tolerate a G103 change in the prediction. Neither variant addresses thermostability, and changing
 only non-contact CDRH3 positions can at best tie trastuzumab's affinity.
 
+## abguard check (added after the first push)
+
+Where it is: on the team VM in the `hackathon` user's uv cache (not on the PATH). Newest build `abguard-0.1.0`, built
+2026-11-11 16:17, for example `/home/hackathon/.cache/uv/archive-v0/<hash>/bin/abguard` (older builds without the
+novelty gate sit next to it). It is organiser-provisioned but calls itself a demo, so it may not match the jury's
+checker exactly. A subagent installed a copy into an isolated environment and ran it; we re-ran five designs
+independently and got the same verdicts. Run it with
+`abguard team-validate TABLE.csv [--drop] [-o out.csv]`, columns `sequence_id,kind(vhh|scfv|paired),heavy_sequence,light_sequence,design_description`
+(use a `.csv` output path; other extensions fail after validating).
+
+| Designs | Verdict |
+|---|---|
+| 24 refold candidates (12 per variant), as paired VH + trastuzumab VL and as scFv | all pass; each exactly 3 mutations from its nearest known CDRH3 (the minimum), nearest entries are HER2 FACS-table sequences |
+| 10 final picks (7 + 3) | all pass |
+| trastuzumab, D102E, the two measured non-binders | rejected by the novelty gate (0 mutations from trastuzumab or from HER2 SPR-table entries) |
+
+What the build enforces (from its help text and probe runs; the PDF differs):
+
+- Class boundary on whole-Fv identity to trastuzumab: 70% or more is a trastuzumab variant, below 70% is de novo.
+  Our designs are about 98% identical, so they are trastuzumab variants.
+- Novelty gate: a trastuzumab variant needs at least 3 CDRH3 mutations from trastuzumab and from every known CDRH3 in
+  the bundled reference (610,109 CDRH3s, including the HER2 FACS and SPR tables); a de novo design needs at least 2.
+- Not implemented in this build: the PDF's "under 70% CDRH3 identity to trastuzumab" test and the comparison with
+  "any known antibody" (identity is measured against trastuzumab only; the database comparison is on CDRH3 only).
+- Distance to the nearest known CDRH3 decides, not the number of changes: the FACS library is dense around
+  trastuzumab, so 3-change mutants often fail at distance 1 or 2. Our 4-change designs are exactly at distance 3, so
+  there is no margin if the jury's reference is larger.
+- Bug: `abguard novelty-report` ignores the bundled reference and compares against trastuzumab only, so a
+  `novelty.json` made with it is not a database check. Use `team-validate` (or `--all-liabilities`).
+
 ## Caveats and open questions for the organisers
 
 - No lab data: everything is computational. A recovered pose does not show binding.
 - M107: all three measured M107 singles in the paper's SPR data (K, T, A) were 40 to 70 times weaker, so designs that
   change M107 carry affinity risk.
 - Developability: the picks carry 4 to 6 aromatic residues against trastuzumab's 3 (polyreactivity risk).
-- Confirm with the organisers: the exact `abguard` identity and mutation-count rule, and whether an affinity tie
-  counts as "comparable" for the tiers.
+- Confirm with the organisers: whether the jury's `abguard` is identical to the VM build, whether the bar is 3 or
+  2 mutations with the database distance enforced, whether the "under 70% CDRH3 identity" rule is enforced, and
+  whether an affinity tie counts as "comparable" for the tiers.
 
 ## What is in the branch
 

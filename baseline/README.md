@@ -34,7 +34,9 @@ OpenDDE fails trastuzumab itself, so "pose recovered" is weak evidence, not proo
 
 `blosum_diversity.py` also needs `data/paper/spr_submitted.csv` from the paper's GitHub repo
 (oxpig/Tz_her2_affinity_and_beyond), which carries the design-method label of every SPR sequence, plus
-`blosum` and `immunum` in the venv. "abguard-lite" is an approximation: the real `abguard` was not available.
+`blosum` and `immunum` in the venv. "abguard-lite" is an approximation written before the real `abguard` was found on the team VM; the real tool
+supersedes it (see the root README: it needs 3 CDRH3 mutations from trastuzumab and from every known CDRH3, and adds a
+prior-art check that abguard-lite lacks).
 
 ## Results (authors' clonotype split, test set of 78,651)
 
