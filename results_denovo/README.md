@@ -32,3 +32,8 @@ Written 2026-11-14 16:53 (local time) by `denovo/snapshot.py` from the pipeline'
 | `crop/of3_crop.csv` | 170 | cropped-HER2 (539-607) re-run: scores / metrics |
 | `crop/set.csv` | 170 | cropped-HER2 (539-607) re-run: design set |
 | `dde_compare.csv` | 10 | designed vs OpenDDE pose of the top 10 (the PyMOL session itself is not stored) |
+
+## top20/
+
+The 20 designs of `submission_top20_pareto.csv`: `top20.fasta` (VHH sequences) and the RFD4 design complexes (`NN_<design_id>.cif.gz`: chain A = HER2 489-580, chain B = designed VHH,
+chain C = HER2 591-607). All 1,544 design sequences are in `designs_rfd4jf.csv`. These are designed structures, not predictions; no scorer reproduced the designed binding poses (see `pose_check_vm.csv`).
