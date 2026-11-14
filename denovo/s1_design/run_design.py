@@ -298,7 +298,8 @@ def run_wave(jobs, jf, fwrecs, rows, geoms, workers, budget, tag=""):
                 keep_ids = {x["design_id"] for x in fresh}
                 rows.extend(fresh); geoms.extend([g for g in r["geoms"] if g["design_id"] in keep_ids or not g.get("ok", 1)])
                 spent += r["cost"]
-                dn.write_csv(CSV, rows, dn.DESIGN_COLS)      # flushed after EVERY finished job
+                assert len({x["vhh_seq"] for x in rows}) == len(rows) and len({x["design_id"] for x in rows}) == len(rows), "duplicate rows"
+                dn.write_csv(CSV, rows, dn.DESIGN_COLS)      # flushed after EVERY finished job; only ever written with unique vhh_seq
                 if geoms:
                     cols = sorted({k for g in geoms for k in g}, key=lambda k: (k not in ("design_id", "framework", "hotspot_set", "c3_range", "pose"), k))
                     dn.write_csv(GEOM, geoms, cols)

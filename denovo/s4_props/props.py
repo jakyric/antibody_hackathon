@@ -85,18 +85,48 @@ def candidates(a) -> dict[str, dict]:
                                              "is_control": int(r["design_id"].startswith("ctl-"))})
     ids = set(a.ids) if a.ids else None
     out = {}
+    seen_seq: dict[str, str] = {}
     for k, r in rows.items():
         if ids and k not in ids:
             continue
         if r.get("generator") in IGNORE_GENERATORS:  # cancelled generators: fwdiv, BoltzGen (user stopped it); old rows stay, ignored
             continue
         r["vhh_seq"] = r["vhh_seq"].strip().upper()
+        if not r["is_control"]:  # identical sequences under different ids (re-used seeds): compute once, first id wins
+            if r["vhh_seq"] in seen_seq:
+                continue
+            seen_seq[r["vhh_seq"]] = k
         out[k] = r
     return out
 
 
 def load_state(path: Path) -> dict[str, dict]:
     return {r["design_id"]: r for r in dn.read_csv(path)} if path.exists() else {}
+
+
+IDENTITY_COLS = {"design_id", "generator", "framework", "is_control", "stage_ts", "tools_done", "vhh_seq"}
+
+
+def reconcile(state: dict, cands: dict) -> int:
+    """Rows whose design_id left the designs table (S1a de-duplicated re-used seeds) are removed from props.csv; any finished tool
+    value is first moved to the id that now carries the same sequence, so no TNP/monoyield result is lost.  Rows of ignored
+    generators (BoltzGen, fwdiv) are left alone."""
+    by_seq = {c["vhh_seq"]: k for k, c in cands.items() if not c["is_control"]}
+    moved = dropped = 0
+    for did in [d for d, st in state.items() if d not in cands and st.get("generator") not in IGNORE_GENERATORS
+                and st.get("generator") != "baseline"]:
+        st = state.pop(did)
+        keep = by_seq.get(st.get("vhh_seq", ""))
+        if keep:
+            dst = state.setdefault(keep, {"design_id": keep, "vhh_seq": st["vhh_seq"], "generator": cands[keep]["generator"],
+                                          "framework": cands[keep]["framework"], "is_control": cands[keep]["is_control"],
+                                          "stage_ts": dn.utcnow()})
+            for k, v in st.items():
+                if k not in IDENTITY_COLS and v != "" and dst.get(k, "") == "":
+                    dst[k] = v
+                    moved += 1
+        dropped += 1
+    return dropped
 
 
 def pending(tool: str, cands: dict, state: dict, retry_failed: bool) -> list[dict]:
@@ -300,6 +330,10 @@ def one_pass(a) -> int:
         save(state, out)
         a.redo = None
     cands = candidates(a)
+    nstale = reconcile(state, cands)
+    if nstale:
+        LOG(f"reconcile: dropped {nstale} rows whose design_id left the designs table (values carried to the id holding the same sequence)")
+        save(state, out)
     ndone = 0
     where = a.where
     exp = expensive_ids(cands, a) if a.tier == "on" else set(cands)

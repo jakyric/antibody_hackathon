@@ -413,11 +413,74 @@ def pct_of(v, pop, direction="high"):
     return (worse + 0.5 * tie) / len(pop)
 
 
+# ------------------------------------------------------------------ de-duplication by vhh_seq
+SEQ_CACHE = RAW / "id_seq.json"
+
+
+def seq_cache(designs):
+    """design_id -> vhh_seq for every id ever scored (ids that left the table are recovered from their stored structure)."""
+    cache = json.loads(SEQ_CACHE.read_text()) if SEQ_CACHE.exists() else {}
+    cache.update({d: row["vhh_seq"] for d, row in designs.items()})
+    return cache
+
+
+def fill_cache(st, designs, cache):
+    changed = False
+    for (key, mk), r in st.items():
+        did = key.rsplit("__", 1)[0]
+        if did in cache or r["status"] != "ok" or mk == "af2ig" or "cif" not in r.get("metrics", {}) or key.startswith(("cal-", "ctl-tz")):
+            continue
+        try:
+            cache[did] = g.load_cif(ROOT / r["metrics"]["cif"]).seq("A")
+            changed = True
+        except Exception:
+            pass
+    if changed or not SEQ_CACHE.exists():
+        SEQ_CACHE.write_text(json.dumps(cache))
+    return cache
+
+
+def canon_ids(designs):
+    """One id per vhh_seq among the table's designs (earliest created_utc, then id): the only one that is ever scored or ranked."""
+    by = {}
+    for d in sorted(designs, key=lambda d: (designs[d].get("created_utc", ""), d)):
+        by.setdefault(designs[d]["vhh_seq"], []).append(d)
+    return {v[0]: v[1:] for v in by.values()}, by
+
+
+def canonical_view(st, designs):
+    """State re-keyed onto the current table: a score belongs to the sequence, so it is copied to every id in the table that carries
+    the same vhh_seq, and scores of ids that left the table still count. Returns (view, stats)."""
+    cache = fill_cache(st, designs, seq_cache(designs))
+    _, by = canon_ids(designs)
+    view = {}
+    for (key, mk), r in st.items():          # direct hits first
+        did = key.rsplit("__", 1)[0]
+        if did in designs:
+            view[(key, mk)] = r
+    for (key, mk), r in st.items():
+        did, ant = key.rsplit("__", 1) if "__" in key else (key, "")
+        seq = cache.get(did)
+        if seq is None or r["status"] != "ok":
+            continue
+        for t in by.get(seq, []):
+            view.setdefault((f"{t}__{ant}", mk), r)
+    scored = [k.rsplit("__", 1)[0] for (k, mk), r in st.items() if mk == "of3" and r["status"] == "ok" and k.endswith("__her2")
+              and not k.startswith(("cal-", "ctl-"))]
+    seqs = [cache.get(i) for i in scored if cache.get(i)]
+    stats = {"of3_rows": len(scored), "unique_seqs": len(set(seqs)), "dup_rows": len(seqs) - len(set(seqs)),
+             "ids_left_table": sum(1 for i in set(scored) if i not in designs)}
+    return view, stats
+
+
 def build(st=None):
     """Per-design wide dict from the raw metric store. Returns (per, designs)."""
     st = st or load_state()
     gt = gates().get("models", {})
     designs = {d["design_id"]: d for d in load_designs()}
+    st, _stats = canonical_view(st, designs)      # duplicates share one score; ids that left the table drop out
+    dups, _by = canon_ids(designs)
+    dup_of = {x: c for c, xs in dups.items() for x in xs}
     rp = rules_pass()
     per = {}
     for (key, mk), r in st.items():
@@ -483,7 +546,8 @@ def build(st=None):
             except Exception:
                 pass
     # percentile populations = non-control designs that passed the VM abguard de novo gate (S2 rules.csv)
-    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d)]
+    # percentile populations = unique, rule-passing, non-control designs (duplicates would double-count)
+    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_of]
     # OF3 consensus: mean percentile of three confidence metrics against the non-control designs scored so far
     pops = {met: [per[c].get(f"of3_{met}") for c in cand] for met, _ in OF3_CONSENSUS}
     for did, d in per.items():
@@ -518,6 +582,7 @@ def build(st=None):
             d["of3_recipe"] = "openfold3 JapanFold; MSA server on; no template; 3 samples; seed 0; top-ranked sample"
         d["tier"] = 2 if any(k.startswith(("dde_", "esm2_", "af2ig_", "of3s1_")) for k in d) else 1
         d["denovo_vm_pass"] = int(rp[did]) if did in rp else float("nan")
+        d["dup_of"] = dup_of.get(did, "")
     bgf = dn.OUT / "designs_boltzgen_metrics.csv"   # BoltzGen's own (Boltz-2 based) metrics: informational, never a gate
     if bgf.exists():
         for br in dn.read_csv(bgf):
@@ -526,7 +591,7 @@ def build(st=None):
     return per, designs
 
 
-COMMON = ["design_id", "generator", "framework", "hotspot_set", "parent_id", "is_control", "denovo_vm_pass", "tier", "consensus_rank_score",
+COMMON = ["design_id", "dup_of", "generator", "framework", "hotspot_set", "parent_id", "is_control", "denovo_vm_pass", "tier", "consensus_rank_score",
           "n_models_pass", "n_models_scored", "of3_consensus_rank_score", "stage_ts"]
 
 
@@ -536,7 +601,7 @@ def assemble():
     rows_of3, rows_orth = [], []
     for did, d in sorted(per.items()):
         ds = designs[did]
-        base = {"design_id": did, "generator": ds["generator"], "framework": ds.get("framework", ""),
+        base = {"design_id": did, "dup_of": d.get("dup_of", ""), "generator": ds["generator"], "framework": ds.get("framework", ""),
                 "hotspot_set": ds.get("hotspot_set", ""), "parent_id": ds.get("parent_id", ""),
                 "is_control": int(ds["generator"] == "control"), "stage_ts": ts,
                 **{k: d.get(k, float("nan")) for k in ("denovo_vm_pass", "tier", "consensus_rank_score", "n_models_pass", "n_models_scored",
@@ -597,10 +662,13 @@ def tier_plan(st, per, designs, tier2_models):
     """(model -> [item]) still to launch: tier 1 = OF3 on every design (controls first, then newest);
     tier 2 = other models + the lysozyme decoy for controls, top ~35% of OF3 consensus, and all framework-diversified variants."""
     its = {i["id"]: i for i in design_items(decoy=True)}
+    st, _ = canonical_view(st, designs)      # a sequence that was scored under any id is never scored again
+    dups, _by = canon_ids(designs)
+    dup_ids = {x for xs in dups.values() for x in xs}
     rp = rules_pass()           # tier 1 waits for S2's verdict and only takes designs that pass the VM abguard de novo gate
     # representative first: round-robin over (framework, hotspot set) groups, newest first inside each group
     groups = {}
-    for d in sorted((d for d in designs if designs[d]["generator"] != "control" and rp.get(d)),
+    for d in sorted((d for d in designs if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_ids),
                     key=lambda d: designs[d].get("created_utc", ""), reverse=True):
         groups.setdefault((designs[d].get("framework", ""), designs[d].get("hotspot_set", "")), []).append(d)
     newest = []
@@ -610,7 +678,7 @@ def tier_plan(st, per, designs, tier2_models):
                 newest.append(groups[k].pop(0))
     ctl = sorted(d for d in designs if designs[d]["generator"] == "control")
     seq = ctl + newest
-    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and "of3_consensus_rank_score" in per[d]]
+    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_ids and "of3_consensus_rank_score" in per[d]]
     k = max(3, math.ceil(0.35 * len(cand))) if cand else 0
     top = set(sorted(cand, key=lambda d: -per[d]["of3_consensus_rank_score"])[:k])
     t2 = set(ctl) | top
@@ -642,16 +710,19 @@ def tier_plan(st, per, designs, tier2_models):
 
 def funnel_lines(per, designs, st, spent, cyc, plan_sz, n_top):
     rp = rules_pass()
-    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d)]
+    dups, _by = canon_ids(designs)
+    dup_ids = {x for xs in dups.values() for x in xs}
+    uniq = {d: v for d, v in designs.items() if d not in dup_ids}          # unique vhh_seq only
+    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_ids]
     gens = {}
-    for d in designs.values():
+    for d in uniq.values():
         if d["generator"] != "control":
             gens[d["generator"]] = gens.get(d["generator"], 0) + 1
-    n_rule = sum(1 for d in designs.values() if d["generator"] != "control" and rp.get(d["design_id"]))
-    n_wait = sum(1 for d in designs.values() if d["generator"] != "control" and d["design_id"] not in rp)
+    n_rule = sum(1 for d in uniq.values() if d["generator"] != "control" and rp.get(d["design_id"]))
+    n_wait = sum(1 for d in uniq.values() if d["generator"] != "control" and d["design_id"] not in rp)
     n_ctl = sum(1 for d in designs.values() if d["generator"] == "control")
     sc = lambda mk: sum(1 for d in cand if f"{PREF[mk]}_iptm" in per[d])
-    L = [f"cycle {cyc} | designs seen {sum(gens.values())} ({', '.join(f'{k} {v}' for k, v in sorted(gens.items())) or 'none yet'}) + {n_ctl} controls | "
+    L = [f"cycle {cyc} | unique designs {sum(gens.values())} (+{len(dup_ids)} duplicate ids not scored) ({', '.join(f'{k} {v}' for k, v in sorted(gens.items())) or 'none yet'}) + {n_ctl} controls | "
          f"abguard-VM pass {n_rule} (awaiting verdict {n_wait}) | OF3 scored {sc('of3')} | tier-2 (OF3 top {n_top}) dde {sc('dde')} esm2 {sc('esm2')} | to launch {plan_sz} | spend ${spent:.2f}/{BUDGET:.0f}"]
     epi = [d for d in cand if per[d].get("of3_epi_overlap", 0) >= 0.5]
     p3 = [d for d in cand if per[d].get("of3_pass") == 1]
@@ -727,6 +798,11 @@ def watch(a):
     cyc = 0
     log(f"watch start pid {os.getpid()}: tier1 of3, tier2 {tier2}, budget ${BUDGET}, credits ${jf0:.3f}")
     log(f"adopted {adopt(ex, futs, inflight)} earlier jobs that were still unparsed")
+    _designs = {d["design_id"]: d for d in load_designs()}
+    _, _stats = canonical_view(load_state(), _designs)
+    log(f"dedupe by vhh_seq: of {_stats['of3_rows']} already-scored OF3 design rows, {_stats['dup_rows']} were duplicates of another scored id "
+        f"({_stats['unique_seqs']} unique sequences); {_stats['ids_left_table']} scored ids are no longer in the designs table (their scores are "
+        f"kept per sequence, not per id); the table now has {len(_designs)} ids / {len({d['vhh_seq'] for d in _designs.values()})} unique sequences")
     last_spent = 0.0
     while True:
         cyc += 1
