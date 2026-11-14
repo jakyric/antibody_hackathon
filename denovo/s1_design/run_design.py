@@ -109,8 +109,20 @@ def grid(reps):
 
 
 def load_rows():
+    """Load the CSVs and drop designs whose vhh_seq already appeared (first occurrence wins); removed rows go to duplicates_removed.csv."""
     rows = dn.read_csv(CSV) if CSV.exists() else []
     geoms = dn.read_csv(GEOM) if GEOM.exists() else []
+    seen, keep, dup = set(), [], []
+    for r in rows:
+        (dup if r["vhh_seq"] in seen else keep).append(r)
+        seen.add(r["vhh_seq"])
+    if dup:
+        dids = {r["design_id"] for r in dup}
+        old = dn.read_csv(HERE / "duplicates_removed.csv") if (HERE / "duplicates_removed.csv").exists() else []
+        dn.write_csv(HERE / "duplicates_removed.csv", old + dup, dn.DESIGN_COLS)
+        rows, geoms = keep, [g for g in geoms if g["design_id"] not in dids]
+        dn.write_csv(CSV, rows, dn.DESIGN_COLS)
+        print(f"removed {len(dup)} duplicate sequences, kept {len(keep)}", flush=True)
     return rows, geoms
 
 
@@ -197,6 +209,12 @@ def parse_hhmm(x):
     return time.mktime((t.tm_year, t.tm_mon, t.tm_mday, h, m, 0, 0, 0, -1))
 
 
+def new_seed(ci, rep):
+    """A job with seed S makes its 8 designs with seeds S..S+7, so jobs whose seeds differ by < 8 REPEAT designs (wave 1 and the first
+    wave-2 jobs used consecutive seeds: only 422 of 1360 designs were unique). New jobs: 200000 + cell*1000 + rep*8."""
+    return 200000 + ci * 1000 + rep * 8
+
+
 def old_cells():
     return [(fw, hs, c3, pose) for fw in FWS for hs in HOTSETS for c3 in C3 for pose in POSES]
 
@@ -208,12 +226,12 @@ def all_cells():
 
 def job_name(cell, rep):
     fw, hs, c3, pose = cell
-    return f"{'s1a2' if c3 == NEW_C3 else 's1a'}-{fw}-{hs}-{c3}-{pose}-r{rep}"
+    return f"{'s1a3' if c3 == NEW_C3 else 's1a'}-{fw}-{hs}-{c3}-{pose}-r{rep}"
 
 
 def existing_reps(cell):
     fw, hs, c3, pose = cell
-    pre = "s1a2" if c3 == NEW_C3 else "s1a"
+    pre = "s1a3" if c3 == NEW_C3 else "s1a"
     reps = [int(p.stem.rsplit("-r", 1)[1]) for p in dn.JOBS.glob(f"{pre}-{fw}-{hs}-{c3}-{pose}-r*.json")]
     return max(reps) + 1 if reps else 0
 
@@ -223,12 +241,13 @@ def recover_jobs(done_ids):
     Handles both name styles: wave 1 `s1a-<fw>-<hs>-<c3a|c3b>-<pose>-r<n>` and wave 2 `s1a2-<fw>-<hs>-c3n-<pose>-r<n>`."""
     old, new = old_cells(), all_cells()
     out = []
-    for f in sorted(list(dn.JOBS.glob("s1a-*.json")) + list(dn.JOBS.glob("s1a2-*.json"))):
+    for f in sorted(list(dn.JOBS.glob("s1a-*.json")) + list(dn.JOBS.glob("s1a2-*.json")) + list(dn.JOBS.glob("s1a3-*.json"))):
         name = f.stem
         try:
             pre, fw, hs, c3, pose, rep = name.split("-")
             rep = int(rep[1:]); cell = (fw, hs, c3, pose)
-            seed = (1000 + old.index(cell) * 100 + rep) if pre == "s1a" else (100000 + new.index(cell) * 100 + rep)
+            seed = ((1000 + old.index(cell) * 100 + rep) if pre == "s1a" else
+                    (100000 + new.index(cell) * 100 + rep) if pre == "s1a2" else new_seed(new.index(cell), rep))
         except (ValueError, IndexError):
             continue
         if json.loads(f.read_text())["job_id"] in done_ids:
@@ -248,7 +267,7 @@ def plan_jobs(n_jobs, log):
         ci = all_cells().index(cell)
         for rep in range(base, base + k):
             jobs.append({"name": job_name(cell, rep), "fw": fw, "hs": hs, "c3": c3, "pose": pose, "rep": rep,
-                         "seed": 100000 + ci * 100 + rep})
+                         "seed": new_seed(ci, rep)})
     with open(HERE / "plan_log.jsonl", "a") as fh:
         fh.write(json.dumps({"ts": dn.utcnow(), "basis": basis, "alloc": {"|".join(k): v for k, v in alloc.items()},
                              "why": {"|".join(k): v for k, v in why.items()}}) + "\n")
@@ -274,7 +293,10 @@ def run_wave(jobs, jf, fwrecs, rows, geoms, workers, budget, tag=""):
                     with open(HERE / "failed_jobs.jsonl", "a") as fh:
                         fh.write(json.dumps({"name": r["job"]["name"], "job_id": r.get("job_id"), "error": r["error"]}) + "\n")
                     continue
-                rows.extend(r["rows"]); geoms.extend(r["geoms"])
+                seen = {x["vhh_seq"] for x in rows}
+                fresh = [x for x in r["rows"] if x["vhh_seq"] not in seen and not seen.add(x["vhh_seq"])]
+                keep_ids = {x["design_id"] for x in fresh}
+                rows.extend(fresh); geoms.extend([g for g in r["geoms"] if g["design_id"] in keep_ids or not g.get("ok", 1)])
                 spent += r["cost"]
                 dn.write_csv(CSV, rows, dn.DESIGN_COLS)      # flushed after EVERY finished job
                 if geoms:
@@ -282,7 +304,7 @@ def run_wave(jobs, jf, fwrecs, rows, geoms, workers, budget, tag=""):
                     dn.write_csv(GEOM, geoms, cols)
                 with open(ledger, "a") as fh:
                     fh.write(json.dumps({"job": r["job"]["name"], "job_id": r["job_id"], "cost": r["cost"], "n": len(r["rows"])}) + "\n")
-                print(f"{time.strftime('%H:%M:%S')} {tag}{r['job']['name']}: +{len(r['rows'])}; total {len(rows)}; wave spend ${spent:.3f}; fail {nfail}", flush=True)
+                print(f"{time.strftime('%H:%M:%S')} {tag}{r['job']['name']}: +{len(fresh)}/{len(r['rows'])} new; total {len(rows)}; wave spend ${spent:.3f}; fail {nfail}", flush=True)
                 if sum(json.loads(x)["cost"] for x in open(ledger)) > budget:
                     print("budget reached; cancelling remaining jobs", flush=True)
                     STOP_AT[0] = time.time() - 1

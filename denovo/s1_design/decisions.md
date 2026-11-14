@@ -95,4 +95,8 @@ gap (`probe-bcii10-v1`). Solution: HER2 as two chains, A 489-580 and C 591-607, 
   finish. Not an empty wallet (balance was $90). Fixed by retrying with back-off (a real out-of-credit 402 has different text and still fails the job).
 * Head-of-line blocking in my first runner: as many threads as in-flight jobs, so jobs that had already `succeeded` waited behind queued ones for ~15 minutes. Fixed with 40 threads, a semaphore of 12 for NEW
   submissions (`--max-inflight`, the coordinator's cap) and `recover_jobs()`, which collects any submitted job that never reached the CSV (restarting the runner is safe).
+* **Duplicate designs (found 14:55, my bug).** A job with seed S makes its 8 designs with seeds S..S+7, and I gave consecutive repeats consecutive seeds (S, S+1, ...), so each new repeat re-made 7 of the
+  previous job's 8 designs: at 14:55 only 422 of 1360 rows had a unique `vhh_seq`. Effects: every wasted row was scored by S2/S3 and would have taken a ranking slot. Fix: (1) `load_rows()` keeps the first row per
+  `vhh_seq` and moves the rest to `duplicates_removed.csv` (the CSV shrank from 1360 to ~430 rows; design ids of removed rows disappear, their CIFs stay in `results/denovo/designs/`); (2) new jobs are named
+  `s1a3-*` with seeds `200000 + cell*1000 + rep*8` (disjoint); (3) `run_wave` drops any new row whose sequence is already present. Cost of the bug: about $1 and ~25 minutes of queue time.
 * `pkill -f` with the runner's command line also killed my own shell once; harmless.
