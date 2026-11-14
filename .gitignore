@@ -3,6 +3,6 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 data/
-results/
 runs/
 *.npz
+# results/ is NOT ignored: the measured tables and the submission are shared with the team.
