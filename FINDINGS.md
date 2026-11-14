@@ -364,6 +364,60 @@ cysteines keep the parity even.
 
 ---
 
+## 10. The way out: ask the models a question that has a known answer
+
+Section 7 left us with three folding models that disagree. The usual answers
+to that — average them, or trust the most confident — are both guesses. There
+is a better one available here, because this target has a crystal structure.
+
+Trastuzumab's epitope on HER2 is known from 1N8Z: 19 HER2 residues with a
+heavy atom within 4.5 A of the antibody. We can ask each model to predict the
+trastuzumab complex and then simply check how much of that epitope it
+recovers. No confidence score involved — just which residues ended up in
+contact.
+
+| Model | Trastuzumab's predicted epitope vs the crystal (Jaccard) |
+| --- | --- |
+| **Boltz-2** | **1.00** |
+| Boltz-1 (no template) | 0.29 |
+| Protenix v2 | 0.26 |
+| OpenFold3 OpenBind | 0.10 |
+
+Boltz-2 reproduces the crystal epitope exactly. The other three do not come
+close. **That is the tie-break we were missing:** we are not choosing between
+three equally plausible opinions, we are choosing the one model that can get
+the one case we can check right.
+
+Caveat, and it matters: every templated model was given the same template,
+which already places HER2 and the framework. So this measures whether a model
+stays consistent with a structure it was handed, not whether it could find the
+epitope unaided. It is still a real discriminator — three models were handed
+the same help and lost the epitope anyway — but it is not evidence that
+Boltz-2 would find a novel epitope.
+
+### And it gives us a number on the second scored axis
+
+Epitope preservation is one of the three things the lab measures, and until
+now we had only an assumption about it. With Boltz-2 we have a measurement:
+
+| | Overlap with trastuzumab's epitope, same model, same seed |
+| --- | --- |
+| Our 20 designs, median | **0.95** |
+| Our 20 designs, worst | **0.85** |
+
+Every design keeps essentially the whole epitope. That is the expected result
+for four point mutations in CDRH3 on an unchanged framework, and now it is
+measured rather than assumed.
+
+The measure behaves the way a measure of a *different* axis should: across
+the calibration variants it has no relationship with measured affinity
+(Spearman -0.02), and all of them sit between 0.86 and 1.00. Variants of
+trastuzumab bind the same patch whether they bind it tightly or weakly.
+Epitope and affinity are separate questions, and this number answers the
+first one only.
+
+---
+
 ## What we have not done
 
 **Thermostability, beyond the one pair.** Section 9 gives a disulfide with
@@ -376,8 +430,9 @@ the protein before it can test it. This remains the cheapest of the three
 axes and the one where we are most likely to beat the baseline.
 
 **Interface PAE.** Section 7 ranks on ipTM and pLDDT, read from the summary
-scores each model writes. Interface PAE needs the detailed score files, and
-it is the metric the organisers' own pass criteria use. It should be added.
+scores each model writes. Interface PAE needs the detailed score files, which
+are CBOR, and the reader for them is not installed in our environment. It is
+the metric the organisers' own pass criteria use, so it should be added.
 
 **Calibration against the shuffled pairs.** Section 7 calibrates against
 measured KD, which is the stronger test, but we have not measured the false
@@ -388,9 +443,10 @@ sample per design. We therefore do not know the run-to-run spread, and we
 should not separate two designs on a difference we have not shown is larger
 than the noise. A second seed is the cheapest thing left to run.
 
-**Epitope preservation.** We assume it is preserved because we keep
-trastuzumab's framework and binding mode and change only four residues
-in CDRH3. That is a reasonable assumption, not a measurement.
+**Epitope, on more than one model.** Section 10 measures epitope overlap, but
+only Boltz-2 passed the crystal check, so the number rests on a single model.
+It also rests on a template that already placed HER2. An apo prediction, or a
+model that recovers the epitope without the template, would make it stronger.
 
 **`abguard` itself.** Our gate is a local mirror, tested against known
 answers, but theirs is the authority. It must run before submission.
