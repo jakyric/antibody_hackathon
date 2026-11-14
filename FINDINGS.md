@@ -41,7 +41,7 @@ We are not allowed to stay close, and going far is expensive. All 20 of
 our designs therefore sit at **exactly 4 mutations** — as close to the
 original as the rules permit.
 
-## 3. The ceiling is the label, not the model
+## 3. The label did not transfer to affinity
 
 This is the most important thing we found today, and it changed how we
 rank.
@@ -70,9 +70,19 @@ The explanation is in the 27 sequences measured *both* ways:
 affinity with **AUROC 0.61** — barely above chance. Within "high", KD
 spans 0.09 to 174 nM, a factor of 2000.
 
-**The net has saturated its label.** It hits FACS class at 0.98. But the
-label itself hits affinity at 0.61. No model trained on FACS can rank
-affinity better than that ceiling.
+**The net has saturated its label.** It hits FACS class at 0.98, while
+the label itself hits affinity at 0.61.
+
+Be precise about what this is and is not. AUROC 0.61 is **not** a
+mathematical ceiling. A noisy label is not an information-theoretic
+wall: a model can in principle pick up features that correlate with
+affinity beyond what the label itself captures, and we cannot rule out
+that a different architecture or training setup would manage it.
+
+What we can say is what we measured: **our** FACS-trained net did not
+transfer. Spearman -0.04 in the legal zone, against edit distance's
++0.23. We found no transfer, and we have no reason to assume it exists
+until someone demonstrates it.
 
 FACS measures whether something displays on a cell surface and binds at
 all. That is not the same as how tightly it binds.
@@ -230,8 +240,9 @@ Read this carefully, because it cuts both ways.
 - Boltz-2's interface confidence **does** carry affinity signal. +0.41 is not
   nothing, and it is better than the net we trained on half a million FACS
   labels. A folding model that never saw this assay beats a model that was
-  fitted to it. That is finding 3 again, from a different direction: the FACS
-  label, not the model, is the ceiling.
+  fitted to it. That is finding 3 again, from a different direction: training
+  on the FACS label bought us nothing for affinity, while a model that never
+  saw the label carries some.
 - But on the same 25 variants, **edit distance still wins**, and its interval
   is the only one clearly clear of zero. This is the fourth ranking method we
   have tried and the fourth to lose to counting mutations.
@@ -383,3 +394,56 @@ in CDRH3. That is a reasonable assumption, not a measurement.
 
 **`abguard` itself.** Our gate is a local mirror, tested against known
 answers, but theirs is the authority. It must run before submission.
+
+---
+
+## What we think should happen next
+
+### Thermostability needs an owner, and the job is now small
+
+It is the only one of the three axes the novelty rules do not constrain, the
+one with the clearest published precedent, and therefore the one where we are
+most likely to actually beat the baseline. Section 9 turned it from an open
+question into a short list:
+
+1. Build the VH Gly44Cys + VL Gln100Cys variant of our top designs.
+2. Co-fold it against HER2 and check two things: that the two new cysteines
+   come out within bonding distance of each other, and that the CDR loops do
+   not move relative to the same design without the bond. Same model, same
+   seed, parent as the control.
+3. A second, independent opinion on stability (StaB-ddG, ESM-2 likelihood).
+4. Decide whether the documented drop in expression yield is acceptable. A
+   protein the lab cannot make cannot be measured.
+
+Steps 1-3 are a couple of hours of compute. **Step 4 is a judgement call and
+needs the person with wet-lab antibody experience, not the person running the
+pipeline.** It should not be the same person as the design and ranking thread:
+the tooling does not overlap, and both threads are time-boxed by the same
+deadline.
+
+### Both tracks, or only optimisation?
+
+Everything we have built so far is optimisation. Our recommendation is to
+**keep optimisation as the primary track, and enter de novo only if two
+things are confirmed by the organisers:**
+
+- **How the de novo novelty rule is computed.** "Under 70 % identity with a
+  known antibody" is straightforward if it is measured on the CDRs. If it is
+  measured on the whole sequence, then nothing we can build in the time left
+  qualifies, because every real antibody framework is far more than 70 %
+  identical to known antibodies. This single answer decides the track.
+- **Whether the four guaranteed lab slots are per team or per track.** If
+  they are per team, splitting two and two halves our shots in a track where
+  only 3.3 % of measured variants beat the baseline (section 1). If they are
+  per track, entering both is close to free.
+
+If both answers come back favourably, the argument for de novo is not
+affinity. It is that the tier system gives credit for **any one** axis, and a
+fresh scaffold has a genuine chance on thermostability where a trastuzumab
+variant is fighting an already-good clinical antibody. That makes de novo a
+cheap ticket on the axis we are strongest on, not a second attempt at the
+axis we are weakest on.
+
+We have queued a de novo experiment that redesigns all six CDRs against HER2
+on an Fv framework, to find out whether such designs pass our own gate at
+all. It is there to answer the question, not to be submitted.
