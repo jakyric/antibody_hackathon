@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Pick the few designs we actually submit, using a rule that is written in code.
+"""Pick the few designs we actually deliver, by a rule that is written in code.
 
 Only a handful get made in the lab, so every pick is expensive. The rule:
 
   1. only designs that passed the gate (locally and in the official checker)
   2. only designs where the epitope holds: the overlap with trastuzumab's own
-     HER2 residues is at least as large as that of the worst of the anchors, so
-     we do not submit something that binds somewhere else
-  3. sort by mean percentile of interface ipTM across the
-     folding models
+     HER2 residues is at least as large as the worst of the anchors, so we
+     don't deliver something that binds somewhere else
+  3. sort by mean percentile of interface ipTM across the folding models
   4. spread the picks: at most one design per CDR-H3 cluster (clustered on
-     edit distance), so we do not submit four variants of the same thing
+     edit distance), so we don't deliver four variants of the same thing
 
-Each pick is written out with its justification, so the order can be verified.
+Each pick is written out with its justification, so the ordering can be
+audited.
 
     python scripts/denovo_select.py --scores results/denovo/scores.csv \
         --candidates results/denovo/candidates_pass.csv --n 4 \
@@ -43,7 +43,7 @@ def num(value, default=float("nan")) -> float:
 
 def cluster(ids_seqs: list[tuple[str, str]], cutoff: int = CLUSTER_DISTANCE) -> dict[str, int]:
     """Simple greedy clustering on edit distance. The input order decides
-    which one becomes the first of a cluster, so pass them in ranked order."""
+    which one becomes the first in a cluster, so pass them in ranked order."""
     centres: list[tuple[str, int]] = []
     out: dict[str, int] = {}
     for ident, seq in ids_seqs:
@@ -58,7 +58,9 @@ def cluster(ids_seqs: list[tuple[str, str]], cutoff: int = CLUSTER_DISTANCE) -> 
     return out
 
 
-def select(rows: list[dict], n: int, epitope_floor: float) -> list[dict]:
+def select(rows: list[dict], n: int, epitope_floor: float,
+           max_rmsd: float = float("inf"),
+           rmsd_column: str = "boltz2_rmsd_to_designed_pose") -> list[dict]:
     ranked = [r for r in rows if r.get("group") == "denovo"]
     ranked.sort(key=lambda r: -num(r.get("binding_percentile_mean"), -1))
 
@@ -66,6 +68,13 @@ def select(rows: list[dict], n: int, epitope_floor: float) -> list[dict]:
     picked: list[dict] = []
     used: set[int] = set()
     for r in ranked:
+        # A design that refolds far from the pose it was designed in binds
+        # somewhere other than where we asked — no matter how good min_ipae is there.
+        rm = num(r.get(rmsd_column))
+        if rm == rm and rm > max_rmsd:
+            r["decision"] = (f"not picked: refolds {rm:.1f} A from the designed pose "
+                             f"(limit {max_rmsd:.0f} A)")
+            continue
         ej = num(r.get("epitope_jaccard"))
         if ej == ej and ej < epitope_floor:
             r["decision"] = f"not picked: epitope overlap {ej} below the anchor floor {epitope_floor}"
@@ -91,8 +100,11 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--scores", type=Path, required=True)
     ap.add_argument("--candidates", type=Path, required=True,
-                    help="candidates_pass.csv: the sequences and their origin are taken from here")
+                    help="candidates_pass.csv: the sequences and the origin are taken from here")
     ap.add_argument("--n", type=int, default=4)
+    ap.add_argument("--max-rmsd", type=float, default=float("inf"),
+                    help="discard designs that refold farther than this from the designed pose (A)")
+    ap.add_argument("--rmsd-column", default="boltz2_rmsd_to_designed_pose")
     ap.add_argument("--epitope-floor", type=float, default=-1.0,
                     help="smallest allowed overlap with trastuzumab's epitope; "
                          "negative means the floor is read from the anchors")
@@ -115,9 +127,9 @@ def main(argv: list[str] | None = None) -> int:
                        if r.get("group") in ("anchor", "baseline")]
         anchor_vals = [v for v in anchor_vals if v == v]
         floor = min(anchor_vals) if anchor_vals else 0.0
-        print(f"the epitope floor is set by the anchors: {floor}")
+        print(f"epitope floor is set by the anchors: {floor}")
 
-    picked = select(rows, args.n, floor)
+    picked = select(rows, args.n, floor, args.max_rmsd, args.rmsd_column)
     if not picked:
         raise SystemExit("no design made it through the selection")
 
@@ -127,6 +139,7 @@ def main(argv: list[str] | None = None) -> int:
         out_rows.append({
             "design_id": r["design_id"],
             "rank": len(out_rows) + 1,
+            "kind": c.get("kind") or ("vhh" if not c.get("vl_sequence") else "scfv"),
             "vh_sequence": c.get("vh_sequence", ""),
             "vl_sequence": c.get("vl_sequence", ""),
             "cdrh3": r.get("cdrh3", ""),
@@ -151,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         w = csv.DictWriter(fh, fieldnames=list(out_rows[0]))
         w.writeheader()
         w.writerows(out_rows)
-    print(f"{len(out_rows)} designs selected -> {args.out}")
+    print(f"{len(out_rows)} designs picked -> {args.out}")
     for r in out_rows:
         print(f"  {r['rank']}. {r['design_id']} {r['cdrh3']} {r['decision']}")
     return 0

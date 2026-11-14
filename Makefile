@@ -26,6 +26,19 @@ setup:
 test:
 	$(PY) -m pytest tests -q
 
+# A complete run, end to end: propose variants, apply the entry rules against
+# every provided sequence, drop what the model rates unlikely, rank on the one
+# signal that transferred to measured affinity, and pick a diverse set. Writes
+# to results/demo/ so it never overwrites the submitted designs.
+# Needs the two Chinery tables in data/ -- see "Getting the data" in the README.
+demo:
+	$(PY) -m abx.pipeline --candidates 5000 --submit 10 --seed 7 \
+	  --out results/demo/designs_demo.csv
+	@echo
+	@echo "Ranked candidates with their rationale: results/demo/designs_demo.csv"
+	@echo "Then check them against the entry rules:"
+	@echo "  $(PY) scripts/requirement_check.py --submission <submission.csv>"
+
 verify:
 	$(PY) -m abx.benchmark
 

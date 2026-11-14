@@ -1,19 +1,60 @@
-# krishagen — HER2 / trastuzumab optimisation
+# Evidence-first antibody design
 
-Ten optimisation-track candidates for a better trastuzumab, and the tested pipeline that produced them.
+We built a reproducible antibody-design pipeline that prioritises experimental evidence over model
+confidence.
 
-This README is organised around the four pitch criteria, so each one can be checked directly:
+Our central finding was that **highly accurate computational scores did not reliably predict experimental
+binding affinity**. A model we trained reached AUROC 0.983 on its own label and still lost to plain edit
+distance against measured KD. Rather than optimise a misleading metric, we built a selection process on
+things we could verify: novelty against the full provided dataset, chemical liabilities from the
+organisers' own reference, structural consistency across folding models and seeds, and explicit
+uncertainty on every claim.
+
+We deliver **ten trastuzumab-derived scFv/paired candidates** for experimental evaluation, including a
+controlled investigation of the VL R66G thermostability mutation.
+
+Our goal is not to claim that AI has already designed a superior antibody. It is to help scientists make
+better decisions about which antibodies to test.
+
+```bash
+make setup && make test     # 97 tests, no data needed
+make demo                   # a complete run: target in -> ranked candidates out
+```
+
+**Nothing in this repository is a laboratory measurement of our designs.** Adaptyv measures affinity,
+epitope preservation and thermostability weeks after the event. Every claim is labelled `measured`,
+`predicted`, `literature` or `unknown`, and we never write "binds".
+
+---
+
+## What changed because we tested our assumptions
+
+The pipeline's main output is not the candidate list. It is a set of conclusions we did not want, each of
+which changed what we submitted.
+
+| We assumed | We tested it | What we did |
+| --- | --- | --- |
+| Our binder model is good — AUROC 0.983 | Against measured SPR it scores +0.16, worse than edit distance's +0.23 | **Removed binding from the ranking entirely** |
+| StaB-ddG can order our designs | +0.38 overall, but **+0.14 [−0.26, +0.53]** at the 4–5 mutations our designs sit at | **Did not run it on the candidates** |
+| R66G is a free thermostability win | Its own paper reports a 2.4× affinity loss; an independent group installed that residue *to gain* affinity | **Submitted matched pairs instead of stabilising everything** |
+| Our novelty check covers the dataset | It assumed all 525,063 CDR-H3s are 10-mers. **21 are not**, and those were silently skipped | **Rewrote it to measure edit distance exhaustively** |
+| Our cysteine filter works | It counted across the whole molecule; the rule is per domain | **Fixed; an odd count in each chain is now caught** |
+| The repo builds for a judge | `make setup` **failed** on a clean Debian box — venv without pip | **Fixed; verified from a fresh clone** |
+| Two folding seeds are enough | A third seed flipped the sign of our R66G interface result | **Report it as a hint, not a finding** |
+
+Each row is a filter that returned a clean answer to the wrong question. That is the failure mode this
+pipeline is built to catch.
+
+---
+
+This README is organised around the four pitch criteria, so each can be checked directly:
 
 | Weight | Criterion | Where it is answered |
 | ---: | --- | --- |
 | **40%** | Judgment — clear reasoning behind the molecules we chose | [§1](#1-judgment-40) |
 | **20%** | Execution — a reproducible pipeline in a GitHub repo | [§2](#2-execution-20) |
-| **20%** | User fit — what the design is for, and who needs it | [§3](#3-user-fit-20) |
+| **20%** | User fit — who actually benefits | [§3](#3-user-fit-20) |
 | **20%** | Path to value — a credible route to real use | [§4](#4-path-to-value-20) |
-
-One rule governs every number below: **nothing here is a laboratory measurement of our designs.** Adaptyv
-measures affinity, epitope preservation and thermostability weeks after the event. Every claim is labelled
-`measured`, `predicted`, `literature` or `unknown`, and we never write "binds".
 
 This is one person's branch of the team's private repository. It holds methods, tests, measured results and
 the candidates. It holds no credentials and does not redistribute the organisers' task text or data files.
@@ -31,8 +72,16 @@ that does not work is worse than no ranking.
 trastuzumab's median of 0.135 nM. The median variant is ~590× worse. These are published, professionally
 designed variants from a study doing exactly this task.
 
-**The novelty rule excludes the zone that works.** `abguard` enforces ≥3 CDR-H3 mutations from trastuzumab
-and from every provided sequence. Binder quality falls steeply with distance:
+**The novelty rule excludes the zone that works.** Two separate constraints apply, and they are not the
+same number:
+
+| Constraint | Minimum mutations | Where it comes from |
+| --- | ---: | --- |
+| CDR-H3 identity to trastuzumab under 70% | **4** | 3 mutations leaves 70% on the 10-mer (77% on abguard's 13-mer), which is not *under* 70% |
+| Distance from every provided sequence | **3** | `abguard`'s `required_cdrh3_mutations: 3` |
+
+Our designs carry **4 mutations from trastuzumab** and sit at **3 from the nearest provided sequence**, so
+they satisfy both. Binder quality falls steeply with distance:
 
 | CDR-H3 mutations | n | fraction "high" |
 | --- | --- | --- |
@@ -87,37 +136,78 @@ error bars**, no n and no statistical test. We do not repeat the word "unchanged
 the opposite direction: huMAb4D5-3 (VL66 **Gly**) KD 4.4 nM vs huMAb4D5-5 (VL66 **Arg**) KD 1.1 nM, differing
 only at VL66. Trastuzumab has Arg66 on purpose.
 
-**The structural premise of the mutation is wrong.** It is justified on the grounds that position 66 "was
-not located at the antigen-binding region". Measured by us in crystal structure 1N8Z
+**Our structural analysis challenges the assumption that R66G is functionally neutral.** The mutation is
+justified on the grounds that position 66 "was not located at the antigen-binding region". Arg66 indeed
+makes no direct contact with HER2 — but it is positioned to stabilise a loop that does. Measured by us in
+crystal structure 1N8Z
 (`results/r66g/R66_GEOMETRY.md`, `scripts/r66_contacts.py`):
 
 | | Distance |
 | --- | ---: |
-| Arg66 side chain → CDR-L1 Asn30 backbone O | **2.54 Å** (hydrogen bond) |
+| Arg66 side chain → CDR-L1 Asn30 backbone O | **2.54 Å** (consistent with a hydrogen bond) |
 | Arg66 side chain → CDR-L1 Asp28 | 3.84 Å |
 | Arg66 side chain → nearest HER2 atom | 5.45 Å |
 | for scale, CDR-L1 → HER2 | 2.99 Å |
 
-Arg66 is not in the interface, but it hydrogen-bonds a loop that is.
+Arg66 is not in the interface. It sits against CDR-L1 at a distance consistent with a hydrogen
+bond, and CDR-L1 contacts HER2 at 2.99 Å. Distance alone does not prove the bond, and this does
+not show the original paper's geometry to be wrong — but it does give a **plausible mechanism**
+for the affinity loss those authors measured and then described as absent.
 
 **Our own folding agrees in direction** (`results/r66g/R66G.md`). We folded four matched pairs —
-trastuzumab and three designs, with and without R66G — with Boltz-2 at multiple seeds, same template:
+trastuzumab and three designs, with and without R66G — with Boltz-2 at three seeds (42, 77, 123), same template:
 
-- **Epitope is preserved.** Pair overlap is 1.00 for trastuzumab, tz-opt-02 and tz-opt-18, against a
-  seed-to-seed noise floor of 0.97 measured on the same sequences. Only tz-opt-07 shifts (0.90).
-- **Interface confidence drops slightly.** Antibody–antigen ipTM is lower with R66G in **6 of 8**
-  comparisons; for trastuzumab itself the drop clears the noise floor at both seeds.
+- **Epitope is preserved.** Median pair overlap is 1.00 for trastuzumab, tz-opt-02 and tz-opt-18, against
+  a seed-to-seed noise floor of 0.97 measured on the same sequences. tz-opt-02 holds 1.00 at all three
+  seeds; tz-opt-18 holds it at two of three. **tz-opt-07 is the exception** — 0.86 / 0.94 / 0.90, below
+  the noise floor at every seed. R66G moves that design's predicted epitope and does not move the others',
+  which is a per-design result, not a property of the mutation.
+- **Interface confidence leans down, but only leans.** Antibody–antigen ipTM is lower with R66G in
+  **8 of 12** comparisons, median **−0.012**. Per design, almost all of that sits inside the seed-to-seed
+  spread of a single sequence (median 0.014). This is a directional hint consistent with the published
+  affinity loss — it is **not** independent confirmation, and we do not present it as one.
+
+  The third seed is why that sentence is hedged. On two seeds the drop for trastuzumab looked like it
+  cleared the noise floor; the third seed flipped its sign. Two seeds would have let us overstate this.
 
 **Why this changes the submission.** The brief counts a property only if it beats the measured baseline —
-"ties and regressions are hollow". R66G buys the thermostability vertex and puts the affinity vertex at
-risk, so it is a reasonable bet for A-tier and a poor one for S-tier. We therefore submit **matched pairs**:
-each stabilised design alongside its unmodified parent, so the lab result separates the loop from the
-mutation instead of confounding them.
+"ties and regressions are hollow". R66G *may* improve thermostability — no design of ours has had its
+Tm measured — while putting the affinity vertex at
+risk, so it is a reasonable bet for A-tier and a poor one for S-tier. We therefore spend part of the
+submission on **matched pairs** rather than stabilising everything.
+
+**Exactly what the ten rows are**, since the pair argument depends on it:
+
+| | Count | Which |
+| --- | ---: | --- |
+| Stabilised (carry R66G) | 6 | `tz-opt-02/07/18/01/15/03-stab` |
+| Unmodified parents | 4 | `tz-opt-02/07/18/01` |
+| **Complete matched pairs** | **4** | `tz-opt-02`, `tz-opt-07`, `tz-opt-18`, `tz-opt-01` |
+| Stabilised with no parent in the list | 2 | `tz-opt-15-stab`, `tz-opt-03-stab` |
+
+Ten unique rows allow at most five complete pairs; we submit four, and spend the two remaining slots on
+additional loops rather than a fifth control. **The two unpaired stabilised designs cannot support a
+controlled read of R66G** — if only those are tested, we learn nothing about the mutation. That is the
+cost of the choice, and it is why the pairs are ranked above them.
 
 ### 1.4 The candidates
 
 `results/CANDIDATES.md` is the single table: ten rows, the three judged axes, the uncertainty on each, and
 what each claim rests on. `results/SUBMISSION.csv` is the submitted file.
+
+**One row, in full, so the format is clear** — `tz-opt-02-stab`, our first-ranked candidate:
+
+| | |
+| --- | --- |
+| **Why it is in the list** | Best developability profile of all twenty: it drops trastuzumab's DG isomerisation motif and the CDR-H3 tryptophan, giving 7 liability motifs against trastuzumab's 8, with one fewer at high severity. It is the only design strong on both axes we could actually measure. |
+| **CDR-H3** | `MGPEPFYAMD` — 4 mutations from trastuzumab, 3 from the nearest of 525,063 provided sequences (`CGAEGFYAMD`) |
+| **Affinity** | `unknown`. No scorer we have orders designs at 4 mutations. R66G additionally costs affinity in the literature (2.0 → 4.8 nM) |
+| **Epitope** | `predicted` 0.89 vs trastuzumab; R66G pair overlap **1.00 at all three seeds**, noise floor 0.97 |
+| **Thermostability** | `literature` +4.9 °C, on a different molecule, one lab, never replicated |
+| **What the lab should find out** | Whether R66G's Tm gain transfers to a redesigned loop, and what it costs in SPR. Its parent `tz-opt-02` is in the list for exactly this comparison. |
+| **What could go wrong** | The affinity loss exceeds the Tm gain in value; the Tm gain does not transfer out of Okazaki's construct; or the design simply fails to express |
+
+The other nine rows are in the same form in `results/CANDIDATES.md`.
 
 ---
 
@@ -138,8 +228,47 @@ python, `python3 -m venv` creates an environment *without* pip, and every later 
 named pip". `make setup` now bootstraps pip itself, so the repository builds on a machine with no
 `python3-venv` package.
 
-`make verify` needs the two public Chinery tables in `data/` (`tz_her2_facs_3classes_524346.csv`,
-`trastuzumab_her2_spr_all_768.csv`). They are not redistributed here. `make test` passes without them.
+### 2.1b A complete run: target in, ranked candidates out
+
+`make demo` is the whole method in one command, on a fresh target definition:
+
+```bash
+make demo        # ~1 minute
+```
+
+| Step | What happens | Typical numbers |
+| ---: | --- | --- |
+| 1 | Propose CDR-H3 variants from a position-weight matrix fitted to the FACS library | 5,000 unique |
+| 2 | **Entry gate** — novelty against all 525,063 provided sequences | 3,354 pass (67%); 1,646 too close |
+| 3 | Drop what the binder model rates unlikely (top 30% kept) | 1,006 left |
+| 4 | Rank on the only signal that transferred to measured SPR | 907 clear the full gate |
+| 5 | Select a diverse set, no near-duplicates of each other | 10 chosen |
+| out | `results/demo/designs_demo.csv` — ranked, with a written rationale per design | |
+
+It writes to `results/demo/`, so it never touches the submitted designs. To point it at a different
+target, replace the reference sequences in `src/abx/sequences.py` and the assay tables in `data/`; the
+gate, the ranking and the reporting are target-agnostic.
+
+Then check any candidate table against the entry rules:
+
+```bash
+python scripts/requirement_check.py --submission results/SUBMISSION.csv
+```
+
+### 2.1c Getting the data
+
+`make demo` and `make verify` need two public tables in `data/`. `make test` does **not** — it passes on a
+clean clone with no data at all.
+
+| File | What it is |
+| --- | --- |
+| `data/tz_her2_facs_3classes_524346.csv` | 524,346 CDR-H3 variants with a FACS binding class |
+| `data/trastuzumab_her2_spr_all_768.csv` | 768 variants, 190 with a measured KD |
+
+Both come from Chinery et al., bioRxiv [10.1101/2024.03.26.586756](https://doi.org/10.1101/2024.03.26.586756),
+distributed by the organisers at `s3://apheris-oslo-hackathon/data/`. We do not redistribute them here. If
+a file is missing, every script that needs it says which file and where to put it rather than failing
+obscurely.
 
 ### 2.2 One command that says whether we pass
 
@@ -222,22 +351,37 @@ anything it cannot verify locally, never a pass, and why every gate run includes
 
 ## 3. User fit (20%)
 
-**The molecule.** Trastuzumab treats HER2-positive breast cancer. We optimise it in the format the challenge
-specifies, and the three properties we target — affinity, retained epitope, thermostability — are the ones
-that decide whether a binder survives manufacture, shipping and storage, not only a binding assay.
+**Our users are antibody engineers and experimental scientists who must decide which candidates deserve
+expensive laboratory testing.** That is the decision this pipeline is built around.
 
-**Who needs the thermostability axis.** A higher Tm is a developability proxy: it is what lets a formulation
-tolerate a cold chain that breaks, and it is the usual route to high-concentration subcutaneous dosing. That
-is the argument for spending any of a limited candidate budget on it.
+Existing AI tools can produce thousands of candidates and highly confident predictions, but those scores
+do not always predict experimental success. We demonstrated that on our own work: a model scoring AUROC
+0.983 on its own label was beaten by edit distance against measured affinity, and a published ddG model
+lost its signal entirely in the regime our designs occupy.
 
-**Why matched pairs are the right deliverable here.** A lab that tests ten unrelated molecules gets ten
-numbers. A lab that tests matched pairs learns what one mutation *does*, on several backgrounds, with the
-loop held constant. Given that the published justification for R66G is contradicted by the crystal
-structure, the controlled comparison is the more useful thing to hand over.
+Our pipeline helps researchers avoid false confidence. It validates scorers against experimental evidence
+*in the regime where they will be used*, filters invalid and chemically risky designs, reports a noise
+floor beside every prediction, and states what it cannot know. The result is not just a ranked list — it
+is an **auditable experimental plan**: every candidate carries what we expect, how uncertain it is, what
+the claim rests on, and what the assay would have to show to refute it.
 
-**What we explicitly do not claim.** We have no measured affinity, epitope or thermostability for any
-design. We do not claim any design binds. We do not rank the ten on binding, because no scorer we tested
-can.
+**Why matched pairs are the right deliverable for this user.** A lab that tests ten unrelated molecules
+gets ten numbers. A lab that tests matched pairs learns what one mutation *does*, with the loop held
+constant. We hand over a controlled experiment, not a wish list.
+
+**What we explicitly do not claim.**
+
+- We have **no measured affinity, epitope or thermostability** for any design, and we do not claim any
+  design binds.
+- We do **not** rank the ten on binding, because no scorer we tested can order designs at 4 mutations.
+- We deliver an **scFv / paired variable fragment**, not the clinical IgG. Properties do not transfer
+  between formats automatically, and the R66G literature is scFv-only.
+- A higher Tm is a **developability proxy, not a formulation result**. It does not by itself show that a
+  formulation survives a broken cold chain or supports high-concentration subcutaneous dosing; those need
+  separate aggregation, solubility and viscosity work that we have not done.
+- We do **not** claim the method saves time or money. We have not compared it against how candidates are
+  normally selected, and until we do, that claim would be exactly the kind of unvalidated confidence this
+  pipeline exists to catch.
 
 ---
 
@@ -260,9 +404,24 @@ candidates and the mutation is dropped. An all-stabilised submission would not d
 3. **Controls that must fail.** Trastuzumab in every gate run; planted near-duplicates in the reference
    check. A filter is only evidence once you have watched it reject something.
 
-**Honest next step.** The highest-value experiment is not another model. It is the matched-pair lab result,
-which settles a published claim that rests on a structural premise we have shown to be false and that no
-independent group has replicated.
+### The route from here
+
+| Phase | What we do | The value |
+| --- | --- | --- |
+| **Now** | Generate candidates and quality-assure them | Invalid and weakly-justified designs never reach the bench |
+| **The lab** | Adaptyv measures binding, epitope and stability | We find out what actually works |
+| **Next version** | Use those measurements to score our own selection process | Fewer mis-prioritised experiments, measured rather than asserted |
+| **Beyond** | Run the method on other antibodies and targets | Tests whether the approach generalises |
+
+**The key point: the method improves even if none of our ten beats trastuzumab.** We have handed the lab a
+falsifiable hypothesis about R66G. If it raises Tm across different CDR-H3 backgrounds, we have found
+something portable. If it costs affinity as Okazaki's and Carter's data predict, we have identified a real
+limitation and the parents become the candidates. Both outcomes are worth the assay; an all-stabilised
+submission would have produced neither.
+
+**The measurable decision point.** The next version of this pipeline is only better if, scored against the
+lab results, its ranking beats our current one — which is, by our own admission, no ranking at all on the
+binding axis. That is a low bar and an honest one, and it is the first number we will report.
 
 ---
 

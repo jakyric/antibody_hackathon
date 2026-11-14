@@ -37,11 +37,15 @@ import random
 import sys
 from pathlib import Path
 
+import numpy as np
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from abx.data import provided_cdrh3s, vh_from_cdrh3  # noqa: E402
-from abx.gate import hamming  # noqa: E402
+from abx.gate import levenshtein  # noqa: E402
 from abx.sequences import TRASTUZUMAB_VL  # noqa: E402
+from verify_novelty_full import edit_distances_same_length  # noqa: E402
 
 
 def designs_cdrh3(path: Path) -> list[tuple[str, str]]:
@@ -67,14 +71,33 @@ def main(argv: list[str] | None = None) -> int:
     provided = sorted(provided_cdrh3s())
     print(f"{len(provided)} provided CDRH3s, {len(designs)} designs")
 
+    # Distances are EDIT distances, not positional ones, even where the two
+    # loops are the same length. Two 10-mers that differ at three positions
+    # can be one insertion and one deletion apart, which the official checker sees and a
+    # Hamming comparison does not; a reference built on Hamming can therefore
+    # leave out the very neighbour that decides a design's verdict.
+    by_len: dict[int, list[str]] = {}
+    for p in provided:
+        by_len.setdefault(len(p), []).append(p)
+    packed = {
+        L: np.frombuffer("".join(seqs).encode(), dtype=np.uint8).reshape(len(seqs), L)
+        for L, seqs in by_len.items()
+    }
+
     near: dict[str, int] = {}
     for did, d in designs:
         best = 99
-        for p in provided:
-            dist = hamming(p, d) if len(p) == len(d) else 99
-            if dist <= args.radius:
-                near[p] = min(near.get(p, 99), dist)
-            best = min(best, dist)
+        for L, seqs in by_len.items():
+            if L == len(d):
+                dists = edit_distances_same_length(d, packed[L])
+            else:
+                if abs(L - len(d)) > args.radius and abs(L - len(d)) >= best:
+                    continue
+                dists = np.array([levenshtein(d, s) for s in seqs])
+            best = min(best, int(dists.min()))
+            for i in np.flatnonzero(dists <= args.radius):
+                seq = seqs[int(i)]
+                near[seq] = min(near.get(seq, 99), int(dists[i]))
         print(f"  {did}: nearest provided sequence is {best} mutation(s) away")
 
     rng = random.Random(args.seed)

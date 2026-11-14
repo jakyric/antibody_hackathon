@@ -1,9 +1,9 @@
 id,n_seed_pairs,seed_overlap_median,seed_overlap_min
-trastuzumab,1,1.0,1.0
-trastuzumab-stab,1,1.0,1.0
-tz-opt-02,1,0.889,0.889
-tz-opt-02-stab,1,0.889,0.889
-tz-opt-07,1,0.947,0.947
-tz-opt-07-stab,1,0.85,0.85
-tz-opt-18,1,1.0,1.0
-tz-opt-18-stab,1,1.0,1.0
+trastuzumab,3,1.0,1.0
+trastuzumab-stab,3,1.0,1.0
+tz-opt-02,3,0.889,0.889
+tz-opt-02-stab,3,0.889,0.889
+tz-opt-07,3,0.895,0.85
+tz-opt-07-stab,3,0.85,0.818
+tz-opt-18,3,0.9,0.9
+tz-opt-18-stab,3,1.0,1.0

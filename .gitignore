@@ -5,4 +5,6 @@ __pycache__/
 data/
 runs/
 *.npz
+# The trained binder model (85 kB, trained on the public FACS table) is shared; other .npz files are not.
+!results/binder_model.npz
 # results/ is NOT ignored: the measured tables and the submission are shared with the team.

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Which HER2 residues does each design engage — and is it trastuzumab's site?
+"""Which HER2 residues does each design take — and is it trastuzumab's site?
 
 Epitope is one of the three axes the lab measures, and for the de novo designs
 it cannot be assumed: all six loops are new. Here it is measured.
 
-APPROACH
+METHOD
   For each predicted complex: find the HER2 residues (chains C and D) that have
   a heavy atom within 4.5 Å of a heavy atom in the antibody (chains A and B).
   That is the interface. The overlap with trastuzumab's own interface is
@@ -14,11 +14,11 @@ TWO COMPARISONS, and both are needed
   against trastuzumab's PREDICTED complex, same model and seed: same sources
     of error on both sides, so the number is a clean comparison.
   against 1N8Z, the experimental structure: the real answer, but then the
-    folding model's own error is measured as well. Trastuzumab's own value
-    against 1N8Z is the benchmark a design should be held up against — not 1.0.
+    fold model's own error is measured too. Trastuzumab's own value against
+    1N8Z is the benchmark a design should be held up against — not 1.0.
 
 The numbering in the predicted files starts at 1 per chain. residue_ids in
-queries.json gives the original HER2 numbers, and is used for translating.
+queries.json give the original HER2 numbers, and are used to translate.
 
     python scripts/denovo_epitope.py --predictions runs/<run>/predictions \
         --queries runs/denovo-panel/queries.json --reference trastuzumab \
@@ -99,7 +99,7 @@ def interface(atoms, ab_chains=AB_CHAINS, ag_chains=AG_CHAINS,
     if len(ab) == 0 or len(ag) == 0:
         return set()
     hits: set[tuple[str, int]] = set()
-    # in blocks, so 10,000 x 10,000 distances don't blow up memory
+    # in blocks, so 10,000 x 10,000 distances do not blow up memory
     for i in range(0, len(ag), 2000):
         block = ag[i:i + 2000]
         d2 = ((block[:, None, :] - ab[None, :, :]) ** 2).sum(-1)
@@ -127,19 +127,39 @@ def residue_id_map(queries_path: Path) -> dict[str, dict[int, int]]:
     return out
 
 
-def renumber(hits: set[tuple[str, int]], mapping: dict[str, dict[int, int]]) -> set[int]:
-    """The interface as original HER2 residue numbers, without chain.
+def parse_offsets(text: str) -> dict[str, int]:
+    """'C=488,D=590' -> {'C': 488, 'D': 590}.
 
-    Some folding models write out HER2 with their own numbering (1, 2, 3 ...),
+    Some refold queries do not carry residue_ids, and then HER2 is numbered
+    from 1 in the predicted files. The offset restores the 1N8Z numbering:
+    chain C is residues 489-580 and chain D is 591-607, and the lengths
+    (92 and 17) are checked against that before the numbers are used.
+    """
+    out: dict[str, int] = {}
+    for part in text.split(","):
+        if "=" in part:
+            chain, _, value = part.partition("=")
+            out[chain.strip()] = int(value)
+    return out
+
+
+def renumber(hits: set[tuple[str, int]], mapping: dict[str, dict[int, int]],
+             offsets: dict[str, int] | None = None) -> set[int]:
+    """The interface as original HER2 residue numbers, chain-free.
+
+    Some fold models write out HER2 with their own numbering (1, 2, 3 ...),
     others keep the original (489, 490 ...). Both must be handled correctly:
     if the number is already in residue_ids, it is the original. A number we
     cannot place becomes negative, so it shows up in the table instead of
-    silently blending in among the real ones.
+    silently mixing in among the real ones.
     """
     out = set()
+    offsets = offsets or {}
     for chain, pos in hits:
         m = mapping.get(chain)
-        if not m:
+        if chain in offsets:
+            out.add(offsets[chain] + pos)
+        elif not m:
             out.add(-pos)
         elif pos in set(m.values()):
             out.add(pos)
@@ -163,12 +183,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reference", default="trastuzumab",
                     help="query_id for the predicted reference complex")
     ap.add_argument("--reference-prediction", type=Path,
-                    help="the folder the reference was folded in, if it is a different run")
+                    help="directory the reference was folded in, if it is a different run")
     ap.add_argument("--experimental", type=Path, default=Path("data/1n8z.pdb"))
     ap.add_argument("--ab-chains", default="AB",
                     help="the chains that are the antibody in the predicted files")
     ap.add_argument("--ag-chains", default="CD",
                     help="the chains that are HER2 in the predicted files")
+    ap.add_argument("--chain-offsets", default="",
+                    help="e.g. C=488,D=590 when the queries lack residue_ids")
     ap.add_argument("--exp-ab-chains", default="AB")
     ap.add_argument("--exp-ag-chains", default="C")
     ap.add_argument("--out", type=Path, required=True)
@@ -189,7 +211,8 @@ def main(argv: list[str] | None = None) -> int:
             exp_atoms, tuple(args.exp_ab_chains), tuple(args.exp_ag_chains))}
 
     ab_chains, ag_chains = tuple(args.ab_chains), tuple(args.ag_chains)
-    sets = {qid: renumber(interface(read_atoms(p), ab_chains, ag_chains), mapping)
+    offsets = parse_offsets(args.chain_offsets)
+    sets = {qid: renumber(interface(read_atoms(p), ab_chains, ag_chains), mapping, offsets)
             for qid, p in sorted(files.items())}
     ref = sets.get(args.reference, set())
 

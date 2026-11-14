@@ -1,4 +1,4 @@
-"""The whole way: proposal → gate → filtering → ranking → designs.csv
+"""The whole pipeline: proposals → gate → filtering → ranking → designs.csv
 
 Run:  make designs
 """
@@ -23,7 +23,9 @@ OUT = RESULTS / "designs.csv"
 
 
 def run(n_candidates: int = 20_000, n_submit: int = 20, seed: int = 0,
-        keep_percentile: float = 70.0, verbose: bool = True) -> list:
+        keep_percentile: float = 70.0, verbose: bool = True,
+        out: Path | None = None) -> list:
+    out = Path(out) if out else OUT
     def say(*a):
         if verbose:
             print(*a)
@@ -39,7 +41,7 @@ def run(n_candidates: int = 20_000, n_submit: int = 20, seed: int = 0,
 
     say("\n2. The gate: novelty against all provided sequences …")
     provided = ProvidedIndex()
-    say(f"   index of {provided.n:,} provided CDR-H3s")
+    say(f"   index over {provided.n:,} provided CDR-H3s")
     legal = [c for c in cands if provided.is_novel(c)]
     say(f"   {len(legal):,} passed ({100*len(legal)/len(cands):.1f} %), "
         f"{len(cands)-len(legal):,} were too close to something provided")
@@ -56,19 +58,20 @@ def run(n_candidates: int = 20_000, n_submit: int = 20, seed: int = 0,
     pct = np.array([pct_all[idx[c]] for c in kept])
     say(f"   {len(kept):,} remaining")
 
-    say("\n4. Ranking by what actually transferred to SPR …")
+    say("\n4. Ranking by what actually carried over to SPR …")
     ranked = stage2_rank(kept, z, pct, provided)
     ok = [d for d in ranked if d.gate_ok]
     say(f"   {len(ok):,} passed the whole gate")
 
-    say(f"\n5. Picking {n_submit} that are not variants of each other …")
+    say(f"\n5. Choosing {n_submit} that are not variants of each other …")
     chosen = diversify(ok, n_submit)
     for i, d in enumerate(chosen, 1):
         d.design_id = f"tz-opt-{i:02d}"
     say(f"   {len(chosen)} chosen")
 
     RESULTS.mkdir(parents=True, exist_ok=True)
-    with OUT.open("w", newline="") as fh:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["rank", "design_id", "cdrh3", "n_mutations_from_trastuzumab",
                     "min_mutations_from_provided", "model_percentile",
@@ -81,23 +84,25 @@ def run(n_candidates: int = 20_000, n_submit: int = 20, seed: int = 0,
                         "scFv", d.vh, TRASTUZUMAB_VL, d.scfv,
                         len(d.scfv), d.rationale()])
 
-    say(f"\nWritten: {OUT}")
+    say(f"\nWritten: {out}")
     say("\nNEXT STEPS, and they are not optional:")
     say("  · run the official checker. It is the ground truth, not this gate.")
     say("  · co-fold against HER2 and look at the interface, not just the sequence.")
-    say("  · thermostability lives in the framework, which the novelty filter")
-    say("    does not touch. It is the cheapest of the three axes and has not been done here.")
+    say("  · thermostability lives in the framework, which the novelty filter does not")
+    say("    touch. It is the cheapest of the three axes and has not been done here.")
     return chosen
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Make a ranked design set")
+    p = argparse.ArgumentParser(description="Build a ranked design set")
     p.add_argument("--candidates", type=int, default=20_000)
     p.add_argument("--submit", type=int, default=20)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--keep-percentile", type=float, default=70.0)
+    p.add_argument("--out", type=Path, default=None,
+                   help="where the designs are written (default: results/designs.csv)")
     a = p.parse_args()
-    run(a.candidates, a.submit, a.seed, a.keep_percentile)
+    run(a.candidates, a.submit, a.seed, a.keep_percentile, out=a.out)
 
 
 if __name__ == "__main__":

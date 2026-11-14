@@ -2,12 +2,12 @@
 """Write the submission table for the de novo track, with provenance in the description.
 
 The official checker wants exactly five columns: sequence_id, kind, heavy_sequence,
-light_sequence, design_description. Our designs are Fvs, and are submitted as
+light_sequence, design_description. Our designs are Fvs, and are delivered as
 scFv (VH + (G4S)x3 + VL in heavy_sequence, empty light_sequence) — one of the three
 legal formats in the de novo track.
 
 design_description carries the traceability: model, weight, seed, run id, and the
-novelty figures the choice rests on. All in English; the table is public.
+novelty numbers the selection rests on. All in English; the table is public.
 
     python scripts/denovo_table.py --designs results/denovo/candidates_pass.csv \
         --out results/denovo/denovo_submission.csv
@@ -30,13 +30,16 @@ MODEL = "RFD4-Proteina v0.3.0"
 
 
 def describe(rec: dict) -> str:
-    kind = (rec.get("kind") or "scfv").strip()
-    what = ("de novo VHH; three CDRs designed on a nanobody framework against HER2 domain IV"
+    kind = (rec.get("kind") or "").strip()
+    if not kind:
+        kind = "scfv" if rec.get("vl_sequence", "").strip() else "vhh"
+    what = ("de novo VHH; three CDRs designed on a nanobody framework against HER2 domain IV "
+            "at the trastuzumab epitope"
             if kind == "vhh" else
             "all six CDRs designed on the trastuzumab Fv framework against HER2 domain IV")
     bits = [
         what,
-        f"{MODEL} weight {rec.get('weight', '?')}",
+        f"{MODEL} weight {str(rec.get('weight', '?')).removeprefix('vhh-')}",
         f"seed {rec.get('seed', '?')}",
         f"run {rec.get('run_id', '?')}",
         f"CDRH3 {rec.get('cdrh3', '?')}",
@@ -58,7 +61,11 @@ def rows_from(path: Path, prefix: str, limit: int | None) -> list[dict]:
     if limit:
         records = records[:limit]
     for i, rec in enumerate(records, 1):
-        kind = (rec.get("kind") or "scfv").strip()
+        kind = (rec.get("kind") or "").strip()
+        if not kind:
+            # An empty light chain means a VHH. Without this, a VHH gets the
+            # scFv linker left dangling after it, and the sequence ends up wrong.
+            kind = "scfv" if rec.get("vl_sequence", "").strip() else "vhh"
         if kind == "vhh":
             # one chain, no linker, no light chain
             heavy = rec["vh_sequence"].strip()
