@@ -1,8 +1,9 @@
 # What we measured, and what it means for the submission
 
-Everything below is computed from the provided data with the code in this
-branch. Each section says which script produces it, so every number can be
-re-run rather than taken on trust.
+Everything below is computed from the provided data. Every claim can be
+re-run: `python scripts/status.py`
+
+Norwegian version: [FUNN.md](FUNN.md)
 
 ---
 
@@ -97,6 +98,25 @@ chemical substitutions.
 That is a weaker ranking. Spearman +0.23 is not much. We say so in the
 pitch rather than hiding it behind a prettier number.
 
+> **CORRECTED 14 November — both halves of that ranking were wrong.**
+> See section 11 and `results/audit/`.
+>
+> **Proximity to trastuzumab cannot order our designs.** Every one of the
+> twenty sits at exactly 4 CDRH3 mutations, so edit distance is *constant*
+> across them. The one signal that transferred contributes nothing to the
+> order of our own list. Restricted to measured variants at exactly 4
+> mutations (n = 34), no scorer we have beats chance.
+>
+> **Conservative substitutions point the wrong way.** `conservative_fraction`
+> carried the largest weight in the formula and has a *negative* point
+> estimate against measured affinity in every subset tested: −0.133 (all),
+> −0.162 (legal), −0.159 (d=4), −0.277 (d=5). No interval excludes zero, so
+> this is not established — but it was never validated before it went in.
+>
+> The corrected number for the net in the legal zone is **+0.156, CI
+> [−0.027, +0.326]**, not −0.04. The −0.04 was the d=5 slice quoted as if it
+> were the whole legal zone.
+
 ## 4. We leaked first, and caught it ourselves
 
 Our first split grouped on the first five residues. It gave AUROC 0.995.
@@ -116,7 +136,7 @@ warning sign, not a victory.**
 ## 5. A third of a naive proposal set is illegal
 
 Of 20,000 generated variants, **6,639 (33 %)** sat too close to a
-provided sequence and would be rejected by `abguard`.
+provided sequence and would be rejected by the official checker.
 
 The task description warns about this in its own RFD4 weights table: the
 HER2 fine-tuned weights reproduce known binders, and `her2-2026-11-07`
@@ -127,7 +147,7 @@ after. Anyone generating candidates should run them through it before
 spending GPU time:
 
 ```
-python scripts/check_novelty.py   # not in this branch: it reads the provided data
+python scripts/check_novelty.py
 ```
 
 ## 6. The pitch is a technical decision, not a side task
@@ -157,7 +177,7 @@ experimental outcome.**
 
 ## The two novelty rules, which are separate
 
-For the optimisation track, `abguard` applies **two** independent checks.
+For the optimisation track, the official checker applies **two** independent checks.
 A design failing either is rejected — never reclassified into the other
 track.
 
@@ -311,6 +331,17 @@ support us. The claim we can support is about thermostability and epitope.
 
 ## 9. Our disulfide scan could not see glycine, so it missed the known answer
 
+> **DO NOT ACT ON THE RECOMMENDATION IN THIS SECTION.**
+> The VH44–VL100 disulfide it proposes is **rejected by the official checker** in both
+> submission formats, with `errors: ['unpaired_cysteine']`. A design carrying
+> it is never sent to the lab. The literature does not support it either:
+> Weatherill et al. 2012 (*PEDS* 25(7):321–329) tested it across six scFvs
+> and found "no or little increase in thermal stability".
+>
+> Full result and the replacement in `results/disulfide/` and section 11.
+> The bug analysis below is still correct and worth reading — a C-beta the
+> scan could not see is a real lesson. The conclusion it led to is not.
+
 A bug worth writing down, because it was invisible and the fix changed our
 recommendation.
 
@@ -383,6 +414,12 @@ contact.
 | Protenix v2 | 0.26 |
 | OpenFold3 OpenBind | 0.10 |
 
+The contact cutoff does not decide this. At 4.0, 4.5 and 5.0 A, Boltz-2
+scores 0.94, 1.00 and 1.00, while no other model gets above 0.30 at any of
+the three. ESMFold2, which folds from sequence alone with no template, sits
+at 0.06-0.07: it does not assemble the complex at all and cannot be used for
+this target.
+
 Boltz-2 reproduces the crystal epitope exactly. The other three do not come
 close. **That is the tie-break we were missing:** we are not choosing between
 three equally plausible opinions, we are choosing the one model that can get
@@ -395,19 +432,39 @@ epitope unaided. It is still a real discriminator — three models were handed
 the same help and lost the epitope anyway — but it is not evidence that
 Boltz-2 would find a novel epitope.
 
-### And it gives us a number on the second scored axis
+### And it gives us a computed number on the second scored axis
 
-Epitope preservation is one of the three things the lab measures, and until
-now we had only an assumption about it. With Boltz-2 we have a measurement:
+Epitope preservation is one of the three things the lab measures. We do not
+measure it. What follows is a **prediction**: contact overlap computed from
+Boltz-2's predicted structures, one model, one seed.
 
-| | Overlap with trastuzumab's epitope, same model, same seed |
+| | Predicted overlap with trastuzumab's epitope (Boltz-2, single seed) |
 | --- | --- |
 | Our 20 designs, median | **0.95** |
 | Our 20 designs, worst | **0.85** |
 
-Every design keeps essentially the whole epitope. That is the expected result
-for four point mutations in CDRH3 on an unchanged framework, and now it is
-measured rather than assumed.
+Every design is predicted to keep essentially the whole epitope. That is the
+expected result for four point mutations in CDRH3 on an unchanged framework.
+
+**It replaces an assumption with a model's opinion, not with a measurement.**
+The actual epitope result is the lab's competitive binding assay against
+trastuzumab, and it arrives after the event. Three limits on the number above,
+all of which matter:
+
+- **One seed.** We have no replicate, so we cannot say how much of the 0.95
+  is signal and how much is the sampling noise of a single run. An overlap
+  computed from one structure has no error bar.
+- **Templated.** Boltz-2 was handed a template that already places HER2 and
+  the framework. A high overlap partly reflects that it kept what it was
+  given.
+- **Self-referential.** The reference epitope is Boltz-2's own prediction of
+  the trastuzumab complex, which happens to reproduce the crystal exactly.
+  We are comparing the model against itself on the designs.
+
+Taken together: this number supports the claim that our mutations are
+unlikely to move the binding site, which is what four substitutions in one
+loop on an unchanged framework should do. It is not evidence that the epitope
+is preserved, and it must not be written up as one.
 
 The measure behaves the way a measure of a *different* axis should: across
 the calibration variants it has no relationship with measured affinity
@@ -418,16 +475,131 @@ first one only.
 
 ---
 
+## 11. The gate is verified, against the provided data, with controls
+
+The official checker has now run on all twenty designs. **All twenty pass**, in both
+`paired` and `scfv` format.
+
+The bundled reference does **not** contain the 525,063 provided CDRH3s — for
+every design it reports the nearest known loop as trastuzumab itself. So the
+rule that actually constrains us was untested. We built a reference from the
+provided data (every sequence within 4 mutations of a design, plus 400 random
+controls: 4,579 rows) and re-ran.
+
+> Every design sits at **exactly 3** mutations from the nearest provided
+> sequence. The requirement is 3. **Zero margin, uniformly.**
+
+All twenty still pass. And because a gate that passes everything is
+indistinguishable from a gate that is switched off, we planted three designs
+one mutation from a sequence *in* the reference. In the same run, `--drop`
+removed exactly those three and kept all twenty:
+
+```
+[novelty] control_d1_0_0: CDRH3 SRCDTTACTLWIY is 1 mutation(s) from
+          SRADTTACTLWIY in provided_ref; a novel design needs at least 3
+```
+
+Three things this run settled that the written rules did not:
+
+- **The enforced rule is 3 mutations, not 4.** `required_cdrh3_mutations: 3`.
+  We had read the 70 % identity clause as implying 4. It does not; the
+  identity threshold decides the *track*. Our designs carry 4 anyway, so they
+  satisfy both readings — but the margin is ours, not required.
+- **CDRH3 is 13 residues** in the official checker's numbering (`SRWGGDGFYAMDY`), not the
+  10-mer core `src/abx/` works on. Never quote an identity percentage without
+  saying which length it is over.
+- **`novelty-report` does not report the reference comparison.** With
+  `--reference-db` it still prints `cdrh3_nearest_source: "trastuzumab"`,
+  even for a control sitting 1 mutation from a reference sequence. Only
+  `team-validate` enforces the provided-data check. This nearly produced a
+  false alarm.
+
+## 12. Developability: a ranking signal that is not a model we fitted
+
+The official checker ships a 13-motif liability reference. Run against it, trastuzumab
+itself carries **8 liabilities, 3 of them high severity**, including a `DG`
+isomerisation motif inside CDRH3. A licensed drug manufactured since 1998
+carries that motif. Liabilities are a risk budget, not a disqualification,
+and a raw count means nothing — the delta against trastuzumab does.
+
+| | |
+| --- | ---: |
+| designs **worse** than trastuzumab on high-severity motifs | **0** |
+| the same | 16 |
+| **better** | **4** |
+
+The four that improve — `tz-opt-02`, `18`, `07`, `15` — all drop the `DG`
+motif. But **nine designs introduce `FragH:DP`**, an acid-labile Asp-Pro bond
+that trastuzumab does not carry. Several look neutral on the count because
+they traded `DG` for `DP`. That trade is not neutral: `DG` is demonstrably
+tolerated in a licensed product; `DP` is risk we would be introducing with no
+such evidence. Those nine are excluded from the submission.
+
+## 13. Thermostability: the disulfide is dead, and something better replaces it
+
+The VH44–VL100 plan from section 9 fails twice over.
+
+**The gate rejects it.** Four designs were built with and without the
+substitutions (positions located with `immunum`, not assumed: Kabat VH44 = G,
+VL100 = Q in all four). Every variant carrying the bond fails:
+
+| Format | Parents | With disulfide | Failure |
+| --- | ---: | ---: | --- |
+| `paired` | 4 pass | **4 fail** | `heavy_cysteines_are_paired` |
+| `scfv` | 4 pass | **4 fail** | `heavy_domain_cysteines_are_paired` |
+
+scFv does not rescue it. The official checker pairs cysteines **per domain**, not per
+chain, so the VH domain still holds three. **This generalises: any engineered
+disulfide placing an odd number of cysteines in one variable domain is
+rejected.** An interdomain staple is by construction exactly that.
+
+**The literature does not support it either.** Weatherill et al. 2012 tested
+it across six scFvs in both orientations — the only systematic generality
+test — and found "no or little increase in thermal stability", though it was
+the best of six positions. The nearest 4D5-relevant measurement (Wörn &
+Plückthun 1999, *Biochemistry* 38(27):8739–8750) bought ~0.4 M GdnHCl of
+chemical stability for a **29-fold** collapse in expression yield; Zhao et al.
+2010, using exactly G44C/Q100C, saw a 4-fold drop.
+
+Two misattributions circulate and should not be repeated. The widely quoted
+"Tm 60→69 °C" belongs to **Young et al. 1995**, antibody Se155-4, positions
+A-L57/D-H106 — a different bond on a different antibody. And Okazaki 2023 is
+often cited as disulfide work; it contains none.
+
+### The replacement: VL Arg66Gly
+
+> Okazaki et al. 2023, *ACS Omega* 8(25):22945–22954, PMID 37396255.
+> Trastuzumab scFv by DSF: **61.8 ± 0.2 °C → 66.7 ± 0.2 °C**, ΔTm **+4.9 °C**,
+> binding unchanged.
+
+Measured on our scaffold, on the judged axis, by direct measurement. It
+touches only light-chain framework: CDRH3 is untouched so novelty is
+unaffected, and it adds no cysteine. The gate run confirms liability counts
+are **identical** with and without it, and all variants pass.
+
+It is one paper and one mutation, and we have not measured it. So every
+stabilised candidate is submitted alongside its unmodified parent.
+
+## 14. The submission
+
+The candidate list, its composition and the per-design rationale are kept
+out of this repository by the team's sharing rules. What is shareable is
+the reasoning that produced it, in sections 11-13 above: the gate is
+verified with planted controls, nine designs are excluded for introducing a
+liability trastuzumab does not carry, and the thermostability axis rests on
+VL R66G rather than the disulfide.
+
+---
+
 ## What we have not done
 
-**Thermostability, beyond the one pair.** Section 9 gives a disulfide with
-published lab support, and it costs nothing in novelty because it is in the
-framework. What is still missing is everything else on that axis: a second,
-independent stabilising change; a fold of the disulfide variant to check that
-the bond is modelled closed and the CDR loops do not move; and a decision on
-whether the known drop in expression yield matters for a lab that has to make
-the protein before it can test it. This remains the cheapest of the three
-axes and the one where we are most likely to beat the baseline.
+**Thermostability, beyond the one mutation.** Section 13 replaced the
+disulfide with VL R66G, which is gate-legal and has a measured ΔTm on this
+scaffold. What is still missing is a **second, independent stabilising
+change**, so that the thermostability axis does not rest on a single
+published number from a single paper. We have not folded the R66G variants
+either — worth doing to confirm the CDR loops do not move, though R66 is
+framework and distant from the paratope, so the prior is that they do not.
 
 **Interface PAE.** Section 7 ranks on ipTM and pLDDT, read from the summary
 scores each model writes. Interface PAE needs the detailed score files, which
@@ -448,34 +620,42 @@ only Boltz-2 passed the crystal check, so the number rests on a single model.
 It also rests on a template that already placed HER2. An apo prediction, or a
 model that recovers the epitope without the template, would make it stronger.
 
-**`abguard` itself.** Our gate is a local mirror, tested against known
-answers, but theirs is the authority. It must run before submission.
+~~**The official checker itself.**~~ **Done** — section 11. All twenty pass, against a
+reference built from the provided data, with planted controls proving the
+filter is on.
 
 ---
 
 ## What we think should happen next
 
-### Thermostability needs an owner, and the job is now small
+### Thermostability: resolved differently than planned
 
-It is the only one of the three axes the novelty rules do not constrain, the
-one with the clearest published precedent, and therefore the one where we are
-most likely to actually beat the baseline. Section 9 turned it from an open
-question into a short list:
+The four-step disulfide plan that stood here is obsolete — step 1 produces a
+molecule the gate rejects (section 13). It has been replaced by VL R66G,
+which is already built, gate-checked and in the submission.
 
-1. Build the VH Gly44Cys + VL Gln100Cys variant of our top designs.
-2. Co-fold it against HER2 and check two things: that the two new cysteines
-   come out within bonding distance of each other, and that the CDR loops do
-   not move relative to the same design without the bond. Same model, same
-   seed, parent as the control.
-3. A second, independent opinion on stability (StaB-ddG, ESM-2 likelihood).
-4. Decide whether the documented drop in expression yield is acceptable. A
-   protein the lab cannot make cannot be measured.
+What remains on this axis is one thing: **a second, independent stabilising
+change**, so the axis does not rest on a single published ΔTm. That is a
+literature and design question, not a compute question.
 
-Steps 1-3 are a couple of hours of compute. **Step 4 is a judgement call and
-needs the person with wet-lab antibody experience, not the person running the
-pipeline.** It should not be the same person as the design and ranking thread:
-the tooling does not overlap, and both threads are time-boxed by the same
-deadline.
+The expression-yield judgement that was step 4 no longer applies — R66G has
+no reported yield penalty, which was part of why it won over the disulfide.
+
+### The two questions this document said would decide the de novo track
+
+Both are answered in the task description, and neither needed to be asked:
+
+- **How the de novo novelty rule is computed.** Not whole-sequence. The official checker
+  does a *type-aware* comparison: a VHH against known VHHs and heavy chains,
+  an scFv or Fab split into paired chains and compared as paired antibodies.
+  The de novo threshold is under 70 % identity to the nearest known antibody,
+  plus at least 2 CDRH3 mutations from trastuzumab.
+- **Whether the four guaranteed slots are per team or per track.** **Per
+  team.** "Each team gets 4 designs whatever happens." Placement adds 12/8/4,
+  and each of 6 judges nominates a team for 2 more, to a maximum of 16.
+
+So splitting across tracks does halve our guaranteed shots. The prize fund is
+split equally between tracks, which pulls the other way.
 
 ### Both tracks, or only optimisation?
 
@@ -503,3 +683,4 @@ axis we are weakest on.
 We have queued a de novo experiment that redesigns all six CDRs against HER2
 on an Fv framework, to find out whether such designs pass our own gate at
 all. It is there to answer the question, not to be submitted.
+
