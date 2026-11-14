@@ -129,7 +129,7 @@ Two independent VHH approaches, converged into one list of 15 sequences (7 + 8):
 
 Also explored, **not submitted**: CDR-H3-only variants on the trastuzumab Fv (branch [`Guled`](../../tree/Guled)). The organisers' checker classes them
 `novel` (97 % identical to trastuzumab), and 10 of the 15 shortlisted candidates are rejected for CDR-H3 novelty (only 2 mutations from a known
-sequence; at least 3 are required). They belong to the optimization style of work, so they are not in the de novo list.
+sequence; at least 3 are required). A later version of that shortlist (with the light-chain changes M46L and R66G) is rejected in the same 10 of 15 cases and stays `novel`. They belong to the optimization style of work, so they are not in the de novo list.
 
 What we know and what we do not:
 
