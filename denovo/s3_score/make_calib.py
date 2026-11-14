@@ -61,7 +61,7 @@ def controls():
 
 
 def fv_calibration():
-    spr = pd.read_csv(ROOT / "data" / "her2" / "trastuzumab_her2_spr_all_768.csv")
+    spr = pd.read_csv(ROOT / "optimization" / "data" / "her2" / "trastuzumab_her2_spr_all_768.csv")
     spr = spr[spr.cdrh3.str.len().eq(10)].copy()
     spr["ed"] = [ham(s, WT_H3) for s in spr.cdrh3]
     spr = spr[(spr.ed >= 3) & (spr.ed <= 6)].drop_duplicates("cdrh3")
@@ -74,7 +74,7 @@ def fv_calibration():
             out.append({"calib_id": f"cal-{tag}-{k:02d}", "label": lab, "group": tag, "kind": "fv", "vhh_seq": r.vh_sequence,
                         "vl_seq": r.vl_sequence, "antigen_seq": "", "antigen_name": "her2",
                         "note": f"CDRH3 {r.cdrh3}, {r.ed} changes, KD {r.kd_nM if lab else 'none reported'} nM"})
-    with zipfile.ZipFile(ROOT / "data" / "her2" / "tz_her2_facs_3classes_524346.csv.zip") as z:
+    with zipfile.ZipFile(ROOT / "optimization" / "data" / "her2" / "tz_her2_facs_3classes_524346.csv.zip") as z:
         name = [n for n in z.namelist() if n.endswith(".csv")][0]
         facs = pd.read_csv(z.open(name))
     facs = facs[facs.edit_distance.between(4, 6)]

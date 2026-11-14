@@ -39,7 +39,7 @@ CALIB = HERE / "calib_set.csv"
 GATES = HERE / "gates.json"
 LOCK = threading.Lock()
 
-HER2 = (ROOT / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
+HER2 = (ROOT / "optimization" / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
 HEWL = ("KVFGRCELAAAMKRHGLDNYRGYSLGNWVCAAKFESNFNTQATNRNTDGSTDYGILQINSRWWCNDGRTPGSRNLCNIPCSALLSSDITASVNCAKKIVS"
         "DGNGMNAWVAWRNRCKGTDVQAWIRGCRL")                                                 # hen egg-white lysozyme, decoy antigen
 assert len(HER2) == 119

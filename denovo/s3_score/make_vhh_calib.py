@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "denovo"))
 import dn_common as dn  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
-M = ROOT / "data" / "smorodina" / "x" / "iptm_confidence_scores"
+M = ROOT / "optimization" / "data" / "smorodina" / "x" / "iptm_confidence_scores"
 VHH_NAME = re.compile(r"nanobod|vhh|single.domain|sybody|\bnb\b|camel|llama|vicugna|heavy.chain.antibody", re.I)
 cache = {}
 

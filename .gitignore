@@ -22,3 +22,7 @@ denovo/STOP
 # de novo run state (pids, logs) and caches
 denovo/.run/
 denovo/**/cache/
+denovo/s1_design/plan_log.jsonl
+denovo/slides/artifact/project/slides/
+denovo/slides/artifact/project/deck.json
+denovo/slides/publish_plan.json
