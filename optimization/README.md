@@ -146,7 +146,7 @@ binders (ipTM 0.36, epitope 30 A off) yet "recovers" five designs with ipTM abou
 `WGYTGSDAWD`, `WGGESSPSYY`, `WYAGTAYGLE`), the same four as the general checkpoint plus `WYAGTAYGLE`. The two OpenDDE
 checkpoints share a lineage, so their agreement is not independent evidence, and a model that rejects trastuzumab but
 confidently accepts novel sequences is not a trustworthy referee. The `which`/`tier` columns in
-`baseline/outputs/final_shortlist_paper.csv` count this checkpoint ("3 of 3 services" for `WYAGTAYGLE`); read the tier
+`optimization/baseline/outputs/final_shortlist_paper.csv` count this checkpoint ("3 of 3 services" for `WYAGTAYGLE`); read the tier
 as "OpenFold3 plus OpenDDE", not as three independent confirmations.
 
 ### Final picks
@@ -212,19 +212,20 @@ OpenDDE general checkpoint accepts are the next candidates if a second opinion i
 ## 6. Repository map and how to reproduce
 
 ```
-baseline/             scripts, outputs and a technical README (baseline/README.md)
+optimization/baseline/   scripts, outputs and a technical README (optimization/baseline/README.md)
   common.py structure_tools.py              helpers; comparison with the 1N8Z crystal
   train_eval.py score_cdrh3.py              binding baselines and the gate
   blosum_diversity.py                       variants A and B (--allow-contacts for B)
   paper_pipeline.py paper_structure_filter.py abb3_nebius.sh      variant C
   refold_prepare.py refold_japanfold.py refold_nebius.sh refold_analyze.py refold_consensus.py pick_shortlist.py
   outputs/                                  shortlists, metrics, consensus (suffix _contacts = B, _paper = C)
-nebius-runs/          run records and inputs      results/    refolded structures and scores (top model per complex)
+optimization/nebius-runs/   run records and inputs      optimization/results/   refolded structures and scores (top model per complex)
 ```
 
 ```bash
-uv venv baseline/.venv --python 3.12 && uv pip install --python baseline/.venv/bin/python -r requirements.txt
-cd baseline
+# from the repository root
+uv venv optimization/baseline/.venv --python 3.12 && uv pip install --python optimization/baseline/.venv/bin/python -r optimization/requirements.txt
+cd optimization/baseline
 .venv/bin/python train_eval.py                                            # classifiers (needs the data below)
 .venv/bin/python blosum_diversity.py                                      # variant A
 VARIANT=contacts .venv/bin/python blosum_diversity.py --allow-contacts    # variant B
@@ -235,13 +236,13 @@ VARIANT=paper .venv/bin/python refold_prepare.py --top 13                 # then
 
 `VARIANT=<name>` makes every script write `..._<name>` files and folders, so runs never overwrite each other.
 JapanFold calls read `JAPANFOLD_API_KEY`; Nebius calls need `NEBIUS_CREDS` and the `nebius-scientific-ai` skill. No keys
-are stored in this repository.
+are stored in this repository. The shell helpers `baseline/abb3_nebius.sh` and `baseline/refold_nebius.sh` change into `optimization/` themselves, so run them as `bash optimization/baseline/refold_nebius.sh` from anywhere.
 
 **Data (not included, fetch it yourself):**
 
 | Path expected | Source |
 |---|---|
-| `data/her2/tz_her2_facs_3classes_524346.csv.zip` (unzip to `data/her2/facs_extract/`), `data/her2/trastuzumab_her2_spr_all_768.csv` | hackathon bucket `data/her2-trastuzumab/` |
-| `data/her2/her2_fv_1n8z.cif` | hackathon bucket `rfd4-proteina/docs/Data/12-her2/her2_fv_1n8z.cif` |
-| `data/mehta/{train,val,test}.csv`, `saved_weights.h5`, `shanehsazzadeh_test.csv` | Zenodo 10831512 `data.zip`, folder `clonotype_split/0.7_0.15_0.15` |
-| `data/paper/spr_submitted.csv` | github.com/oxpig/Tz_her2_affinity_and_beyond, `data/spr/` |
+| `optimization/data/her2/tz_her2_facs_3classes_524346.csv.zip` (unzip to `optimization/data/her2/facs_extract/`), `optimization/data/her2/trastuzumab_her2_spr_all_768.csv` | hackathon bucket `data/her2-trastuzumab/` |
+| `optimization/data/her2/her2_fv_1n8z.cif` | hackathon bucket `rfd4-proteina/docs/Data/12-her2/her2_fv_1n8z.cif` |
+| `optimization/data/mehta/{train,val,test}.csv`, `saved_weights.h5`, `shanehsazzadeh_test.csv` | Zenodo 10831512 `data.zip`, folder `clonotype_split/0.7_0.15_0.15` |
+| `optimization/data/paper/spr_submitted.csv` | github.com/oxpig/Tz_her2_affinity_and_beyond, `data/spr/` |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fold every complex in nebius-runs/refold${SUF}/ with Boltz-2 on the Nebius platform, 4 at a time, then fetch the results.
-# Run from the project root:  bash baseline/refold_nebius.sh
+# Run from anywhere in the repo:  bash optimization/baseline/refold_nebius.sh   (the script changes into optimization/ itself)
 # Needs NEBIUS_CREDS (set by .claude/settings.local.json) and the nebius-scientific-ai skill.
 set -u
 F=~/.claude/skills/nebius-scientific-ai/forge.py

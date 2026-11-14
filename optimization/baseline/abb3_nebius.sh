@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Model every nebius-runs/paper/inputs/p*.fasta (H + L chains) with ABodyBuilder3 on Nebius, 4 at a time, then fetch.
-# Run from the project root:  bash baseline/abb3_nebius.sh
+# Run from anywhere in the repo:  bash optimization/baseline/abb3_nebius.sh   (the script changes into optimization/ itself)
 set -u
 F=~/.claude/skills/nebius-scientific-ai/forge.py
 cd "$(dirname "$0")/.."

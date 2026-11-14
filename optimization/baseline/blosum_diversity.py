@@ -11,7 +11,7 @@ Pipeline
      liability motifs, gate score from the classifiers, and an "abguard-lite" check with immunum.
   5. Greedy diverse shortlist ranked by BLOSUM joint probability.
 
-Run: baseline/.venv/bin/python baseline/blosum_diversity.py [--m 6] [--top 24] [--threshold 0.9]
+Run: optimization/baseline/.venv/bin/python optimization/baseline/blosum_diversity.py [--m 6] [--top 24] [--threshold 0.9]
 """
 import argparse
 import itertools

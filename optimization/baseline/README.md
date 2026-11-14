@@ -6,12 +6,12 @@ FACS screen, plus a gate script for filtering designs. Runs on CPU in about 40 s
 ## Run
 
 ```bash
-baseline/.venv/bin/python baseline/train_eval.py              # train, evaluate, save outputs/
-baseline/.venv/bin/python baseline/score_cdrh3.py --seqs WGSQGFYAYD ARNDCQEGHI
-baseline/.venv/bin/python baseline/score_cdrh3.py --csv designs.csv --col cdrh3 --out scored.csv
+optimization/baseline/.venv/bin/python optimization/baseline/train_eval.py              # train, evaluate, save outputs/
+optimization/baseline/.venv/bin/python optimization/baseline/score_cdrh3.py --seqs WGSQGFYAYD ARNDCQEGHI
+optimization/baseline/.venv/bin/python optimization/baseline/score_cdrh3.py --csv designs.csv --col cdrh3 --out scored.csv
 ```
 
-Environment: `baseline/.venv` (pandas, scikit-learn, scipy, h5py). Data lives in `data/` (git-ignored):
+Environment: `optimization/baseline/.venv` (pandas, scikit-learn, scipy, h5py). Data lives in `optimization/data/` (git-ignored):
 the FACS and SPR tables from the team bucket and the Mehta et al. split files from Zenodo 10831512.
 
 ## Files
@@ -32,7 +32,7 @@ summarise. Outputs: `outputs/refold_metrics.csv`, `outputs/refold_consensus.csv`
 separated the measured binders from the measured non-binders; Boltz-2 reproduces the crystal pose for everything and
 OpenDDE fails trastuzumab itself, so "pose recovered" is weak evidence, not proof of binding.
 
-`blosum_diversity.py` also needs `data/paper/spr_submitted.csv` from the paper's GitHub repo
+`blosum_diversity.py` also needs `optimization/data/paper/spr_submitted.csv` from the paper's GitHub repo
 (oxpig/Tz_her2_affinity_and_beyond), which carries the design-method label of every SPR sequence, plus
 `blosum` and `immunum` in the venv. "abguard-lite" is an approximation written before the real `abguard` was found on the team VM; the real tool
 supersedes it (see the root README: it needs 3 CDRH3 mutations from trastuzumab and from every known CDRH3, and adds a

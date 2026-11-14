@@ -13,7 +13,7 @@ What the paper did, and what is done here
 Added for the hackathon: designs must be more than 2 mutations from every provided FACS/SPR sequence (abguard's
 novelty gate), and we use edit distances 4-10 (4 satisfies both readings of the CDRH3-identity rule).
 
-Run: baseline/.venv/bin/python baseline/paper_pipeline.py [--n 1000000] [--per-bucket 4] [--seed 0]
+Run: optimization/baseline/.venv/bin/python optimization/baseline/paper_pipeline.py [--n 1000000] [--per-bucket 4] [--seed 0]
 """
 import argparse
 import json

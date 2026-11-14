@@ -1,7 +1,7 @@
 """Compare predicted Fv-HER2 complexes with the 1N8Z crystal structure used by the Apheris HER2 example.
 
 Predicted complex chains: A = VH (120), B = VL (107), C = HER2 domain IV (119 aa, residues 489-607).
-Crystal chains (data/her2/her2_fv_1n8z.cif): B = VH, A = VL, C = HER2 489-580, D = HER2 591-607.
+Crystal chains (optimization/data/her2/her2_fv_1n8z.cif): B = VH, A = VL, C = HER2 489-580, D = HER2 591-607.
 """
 import numpy as np
 import pandas as pd

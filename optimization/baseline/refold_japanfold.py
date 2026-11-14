@@ -1,8 +1,8 @@
 """Submit the refolding set to JapanFold as one batch job, wait, and download the results.
 
-  baseline/.venv/bin/python baseline/refold_japanfold.py --model opendde-abag --msa on  --tag jf_abag_msa
-  baseline/.venv/bin/python baseline/refold_japanfold.py --model openfold3    --msa on  --tag jf_of3_msa
-  baseline/.venv/bin/python baseline/refold_japanfold.py --model opendde-abag --msa off --tag jf_abag_nomsa
+  optimization/baseline/.venv/bin/python optimization/baseline/refold_japanfold.py --model opendde-abag --msa on  --tag jf_abag_msa
+  optimization/baseline/.venv/bin/python optimization/baseline/refold_japanfold.py --model openfold3    --msa on  --tag jf_of3_msa
+  optimization/baseline/.venv/bin/python optimization/baseline/refold_japanfold.py --model opendde-abag --msa off --tag jf_abag_nomsa
 
 The API key is read from JAPANFOLD_API_KEY and never printed. Re-running a tag reuses its saved job id instead of
 submitting (and paying for) a second job.

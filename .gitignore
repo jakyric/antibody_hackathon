@@ -1,10 +1,20 @@
-# data, environments and secrets stay local
-data/
-baseline/.venv/
-__pycache__/
-*.zip
-*.joblib
+# secrets, local settings and environments stay local
 *.private.json
 participant-*/
-.claude/
 .env
+.claude/settings.local.json
+.venv/
+__pycache__/
+*.pyc
+*.zip
+*.joblib
+*.log
+
+# optimisation track (see optimization/README.md): data and venv are fetched/created locally
+optimization/data/
+optimization/baseline/.venv/
+
+# de novo pipeline run outputs (created by denovo/run_pipeline.sh); small snapshots are committed in results_denovo/
+/results/
+/nebius-runs/
+denovo/STOP

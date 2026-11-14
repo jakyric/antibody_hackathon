@@ -9,7 +9,7 @@ Training/eval protocol
     trastuzumab designs (Shanehsazzadeh et al.).
   * Finally refit the best simple model on all 524,346 FACS variants and save it for the gate.
 
-Run:  baseline/.venv/bin/python baseline/train_eval.py
+Run:  optimization/baseline/.venv/bin/python optimization/baseline/train_eval.py
 """
 import json
 import time

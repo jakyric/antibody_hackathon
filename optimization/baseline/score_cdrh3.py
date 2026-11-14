@@ -1,8 +1,8 @@
 """Gate: score trastuzumab CDRH3 candidates for HER2 binding likelihood and the novelty rule.
 
-  baseline/.venv/bin/python baseline/score_cdrh3.py --seqs WGGDGFYAMD WGSQGFYAYD
-  baseline/.venv/bin/python baseline/score_cdrh3.py --csv designs.csv --col cdrh3 --out scored.csv
-  baseline/.venv/bin/python baseline/score_cdrh3.py --fasta cdrh3.fa
+  optimization/baseline/.venv/bin/python optimization/baseline/score_cdrh3.py --seqs WGGDGFYAMD WGSQGFYAYD
+  optimization/baseline/.venv/bin/python optimization/baseline/score_cdrh3.py --csv designs.csv --col cdrh3 --out scored.csv
+  optimization/baseline/.venv/bin/python optimization/baseline/score_cdrh3.py --fasta cdrh3.fa
 
 Output columns
   p_hgb         P(high HER2 binder) from our gradient-boosted model (trained on all FACS variants)
