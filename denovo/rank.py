@@ -77,14 +77,14 @@ def build(args) -> pd.DataFrame:
     D = D[~D.generator.isin(["fwdiv", "boltzgen", "boltzgen-cys"])].copy()
     D["is_control"] = (D.generator == "control").astype(int)
     for name, keep in (("rules.csv", None), ("score_of3.csv", None), ("score_orth.csv", None), ("score_ptx.csv", None), ("score_vmof3.csv", None), ("score_dde_extra.csv", None),
-                       ("props.csv", None), ("props_nm.csv", None), ("props_tnpvm.csv", None), ("validity.csv", None), ("gapcheck.csv", None), ("designs_boltzgen_metrics.csv", None)):
+                       ("props.csv", None), ("props_nm.csv", None), ("props_tnpvm.csv", None), ("props_my.csv", None), ("validity.csv", None), ("gapcheck.csv", None), ("designs_boltzgen_metrics.csv", None)):
         t = rd(name)
         if t is None or "design_id" not in t:
             continue
         t = t.drop_duplicates("design_id", keep="last")
-        if name in ("props_nm.csv", "props_tnpvm.csv"):  # NanoMelt (local CPU) and TNP (VM CPU) run in their own processes/files
-            tt = t.set_index("design_id")                # so they cannot slow or race the main TNP/monoyield loop; merged by fill
-            pre = "nm_" if name == "props_nm.csv" else "tnp_"
+        if name in ("props_nm.csv", "props_tnpvm.csv", "props_my.csv"):  # NanoMelt (local CPU), TNP (VM CPU) and monoyield (recovered from the
+            tt = t.set_index("design_id")                # VM run folders after a restricted props.py run dropped rows from props.csv):
+            pre = {"props_nm.csv": "nm_", "props_tnpvm.csv": "tnp_", "props_my.csv": "my_"}[name]  # side files, merged by fill
             for c in [c for c in tt.columns if c.startswith(pre)]:
                 m = D.design_id.map(tt[c])
                 D[c] = D[c].fillna(m) if c in D else m
@@ -105,9 +105,13 @@ def build(args) -> pd.DataFrame:
     # For every scorer that has data for >= 5 designs: within-run percentile of its iPTM and of its ipSAE (chain-length-scaled,
     # 15 A cutoff: `ipsae_chn15`, the variant that separates the trastuzumab control from the decoys); t_bind = mean of all those
     # percentiles. Scorers: OpenFold3 (2 seeds), OpenDDE-abag, ESMFold-2, AF2-IG, Protenix-v2.
-    SCORERS = {"of3": ("of3_iptm", "of3_ipsae_chn15"), "of3s1": ("orth_of3s1_iptm", "orth_of3s1_ipsae_chn15"),
-               "dde": ("orth_dde_iptm", "orth_dde_ipsae_chn15"), "esm2": ("orth_esm2_iptm", "orth_esm2_ipsae_chn15"),
-               "af2ig": ("orth_af2ig_iptm", "orth_af2ig_ipsae_chn15"), "ptx": ("ptx_iptm", None),
+    # User (15:52): JapanFold scoring is stopped and its scores are NOT used for ranking (the VM GPU runs replace it). The JapanFold
+    # scorers (OpenFold3, OpenFold3 seed 2, ESMFold-2, AF2-IG, Protenix, and OpenDDE as a ranking term) stay out of t_bind below;
+    # the OpenDDE iPTM/ipSAE GATE (the user's 15:44 instruction) keeps using the OpenDDE results that exist, the only source for it.
+    JAPANFOLD_SCORERS = {"of3": ("of3_iptm", "of3_ipsae_chn15"), "of3s1": ("orth_of3s1_iptm", "orth_of3s1_ipsae_chn15"),
+                         "dde": ("orth_dde_iptm", "orth_dde_ipsae_chn15"), "esm2": ("orth_esm2_iptm", "orth_esm2_ipsae_chn15"),
+                         "af2ig": ("orth_af2ig_iptm", "orth_af2ig_ipsae_chn15"), "ptx": ("ptx_iptm", None)}
+    SCORERS = {
                # VM GPU runs (user, 15:30): OpenFold3 OpenBind with the HER2 template and no MSA (the upstream-style recipe) and
                # untemplated ESMFold-2; pair_iptm = VHH-HER2 chain-pair ipTM (the whole-complex iptm also counts HER2 fragment-fragment)
                "vmof3": ("vmof3_pair_iptm", "vmof3_ipsae_chn15"), "vmesm2": ("vmesm2_pair_iptm", "vmesm2_ipsae_chn15")}
