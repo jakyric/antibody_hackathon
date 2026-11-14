@@ -129,7 +129,7 @@ the 42 crystal contact pairs reproduced). Controls: trastuzumab, D102E, two meas
 |---|---|---|---|
 | OpenFold3, MSA on (JapanFold), 3 seeds | 2/2 (D102E in 2 of 3 seeds) | 2/2 | trusted |
 | Boltz-2 (Nebius), HER2 alignment | 2/2 | 0/2 | not trusted: reproduces the pose for everything |
-| OpenDDE antibody-antigen (JapanFold) | 0/2 | 2/2 | not trusted: fails trastuzumab itself |
+| OpenDDE antibody-antigen (JapanFold) | 0/2 | 2/2 | not trusted: fails trastuzumab itself (see the variant C note below) |
 | OpenDDE general checkpoint (JapanFold, MSA on), run on the variant C set only, 2 seeds | 4/4 | 3/4 | partly trusted: one non-binder was recovered in seed 1 |
 
 Single-sequence runs fail everywhere, so the MSA is needed.
@@ -140,6 +140,14 @@ checkpoint recovers five consistently (`WLGDGFWATT`, `WTGDGWFASD`, `WGYTGSDAWD`,
 `WYAGTAYGLE` in one of two seeds. The two refolders agree on only `WYAGTAYGLE`, so the paper recipe's designs
 (which change 2.6 contact positions on average) hold up far less well under this check than variants A and B.
 This does not contradict the paper's 48% retained-binding rate, which was measured by SPR, not by refolding.
+
+The OpenDDE antibody-antigen checkpoint was also run on the variant C set and behaves oddly: it fails both measured
+binders (ipTM 0.36, epitope 30 A off) yet "recovers" five designs with ipTM about 0.9 (`WLGDGFWATT`, `WTGDGWFASD`,
+`WGYTGSDAWD`, `WGGESSPSYY`, `WYAGTAYGLE`), the same four as the general checkpoint plus `WYAGTAYGLE`. The two OpenDDE
+checkpoints share a lineage, so their agreement is not independent evidence, and a model that rejects trastuzumab but
+confidently accepts novel sequences is not a trustworthy referee. The `which`/`tier` columns in
+`baseline/outputs/final_shortlist_paper.csv` count this checkpoint ("3 of 3 services" for `WYAGTAYGLE`); read the tier
+as "OpenFold3 plus OpenDDE", not as three independent confirmations.
 
 ### Final picks
 
