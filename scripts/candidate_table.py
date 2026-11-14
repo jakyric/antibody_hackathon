@@ -103,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--liabilities", type=Path, default=ROOT / "results/stabilise/stab_liab.json"
     )
+    ap.add_argument("--precedent", type=Path, default=ROOT / "results/precedent.csv")
     ap.add_argument("--out", type=Path, default=ROOT / "results/CANDIDATES.md")
     args = ap.parse_args(argv)
 
@@ -110,6 +111,22 @@ def main(argv: list[str] | None = None) -> int:
     epi = load_epitope(args.epitope)
     r66g = load_r66g(args.r66g)
     liab = load_liabilities(args.liabilities)
+    prec = {r["design_id"]: r for r in csv.DictReader(args.precedent.open())} \
+        if args.precedent.exists() else {}
+    # The BLOSUM45 rank only means something relative to the other designs, not
+    # on its own. Each sequence appears twice in the table (with and without
+    # R66G), and the two share the same loop, so the rank is counted over
+    # unique CDR-H3s.
+    uniq: dict[str, int] = {}
+    for k, r in prec.items():
+        if k != "trastuzumab":
+            uniq.setdefault(r["cdrh3"], int(r["blosum45"]))
+    order = sorted(uniq, key=lambda c: -uniq[c])
+    cdr_rank = {c: i + 1 for i, c in enumerate(order)}
+    bl_rank = {
+        k: cdr_rank[r["cdrh3"]] for k, r in prec.items() if k != "trastuzumab"
+    }
+    n_uniq = len(cdr_rank)
     novel = {r["sequence_id"]: r for r in csv.DictReader(args.novelty.open())} \
         if args.novelty.exists() else {}
 
@@ -163,6 +180,21 @@ def main(argv: list[str] | None = None) -> int:
             th_cell = "`unknown` loop changes may help or hurt; no deliberate gain"
             unc = "no thermostability gain engineered, so that axis is a coin flip"
 
+        # BLOSUM45 is the only calibrated proxy that separates our designs:
+        # all ten sit at 4 mutations, so edit distance is constant.
+        p = prec.get(base)
+        if p:
+            aff_cell += (f". `predicted` BLOSUM45 to trastuzumab {p['blosum45']} "
+                         f"(rank {bl_rank[base]}/{n_uniq}; the proxy reaches "
+                         f"Spearman +0.60 vs measured KD)")
+            against = p["against_measured_precedent"]
+            if against:
+                unc += "; against measured precedent at " + ", ".join(
+                    part.split(":")[0] for part in against.split(";")
+                )
+            if p["structural_risk"]:
+                unc += f"; {p['structural_risk'].count(';') + 1} structural flag(s)"
+
         nov = novel.get(sid, {})
         if nov:
             unc += f"; novelty margin {nov['min_distance_to_provided']}/3 (exact)"
@@ -180,10 +212,15 @@ def main(argv: list[str] | None = None) -> int:
         "",
         "## How to read each column",
         "",
-        "**Affinity.** All ten designs carry exactly 4 CDR-H3 mutations. Edit",
-        "distance is the only scorer that tracked measured affinity in our",
-        "benchmark (Spearman +0.23 in the legal zone), and it is constant across",
-        "these ten, so it orders nothing. StaB-ddG was tested on 60 variants whose",
+        "**Affinity.** All ten designs carry exactly 4 CDR-H3 mutations, so edit",
+        "distance is constant across them and orders nothing. BLOSUM45 similarity",
+        "to trastuzumab is not constant (30-52 across the twenty) and is the best",
+        "calibrated ranker we have: Spearman **+0.60** [+0.27, +0.82] against",
+        "measured KD on the 25-variant calibration panel, ahead of edit distance",
+        "(+0.51), every folding metric (best +0.44) and our own trained binder",
+        "model (+0.22). See `results/PRECEDENT.md`. We report it and do **not**",
+        "sort on it: high BLOSUM45 means 'changed trastuzumab least', and the task",
+        "is to beat trastuzumab, not to resemble it. StaB-ddG was tested on 60 variants whose",
         "KD is known: it reaches +0.38 overall but **+0.14, CI [-0.26, +0.53], at",
         "the 4-5 mutation count our designs sit at** (`results/stabddg/ANALYSIS.md`).",
         "We therefore do not rank these ten on binding and do not pretend to.",

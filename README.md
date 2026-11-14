@@ -253,13 +253,19 @@ not show the original paper's geometry to be wrong — but it does give a **plau
 for the affinity loss those authors measured and then described as absent.
 
 **Our own folding agrees in direction** (`results/r66g/R66G.md`). We folded four matched pairs —
-trastuzumab and three designs, with and without R66G — with Boltz-2 at three seeds (42, 77, 123), same template:
+trastuzumab and three designs, with and without R66G — with Boltz-2 at three seeds (42, 77, 123), same template.
 
-- **Epitope is preserved.** Median pair overlap is 1.00 for trastuzumab, tz-opt-02 and tz-opt-18, against
-  a seed-to-seed noise floor of 0.97 measured on the same sequences. tz-opt-02 holds 1.00 at all three
-  seeds; tz-opt-18 holds it at two of three. **tz-opt-07 is the exception** — 0.86 / 0.94 / 0.90, below
-  the noise floor at every seed. R66G moves that design's predicted epitope and does not move the others',
-  which is a per-design result, not a property of the mutation.
+**Read this with one caveat, which we state before the result.** Those three designs come from an earlier
+generation of the pool, before the selection was rebuilt; they are *not* the six loops we now submit. What
+the experiment supports is a claim about **the mutation**, carried by trastuzumab itself — the backbone we
+know binds, folded both ways at every seed. It is not per-candidate evidence for the submitted designs, and
+the candidate table does not use it as such.
+
+- **Epitope is preserved.** Median pair overlap is 1.00 for trastuzumab and for two of the three designs,
+  against a seed-to-seed noise floor of 0.97 measured on the same sequences. Trastuzumab holds 1.00 at all
+  three seeds. One design of the three sat at 0.86 / 0.94 / 0.90, below the noise floor at every seed —
+  so R66G can move a given loop's predicted epitope, which makes it a per-design question rather than a
+  property of the mutation.
 - **Interface confidence leans down, but only leans.** Antibody–antigen ipTM is lower with R66G in
   **8 of 12** comparisons, median **−0.012**. Per design, almost all of that sits inside the seed-to-seed
   spread of a single sequence (median 0.014). This is a directional hint consistent with the published
@@ -278,10 +284,10 @@ submission on **matched pairs** rather than stabilising everything.
 
 | | Count | Which |
 | --- | ---: | --- |
-| Stabilised (carry R66G) | 6 | `tz-opt-02/07/18/01/15/03-stab` |
-| Unmodified parents | 4 | `tz-opt-02/07/18/01` |
-| **Complete matched pairs** | **4** | `tz-opt-02`, `tz-opt-07`, `tz-opt-18`, `tz-opt-01` |
-| Stabilised with no parent in the list | 2 | `tz-opt-15-stab`, `tz-opt-03-stab` |
+| Stabilised (carry R66G) | 6 | `tz-clean-01/02/03/04/06/07-stab` |
+| Unmodified parents | 4 | `tz-clean-01/02/03/07` |
+| **Complete matched pairs** | **4** | `tz-clean-01`, `tz-clean-02`, `tz-clean-03`, `tz-clean-07` |
+| Stabilised with no parent in the list | 2 | `tz-clean-04-stab`, `tz-clean-06-stab` |
 
 Ten unique rows allow at most five complete pairs; we submit four, and spend the two remaining slots on
 additional loops rather than a fifth control. **The two unpaired stabilised designs cannot support a
@@ -346,8 +352,8 @@ make demo        # ~1 minute
 | out | `results/demo/designs_demo.csv` — ranked, with a written rationale per design | |
 
 It writes to `results/demo/`, so it never touches the submitted designs. Note that the demo numbers its
-output in the same `tz-opt-NN` namespace, so a demo `tz-opt-01` at seed 7 is **not** the submitted
-`tz-opt-01` — different seed, different loop. The submitted sequences are only ever in
+output in its own id namespace, so a demo design is **not** a submitted one even where the numbering
+happens to look similar — different seed, different loop. The submitted sequences are only ever in
 `results/SUBMISSION.csv`.
 
 To point it at a different
@@ -402,18 +408,32 @@ python scripts/requirement_check.py --md results/REQUIREMENTS.md
 ```
 
 One row per design, one column per entry requirement, and a verdict that is **PASS**, **FAIL** or
-**UNKNOWN** — never a blank, and never a PASS for something that cannot be tested here. Current state
-(`results/REQUIREMENTS.md`): **all ten designs PASS every locally checkable requirement.**
+**UNKNOWN** — never a blank, and never a PASS for something that cannot be tested here.
 
-| Requirement | Status |
-| --- | --- |
-| Format is VHH / scFv / Fab | PASS, 10/10 |
-| Total length ≤ 250 aa | PASS, 10/10 (227 aa; 23 to spare) |
-| No unpaired cysteines, **per domain** | PASS, 10/10 |
-| CDR-H3 identity to trastuzumab under 70% | PASS, 10/10 (60% on the 10-mer; 4 mutations) |
-| ≥3 mutations from every provided sequence | PASS, 10/10 (distance 3 against all 525,063) |
-| `immunum` numbering confidence | **UNKNOWN** — only `abguard` can answer |
-| Identity to known antibodies (de novo rule) | **UNKNOWN** — needs Adaptyv's database |
+**This is the direct answer to the entry-criteria requirement, so here it is in full rather than
+summarised.** Every row below is regenerated from `results/SUBMISSION.csv` as it currently stands:
+
+| Design | Format | Length | Cysteines | Identity to trastuzumab | Distance to provided data | `abguard` |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `tz-clean-02-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-01-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-03-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-07-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-06-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-04-stab` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-02` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-01` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-03` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| `tz-clean-07` | paired | 227/250 | ok | 4 mut. (60 %) | 3 (≥3) | pass |
+| **`trastuzumab`** *(negative control)* | paired | 227/250 | ok | **0 mut. — FAIL** | **0 — FAIL** | **rejected** |
+
+**Ten of ten pass. The eleventh row is trastuzumab itself, and it must fail.** A gate that passes
+everything is indistinguishable from a gate that is switched off, so every run carries a row whose
+answer we already know.
+
+Two requirements cannot be checked on any machine without the organisers' tooling, and are reported as
+**UNKNOWN**, never as a pass: `immunum` numbering confidence, and identity to known antibodies (the de
+novo rule). `abguard` is the authority for both, and it has been run — see below.
 
 **UNKNOWN is never reported as a pass.** The two UNKNOWN rows cannot be satisfied on any machine without
 the organisers' tooling, so UNKNOWN warns and FAIL blocks; the command exits 1 only on a FAIL.

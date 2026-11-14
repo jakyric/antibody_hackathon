@@ -69,6 +69,7 @@ from abx.gate import (  # noqa: E402
 PASS, FAIL, UNKNOWN = "PASS", "FAIL", "UNKNOWN"
 REQUIRED_MUTATIONS = 3  # what the official checker enforces; the strictest reading
 VALID_KINDS = {"vhh", "scfv", "paired", "fab"}
+STANDARD_AA = set("ACDEFGHIKLMNPQRSTVWY")
 
 
 def min_distance_to_provided(cdrh3: str, provided: list[str]) -> tuple[int, str]:
@@ -114,6 +115,36 @@ def check_row(row: dict, provided: list[str]) -> dict:
         "verdict": PASS if kind in VALID_KINDS else FAIL,
         "detail": f"kind={kind or '(empty)'}",
         "margin": "",
+    }
+
+    # --- the 20 standard amino acids, and nothing else ------------------
+    # The official checker rejects a row outright for a stray character. A
+    # dash used as a placeholder, a lowercase paste or an X from a masked
+    # position all look harmless in a spreadsheet and are fatal at submission.
+    strays = sorted(set(heavy + light) - STANDARD_AA)
+    out["standard_amino_acids"] = {
+        "verdict": FAIL if strays else PASS,
+        "detail": (f"non-standard characters: {', '.join(repr(c) for c in strays)}"
+                   if strays else "all residues are among the 20 standard"),
+        "margin": "",
+    }
+
+    # --- the light-chain column has to match `kind` ---------------------
+    # The submission format says light_sequence is the light variable domain
+    # for `paired` only, and must be left EMPTY for vhh and scfv. An scFv row
+    # that also fills light_sequence describes a molecule twice.
+    if kind in ("vhh", "scfv"):
+        ok = not light
+        detail = ("light_sequence is empty, as required for " + kind) if ok else (
+            f"kind={kind} must leave light_sequence empty, but it holds {len(light)} aa")
+    elif kind in ("paired", "fab"):
+        ok = bool(light)
+        detail = (f"paired row carries a light chain ({len(light)} aa)") if ok else (
+            "kind=paired but light_sequence is empty")
+    else:
+        ok, detail = False, f"cannot judge the light chain for kind={kind or '(empty)'}"
+    out["light_chain_matches_kind"] = {
+        "verdict": PASS if ok else FAIL, "detail": detail, "margin": "",
     }
 
     # --- total length -------------------------------------------------

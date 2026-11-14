@@ -1,0 +1,13 @@
+sequence_id,n_total,n_high,n_medium,n_low,n_h3,h3_tags,h3_motifs,d_n_total,d_n_high,d_n_medium,d_n_low,d_n_h3,h3_gained,h3_lost,h3_gained_high,h3_lost_high
+tz_reference,8,3,4,1,3,Isom|MetOx|TrpOx,Isom:DG|MetOx:M|TrpOx:W,0,0,0,0,0,,,,
+tz-clean-02-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-01-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-03-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-07-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-06-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-04-stab,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-02,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-01,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-03,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+tz-clean-07,5,2,2,1,0,,,-3,-1,-2,0,-3,,Isom|MetOx|TrpOx,,Isom
+

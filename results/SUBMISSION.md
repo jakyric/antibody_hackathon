@@ -1,109 +1,135 @@
 # The final ten: what we submit and why
 
-`results/SUBMISSION.csv`. Built by `scripts/build_final.py`, validated with
-`abguard team-validate --reference-db` against a reference built from the
-provided HER2 data. All ten pass. Trastuzumab, added as a control, fails.
+`results/SUBMISSION.csv`. Built by `scripts/build_final_clean.py` from
+`results/pool/ranked.csv`, validated with the official checker's `team-validate
+--reference-db` against a reference built from the provided HER2 data.
+**The ten alone exit 0. With trastuzumab added as a control, 10 of 11 pass
+and the control is the one that fails.**
 
-## The three facts that determined this list
+The previous list is kept as `results/SUBMISSION_v1.md` and
+`results/SUBMISSION_v1.csv`. What changed, and why, is at the bottom.
 
-**1. We cannot rank these on affinity, and we will not pretend to.**
-All twenty designs sit at exactly 4 CDRH3 mutations from trastuzumab. Edit
-distance — the only scorer that tracks measured affinity (rho +0.226 in the
-legal zone, interval clear of zero) — is therefore *constant* across them and
-orders nothing. Inside that stratum (n = 34 measured variants) no scorer we
-have beats chance. Full working in `results/audit/`.
+## The list
 
-**2. Developability can rank them.** Measured against trastuzumab with the
-organisers' own liability reference. Nine of twenty introduce `FragH:DP`, a
-high-severity acid-labile motif trastuzumab does not carry; they are excluded.
-Details in `results/developability/`.
+| # | ID | CDRH3 | Stab | Epitope | Liabilities vs trastuzumab |
+| ---: | --- | --- | :-: | ---: | --- |
+| 1 | `tz-clean-02-stab` | RGGEGFYANE | ✓ | **1.00** | −3 total, −1 high |
+| 2 | `tz-clean-01-stab` | YGGDYFYGKD | ✓ | 0.95 | −3 total, −1 high |
+| 3 | `tz-clean-03-stab` | FGGGGNYAKD | ✓ | **1.00** | −3 total, −1 high |
+| 4 | `tz-clean-07-stab` | HGGDRFYKRD | ✓ | 0.95 | −3 total, −1 high |
+| 5 | `tz-clean-06-stab` | YGGAGFHAVD | ✓ | **1.00** | −3 total, −1 high |
+| 6 | `tz-clean-04-stab` | HTGDEFYAID | ✓ | 0.947 | −3 total, −1 high |
+| 7 | `tz-clean-02` | RGGEGFYANE | — | | **control** for #1 |
+| 8 | `tz-clean-01` | YGGDYFYGKD | — | | **control** for #2 |
+| 9 | `tz-clean-03` | FGGGGNYAKD | — | | **control** for #3 |
+| 10 | `tz-clean-07` | HGGDRFYKRD | — | | **control** for #4 |
 
-**3. Only a stabilised design can reach S-tier.** S-tier needs all three
-properties improved. Four substitutions in one CDR loop give no reason to
-expect a higher melting temperature, so an unmodified design tops out at
-A-tier and realistically B. We need a stabilising change to compete at all on
-the third axis.
+Six distinct loops, pairwise edit distance **min 4, median 5, max 6** — six
+different bets, not one written six times. Every design is exactly 4
+substitutions from trastuzumab's CDR-H3 and exactly 3 edits from the nearest
+of the 525,063 provided loops.
+
+## The three things that determined this list
+
+**1. Every design removes all three of trastuzumab's own CDR-H3 liabilities,
+and adds none.**
+
+Trastuzumab's loop `WGGDGFYAMD` carries `Isom:DG` (high severity), `MetOx:M`
+and `TrpOx:W`. Removing all three costs three substitutions; the novelty rule
+demands four; so exactly one position is free. That space is small enough to
+enumerate completely — 691,064 loops — rather than sample.
+
+The official checker's own liability report puts every one of the ten at **5 liabilities
+(2 high) against trastuzumab's 8 (3 high)**. That is the floor reachable by
+changing CDR-H3 alone, and all ten reach it. Expression failure means no
+measurement on any axis, so this is the one sequence property worth
+optimising before the lab sees anything.
+
+**2. Removing those three residues is what the measured data wanted anyway.**
+
+This is the part that could have gone badly: trastuzumab's CDR-H3 tryptophan
+is a paratope residue, and trading it for a developability motif could cost
+binding. The 524,346 FACS-measured variants say otherwise. Fraction scoring
+`high`, per residue at each position:
+
+| Position | Trastuzumab | Its score | Better options in the data |
+| --- | :-: | ---: | --- |
+| 1 | W | 0.532 (n=177,081) | Y 0.656 (n=62,854), N 0.708 (n=917) |
+| 4 | D | 0.363 (n=30,934) | G 0.827, P 0.702, A 0.696 |
+| 5 | G | 0.625 (n=123,584) | R 0.935 (n=42,561) |
+| 9 | M | 0.499 (n=4,737) | V 0.608, L 0.584 (n=72,039) |
+
+All four motif-bearing positions are ones the data says are improvable. The
+liability-clean constraint and the binding evidence point the same way. That
+is luck rather than design, but it is measured luck, and it is why this swap
+is not a trade.
+
+*Caveat: these are marginal per-position fractions from a FACS assay, which
+says whether a variant binds, not how tightly.*
+
+**3. Epitope decided the order, because nothing else could.**
+
+All ten carry an identical liability profile, so developability — which
+ordered the old list — is now a constant and orders nothing. The remaining
+axes are the predicted HER2 contact set against trastuzumab's, and the FACS
+proxy. Combined by rank aggregation (`scripts/clean_rank.py`), ties averaged.
+
+The epitope floor holds: trastuzumab reproduces its own 1N8Z crystal epitope
+at Jaccard **1.00** in this run, so a design's overlap means something. Two
+candidates were dropped outright for drifting off it (0.75 and 0.90) rather
+than ranked low — an optimisation-track design that no longer competes for
+trastuzumab's site has lost that axis, not scored badly on it.
 
 ## The stabilising mutation: VL Arg66Gly
+
+Unchanged from the previous list, and the argument is unchanged.
 
 > Okazaki et al. 2023, *ACS Omega* 8(25):22945–22954, PMID 37396255.
 > Trastuzumab scFv by DSF: **61.8 ± 0.2 °C → 66.7 ± 0.2 °C, ΔTm +4.9 °C**,
 > binding unchanged.
 
-Why this one and not the obvious candidate:
-
-| | VH44–VL100 disulfide | VL R66G |
-| --- | --- | --- |
-| passes the gate | **no** — `unpaired_cysteine`, both formats | **yes**, cleanly |
-| measured on trastuzumab scFv | no | **yes** |
-| effect on Tm | "no or little increase" across six scFvs | **+4.9 °C measured** |
-| expression risk | 29-fold and 4-fold yield drops reported | none reported |
-| adds cysteines | two | none |
-
-The disulfide is dead twice over: the official checker rejects it outright (see
-`results/disulfide/`), and Weatherill et al. 2012 (*PEDS* 25(7):321–329)
-tested it across six scFvs and found no meaningful thermal gain. The nearest
-4D5-relevant measurement (Wörn & Plückthun 1999) bought ~0.4 M GdnHCl of
-chemical stability for a **29-fold** collapse in expression yield.
-
-R66G touches only light-chain framework. It does not alter CDRH3, so our
-novelty margin is untouched, and it adds no cysteine. The gate run confirms
-liability counts are identical with and without it.
-
-**It is still one paper and one mutation.** We have not measured it. Every
-stabilised candidate is paired with its unmodified parent below so the lab
-result can tell them apart.
-
-## The list
-
-| # | ID | CDRH3 | Stab | Why this one |
-| ---: | --- | --- | :-: | --- |
-| 1 | `tz-opt-02-stab` | MGPEPFYAMD | ✓ | best developability of all twenty: drops both trastuzumab's `DG` isomerisation motif and its CDRH3 tryptophan, adds nothing new. Stabilised, so all three axes are in play. |
-| 2 | `tz-opt-18-stab` | WGGWPAYALD | ✓ | second-best developability, a clearly distinct loop from #1. |
-| 3 | `tz-opt-07-stab` | FGGWPWYAMD | ✓ | removes the `DG` motif, loop distinct from both above. |
-| 4 | `tz-opt-15-stab` | FGGDMWYWMD | ✓ | fourth design improving on trastuzumab's liability profile. |
-| 5 | `tz-opt-01-stab` | APGDGFQIMD | ✓ | top loop under the old binding proxy — kept as a hedge in case that proxy carries signal we could not demonstrate. |
-| 6 | `tz-opt-03-stab` | LGGDGAYMVD | ✓ | second loop from the old proxy, same hedge, different sequence. |
-| 7 | `tz-opt-02` | MGPEPFYAMD | — | **control** for #1: isolates what R66G did. |
-| 8 | `tz-opt-18` | WGGWPAYALD | — | **control** for #2. |
-| 9 | `tz-opt-07` | FGGWPWYAMD | — | **control** for #3. |
-| 10 | `tz-opt-01` | APGDGFQIMD | — | **control** for #5. |
-
-Six distinct CDRH3 loops. Pairwise distance between them: **min 3, median 6,
-max 8** — these are different bets, not one bet written six ways.
-
-## Why the stabilised versions take the guaranteed slots
-
-Every team gets its **top four** tested whatever happens. Those four are all
-stabilised and all carry different loops: four independent shots at improving
-all three properties.
-
-The controls sit at 7–10 deliberately. If we place well enough for them to be
-made, we learn what R66G did on our own molecules — which is worth having
-whichever way it goes. If we do not place, we lose nothing, because the
-guaranteed four were never the controls.
+S-tier needs all three judged properties improved. Four substitutions in one
+CDR loop give no reason to expect a higher melting temperature, so an
+unmodified design tops out at A-tier. R66G touches only light-chain
+framework, leaves CDR-H3 and therefore our novelty margin untouched, and adds
+no cysteine. It is still one paper and one mutation, which is why four of the
+ten are the unmodified parents of the top four: the lab result can then say
+what R66G did.
 
 ## What we are not claiming
 
-These designs are **expected** to bind. Nothing here is a measurement.
+- **Not that these bind better than the old list.** On the FACS proxy they
+  score higher (9.2–11.6 against 6.3–9.4), but that proxy has no demonstrated
+  skill inside a fixed mutation count, and every design here sits at exactly
+  four. Read it as reassurance that we did not trade binding away for
+  developability, not as evidence that we bought any.
+- **Not that any of them binds at all.** Every number here is a prediction or
+  a sequence property. "Expected", never "binds". The lab results come after
+  the event.
+- **The novelty margin is still zero.** Three edits against a requirement of
+  three, for every design, as before — now measured by edit distance rather
+  than by position, which is the metric the official checker actually uses.
 
-- **Affinity:** we have no validated way to order these ten. Of 182 published,
-  professionally designed variants with measured KD, 6 beat trastuzumab's
-  median and 1 beat its best. We are not predicting that any of ours will.
-- **Epitope:** the 0.95 median overlap in `FINDINGS.md` is a *prediction* from
-  one Boltz-2 run at one seed, against a reference the same model produced.
-  It supports the claim that four substitutions in one loop should not move
-  the binding site. It is not a measurement, and the real answer is Adaptyv's
-  competitive binding assay.
-- **Thermostability:** +4.9 °C is Okazaki's number on their molecule, not ours.
+## What changed from the previous list, and why
 
-## Reproduce
+A comparison set of published designs, scored through our own pipeline
+(`results/external/README.md`), showed one real gap and it was not in our
+favour: nine of ten of theirs reduced the high-severity liability count,
+against four of our twenty, and nine of our twenty introduced `FragH:DP`, an
+acid-labile motif trastuzumab does not carry and none of theirs did.
 
-```
-python scripts/build_final.py --designs results/designs.csv --out SUBMISSION.csv
-abguard team-validate SUBMISSION.csv --reference-db <provided reference>
-```
+That was a search problem, not a scoring problem. Our twenty were sampled
+from a position-weight matrix and inspected for liabilities afterwards;
+nothing in the draw knew what a liability was. `src/abx/pool.py` enumerates
+the clean space instead. The new list is better than the old on every axis we
+can measure and worse on none:
 
-Gate evidence `results/gate/` · liabilities `results/developability/` ·
-ranking audit `results/audit/` · disulfide `results/disulfide/` ·
-stabilisation gate run `results/stabilise/`.
+| | Old ten | New ten |
+| --- | --- | --- |
+| liability delta vs trastuzumab | −1 total, −1 high at best; most of the pool 0 or worse | **−3 total, −1 high, all ten** |
+| designs introducing `FragH:DP` | 9 of the 20 it was drawn from | **none** |
+| epitope overlap with trastuzumab | median 0.947, min 0.85 | **median 1.00, min 0.947** |
+| FACS proxy score | 6.3 – 9.4 | **9.2 – 11.6** |
+| pairwise distance between loops | min 3 | **min 4** |
+| novelty margin | 3 edits, zero margin | 3 edits, zero margin |
+

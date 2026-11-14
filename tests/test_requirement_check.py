@@ -91,3 +91,56 @@ def test_the_two_organiser_only_checks_are_unknown_never_pass():
     res = check_row(row("ok", vh=swap_loop(TZ_VH, "FGGWPWYAMD")), PROVIDED)
     assert res["checks"]["immunum_numbering_confidence"]["verdict"] == UNKNOWN
     assert res["checks"]["identity_to_known_antibodies"]["verdict"] == UNKNOWN
+
+
+# ── the submission-format rules the organisers stated in the channel ───────
+# The official checker rejects a row for a stray character, for the wrong length, for an
+# odd cysteine count, or for a light chain that contradicts `kind`. The first
+# and last of those are cheap to get wrong in a spreadsheet and fatal at
+# submission, so they are checked here against rows built to break them.
+
+def test_a_stray_character_is_caught():
+    vh = swap_loop(TZ_VH, "FGGWPWYAMD").replace("EVQ", "EVX", 1)
+    res = check_row(row("strayX", vh=vh), PROVIDED)
+    assert res["checks"]["standard_amino_acids"]["verdict"] == FAIL
+    assert "'X'" in res["checks"]["standard_amino_acids"]["detail"]
+
+
+def test_a_placeholder_dash_is_caught():
+    res = check_row(row("dash", vh=swap_loop(TZ_VH, "FGGWPWYAMD"), vl="DIQ-MTQ"),
+                    PROVIDED)
+    assert res["checks"]["standard_amino_acids"]["verdict"] == FAIL
+
+
+def test_a_clean_row_passes_the_alphabet_check():
+    res = check_row(row("ok", vh=swap_loop(TZ_VH, "FGGWPWYAMD")), PROVIDED)
+    assert res["checks"]["standard_amino_acids"]["verdict"] == PASS
+
+
+def test_a_vhh_must_leave_the_light_column_empty():
+    res = check_row(row("vhh1", vh=swap_loop(TZ_VH, "FGGWPWYAMD"), kind="vhh"),
+                    PROVIDED)
+    assert res["checks"]["light_chain_matches_kind"]["verdict"] == FAIL
+
+    res = check_row({"sequence_id": "vhh2", "kind": "vhh",
+                     "heavy_sequence": swap_loop(TZ_VH, "FGGWPWYAMD"),
+                     "light_sequence": ""}, PROVIDED)
+    assert res["checks"]["light_chain_matches_kind"]["verdict"] == PASS
+
+
+def test_an_scfv_must_leave_the_light_column_empty():
+    res = check_row(row("scfv1", vh=swap_loop(TZ_VH, "FGGWPWYAMD"), kind="scfv"),
+                    PROVIDED)
+    assert res["checks"]["light_chain_matches_kind"]["verdict"] == FAIL
+
+
+def test_a_paired_row_without_a_light_chain_fails():
+    res = check_row({"sequence_id": "p", "kind": "paired",
+                     "heavy_sequence": swap_loop(TZ_VH, "FGGWPWYAMD"),
+                     "light_sequence": ""}, PROVIDED)
+    assert res["checks"]["light_chain_matches_kind"]["verdict"] == FAIL
+
+
+def test_a_correct_paired_row_passes():
+    res = check_row(row("p", vh=swap_loop(TZ_VH, "FGGWPWYAMD")), PROVIDED)
+    assert res["checks"]["light_chain_matches_kind"]["verdict"] == PASS

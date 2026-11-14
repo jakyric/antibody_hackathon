@@ -85,11 +85,10 @@ def panel_of(manifest: dict) -> str | None:
     """Which panel the run used, read from what the run itself recorded.
 
     WHY THIS MUST BE READ AND NOT ASSUMED
-      Two panels number the variants the same way — `calib-05` exists in
-      both — but they are different sequences with different KD. If we read
-      the scores from one run against the KDs from another panel, we get a
-      number that looks real and is not. That happened. Now the panel
-      follows the run.
+      Two panels number the variants the same way — `calib-05` exists in both —
+      but they are different sequences with different KD. If we read the scores
+      from one run against the KDs from another panel, we get a number that
+      looks real and is not. That happened. Now the panel follows the run.
     """
     for key in ("inputs", "input"):
         inputs = manifest.get(key)
@@ -106,7 +105,7 @@ def panel_of(manifest: dict) -> str | None:
 
 
 def find_runs(runs_dir: Path) -> dict[str, tuple[Path, str | None]]:
-    """model name -> (the folder with predictions, the panel the run used)."""
+    """model name -> (the directory with predictions, the panel the run used)."""
     found: dict[str, tuple[Path, str | None]] = {}
     for run in sorted(runs_dir.glob("*-fold-*")):
         manifest_path = run / "run.json"
@@ -138,7 +137,7 @@ def main() -> int:
     if not runs:
         raise SystemExit(f"found no fold runs in {args.runs}")
 
-    # Each run is read against its own panel. If we fall back to --panel for
+    # Each run is read against its own panel. If we fall back on --panel for
     # a run that used a different one, we say so: the ids collide between
     # panels, so a silent mix-up gives a number that means nothing.
     default_panel = load_panel(args.panel)
@@ -188,12 +187,12 @@ def main() -> int:
             m = ok & np.isfinite(vals)
             if m.sum() < 8:
                 continue
-            # a high score should mean low KD, so a negative Spearman against log KD
+            # a high score should mean low KD, i.e. negative Spearman against log KD
             rho = spearman(vals[m], -np.log10(kd[m]))
             lo, hi = bootstrap_ci(
                 lambda a, b: spearman(a, -np.log10(b)), vals[m], kd[m], seed=0
             )
-            # can it separate the strong from the weak? (better than median KD)
+            # can it tell the strong from the weak? (better than median KD)
             strong = (kd[m] < np.median(kd[m])).astype(float)
             au = auroc(vals[m], strong)
             calib_lines.append(
@@ -209,9 +208,9 @@ def main() -> int:
         w.writeheader()
         w.writerows(calib_lines)
 
-    # ── the same variants, ranked with what we had from before ───────────────
-    # Without this we compare fold scores on one sample with edit distance
-    # on another, and then the difference means nothing.
+    # ── the same variants, ranked with what we had before ────────────────────
+    # Without this we compare fold scores on one sample with edit
+    # distance on another, and then the difference means nothing.
     from abx.data import TZ_CDRH3_10  # noqa: PLC0415
     from abx.gate import hamming  # noqa: PLC0415
 
@@ -222,6 +221,15 @@ def main() -> int:
     baselines = []
     dist = np.array([hamming(panel[q]["cdrh3"], TZ_CDRH3_10) for q in calib_ids], dtype=float)
     cand = {"edit_distance": -dist}  # close to trastuzumab = high score
+    # BLOSUM45 similarity to trastuzumab. Ucar & Sormanni (bioRxiv
+    # 2025.10.26.684652) show that this alone ranks HER2 variants as well as
+    # generative models. It is therefore the bar every model here must clear,
+    # and a stricter bar than plain edit distance.
+    from abx.precedent import blosum45_similarity  # noqa: PLC0415
+
+    cand["blosum45"] = np.array(
+        [blosum45_similarity(panel[q]["cdrh3"]) for q in calib_ids], dtype=float
+    )
     model_npz = Path("results/binder_model.npz")
     if model_npz.exists():
         try:
@@ -250,7 +258,7 @@ def main() -> int:
         w.writeheader()
         w.writerows(calib_lines)
 
-    # ── question 2: do the models agree on the designs? ──────────────────────
+    # ── question 2: do the models agree about the designs? ───────────────────
     agree = []
     models = sorted(per_model)
     design_ids = [q for q in panel if panel[q]["group"] == "design"]
@@ -272,7 +280,7 @@ def main() -> int:
         w.writeheader()
         w.writerows(agree)
 
-    # ── question 3: how do the designs stand against trastuzumab? ────────────
+    # ── question 3: how do the designs sit against trastuzumab? ──────────────
     base = []
     for model, rows in sorted(per_model.items()):
         tz = rows.get("trastuzumab")
