@@ -16,7 +16,7 @@ Read `denovo/README.md` for the architecture and `references/` (below) for evide
 * **Deadline**: when must the final list exist? (`PIPELINE_UNTIL=HH:MM`, default now + 2 h.) Generation stops 50 min before it.
 * **Money**: JapanFold balance and caps (defaults: design $12, scoring $20; RFD4 costs about $0.003 per design, scoring dominates). Check `GET /v1/credits` via
   `bash denovo/run_pipeline.sh status`, which prints the balance.
-* **Shared VM**: is the user allowing the shared team VM at all (monoyield on its GPU, VM abguard)? Default is NO. Never assume; the GPU is shared with other teams.
+* **Shared VM**: is the user allowing the shared team VM at all (monoyield on its GPU, VM abguard)? Default is NO. Never assume; the GPU is shared with other teams. Without it the gate runs on a local abguard replica (same track decision), and monoyield (yield objective) is replaced by the nine-rule score.
 * **Nebius**: do they have `NEBIUS_CREDS` and the `nebius-scientific-ai` skill (needed only for Protenix-v2)?
 * **Resume or fresh**: is `results/denovo/` already populated? Then resume; never restart from scratch (it would not re-pay: every job is cached by name).
 

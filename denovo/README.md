@@ -84,6 +84,7 @@ with a README giving the timestamp and row counts. No structures or job ids are 
 * **Every design shares one rigid binding pose** (the framework is placed where trastuzumab's VH sits), so epitope overlap is built in; the pose-based proxies are weak.
 * **The known-VHH panel is incomplete** (PDB, PLAbDab and UniProt germlines, no OAS or patents), so nearest-known identity can only be too low. The organisers' abguard build compares
   the track identity only against trastuzumab and checks prior art only on CDRH3.
+* **Without the shared VM the novelty gate is a local replica.** The organisers' `abguard` is installed on the hackathon VM; the pipeline reproduces its track decision (identity to trastuzumab VH < 70%, identical to the VM values on all 430 designs checked) with `immunum` locally, so everything runs with the VM off (the default). The prior-art CDRH3 check needs abguard's reference data (610k CDRH3s) and is skipped without it, so a design that copies a known CDRH3 would not be caught.
 * **Predictors are filters.** NanoMelt has a mean error of about 4-7 C and a non-commercial licence; TNP thresholds come from clinical nanobodies; monoyield was trained on one scaffold.
 * **Developability and expression predictors the organisers recommend (SoluProt, NetSolP, Aggrescan3D) are not included.**
 * **Expect an A- or B-tier outcome, not S:** trastuzumab's sub-nanomolar affinity is the hardest criterion for a de novo VHH to match.
