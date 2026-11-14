@@ -97,6 +97,9 @@ def run(designs: list[dict], use_vm: bool = True, panel: L.Panel | None = None) 
             r["denovo_vm_pass"] = int(r["abguard_pass"] == 1 and r["abguard_class"] == "de_novo")
             r["denovo_strict_pass"] = int(r["denovo_vm_pass"] == 1 and r.get("ident_lt70", 0) == 1)
             r["gap_vm_ok_ident_ge70"] = int(r["denovo_vm_pass"] == 1 and r.get("ident_lt70", 0) == 0)
+        else:  # no VM abguard: its track decision (identity to trastuzumab VH < 70%) is replicated locally, same hard rules
+            r["denovo_vm_pass"] = int(bool(basic) and r.get("novelty_class_local") == "de_novo")
+            r["denovo_strict_pass"] = int(r["denovo_vm_pass"] == 1 and r.get("ident_lt70", 0) == 1)
     return rows
 
 

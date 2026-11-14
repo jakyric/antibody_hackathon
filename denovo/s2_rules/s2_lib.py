@@ -93,7 +93,11 @@ TRAS_CDR3 = analyse(TRAS_VH)["cdr3"]  # IMGT 'SRWGGDGFYAMDY'
 class Panel:
     def __init__(self, path: Path | None = None):
         path = path or CACHE / "panel.csv"
-        rows = list(csv.DictReader(open(path)))
+        if path.exists():
+            rows = list(csv.DictReader(open(path)))
+        else:  # panel not built (bash denovo/setup.sh --panel): only trastuzumab VH, nearest_known_id then reads trastuzumab_VH
+            print(f"WARNING: {path} missing: nearest-known identity is NOT computed", file=sys.stderr)
+            rows = []
         extra = HERE / "extra_known.fasta"
         self.ids = [r["id"] for r in rows]
         self.src = [r["source"] for r in rows]
@@ -143,6 +147,9 @@ def abguard_ref_cdrh3():
 
 def cdrh3_min_dist(cdr3s: list[str]):
     """Min Levenshtein of each CDRH3 to the 610k CDRH3s that ship in abguard (+ trastuzumab). Chunked to bound memory."""
+    if not (CACHE / "abguard_cdrh3.parquet").exists():  # organisers' abguard reference data not available: prior-art check skipped
+        print("WARNING: abguard reference CDRH3s missing: prior-art CDRH3 check skipped", file=sys.stderr)
+        return [(99, "", "not-checked", "")] * len(cdr3s)
     ref = abguard_ref_cdrh3()
     refs = ref["cdrh3"].tolist()
     out = []

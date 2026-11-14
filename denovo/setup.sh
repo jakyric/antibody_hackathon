@@ -81,7 +81,7 @@ elif [ "$PANEL" = 1 ] && [ "$CHECK" = 0 ] && [ -x "$PY" ]; then
   mkdir -p denovo/s2_rules/cache
   curl -fsSL -o denovo/s2_rules/cache/pdb_seqres.txt.gz https://files.wwpdb.org/pub/pdb/derived_data/pdb_seqres.txt.gz && \
     "$PY" denovo/s2_rules/build_panel.py && "$PY" denovo/s2_rules/build_panel2.py && ok "panel built" || bad "panel build failed (see denovo/s2_rules/README.md)"
-else warn "no panel (denovo/s2_rules/cache/panel.csv): the nearest-known-VHH identity column stays empty; bash denovo/setup.sh --panel builds it"; fi
+else warn "no panel (denovo/s2_rules/cache/panel.csv): nearest-known identity is then computed against trastuzumab VH only (the abguard track gate is unaffected); bash denovo/setup.sh --panel builds the panel"; fi
 [ -s denovo/s2_rules/cache/abguard_cdrh3.parquet ] && ok "abguard reference CDRH3s present" || \
   warn "abguard reference CDRH3s absent (organisers' abguard wheel, reference_data/): the prior-art CDRH3 check of the local replica is skipped"
 
