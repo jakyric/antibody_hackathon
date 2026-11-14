@@ -416,6 +416,36 @@ def collect2(st):
                     cnt[f] = cnt.get(f, 0) + 1
         st["top"] = {"n": len(S), "flags": cnt, "fw": S.framework.value_counts().to_dict(), "front": S.pareto_rank.value_counts().sort_index().to_dict(),
                      "rows": S.head(6).to_dict("records"), "ids": top}
+    # ---- pose recovery of the scorers, cropped HER2 re-run, Jakob's branch check
+    ids = set(D.design_id) if D is not None else set()
+    PV = rd("pose_check_vm.csv")
+    st["posevm"] = {}
+    if PV is not None:
+        for sc, g in PV[PV.design_id.isin(ids)].groupby("scorer"):
+            st["posevm"][sc] = {"n": len(g), "pose": float(g.pose_rmsd.median()), "le20": int((g.pose_rmsd <= 20).sum()),
+                                "scr": float(g.scrmsd.median()), "epi": float(g.epi_frac.median())}
+    CR = rd("crop/dde_crop.csv")
+    st["cropd"] = None
+    if CR is not None:
+        c = CR[CR.design_id.isin(ids)]
+        pr = c[c.dde_c_pose_rmsd.notna()]
+        best = pr.sort_values("dde_c_pose_rmsd").head(1)
+        st["cropd"] = {"n": int(c.dde_c_iptm.notna().sum()), "npose": len(pr), "pose": float(pr.dde_c_pose_rmsd.median()) if len(pr) else None,
+                      "epi": float(pr.dde_c_epi_frac.median()) if len(pr) else None, "le20": int((pr.dde_c_pose_rmsd <= 20).sum()),
+                      "best": (str(best.design_id.iloc[0]), float(best.dde_c_pose_rmsd.iloc[0])) if len(best) else None}
+    JK = rd("jakob_check.csv")
+    st["jakob"] = None
+    if JK is not None and "input" in JK:
+        fv, vh = JK[JK.input == "fv"], JK[JK.input == "vh"]
+        if len(fv) and len(vh):
+            st["jakob"] = {"fv_n": len(fv), "fv_ok3": int((fv.vh_pose_rmsd <= 3).sum()), "fv_med": float(fv.vh_pose_rmsd.median()),
+                           "vh_n": len(vh), "vh_ok10": int((vh.vh_pose_rmsd <= 10).sum()), "vh_med": float(vh.vh_pose_rmsd.median()), "vh_iptm": float(vh.iptm.median())}
+    st["crop_gate"] = None
+    try:
+        m = re.search(r"decoy p95 iPTM\s+([0-9]\.[0-9]+)\s*/\s*ipSAE\s+([0-9]\.[0-9]+)", (ROOT / "denovo" / "CONTRACT.md").read_text())
+        st["crop_gate"] = (float(m.group(1)), float(m.group(2))) if m else None
+    except Exception:
+        pass
     return st
 
 
@@ -541,10 +571,10 @@ def s_scoring(st):
     rows = [
         ["OpenFold3 OpenBind, HER2 template, no MSA", "Team VM", "Ranked: iPTM and ipSAE (15 Å)"],
         ["ESMFold-2", "Team VM", "Ranked: iPTM and ipSAE"],
-        ["OpenDDE-abag", "JapanFold", "Gate: iPTM and ipSAE ≥ decoy 95th percentile; missing fails"],
+        ["OpenDDE-abag, cropped HER2", "JapanFold", (f"Gate: iPTM ≥ {st['crop_gate'][0]:.2f} and ipSAE ≥ {st['crop_gate'][1]:.2f}, the decoy 95th percentile; missing fails" if st.get("crop_gate") else "Gate: decoy 95th percentile; missing fails")],
         ["JapanFold OpenFold3", "JapanFold", "Not ranked: untemplated, looks like decoys"],
     ]
-    cnt = f"Scored so far: OpenFold3 on {cov.get('vmof3', 0)} designs, ESMFold-2 on {cov.get('vmesm2', 0)}, OpenDDE on {cov.get('dde', 0)}."
+    cnt = f"Scored: OpenFold3 on {cov.get('vmof3', 0)} designs, ESMFold-2 on {cov.get('vmesm2', 0)}, OpenDDE on {cov.get('dde', 0)} (full HER2) and {(st.get('cropd') or {}).get('n', 0)} (cropped)."
     if po:
         ptxt = (f"OpenDDE’s pose is a median {po['rmsd']:.0f} Å from the designed pose, and {po['pred']:.0%} of the HER2 residues it contacts lie in the trastuzumab epitope, "
                 f"against {po['des']:.0%} for the designed poses. Re-checked independently, not a bug. Its fold of the VHH itself is consistent (scRMSD median {po['fold']:.1f} Å).")
@@ -644,7 +674,8 @@ def s_live(st):
         ("Pass every gate", c.get("strict", 0), "#0C7473"),
         ("OpenFold3 on the VM", c.get("vmof3", 0), "#0C7473"),
         ("ESMFold-2 on the VM", c.get("vmesm2", 0), "#0C7473"),
-        ("OpenDDE gate scored", c.get("dde", 0), "#0C7473"),
+        ("OpenDDE, full HER2", c.get("dde", 0), "#0C7473"),
+        ("OpenDDE, cropped HER2 (gate)", (st.get("cropd") or {}).get("n", 0), "#0C7473"),
         ("NanoMelt Tm", c.get("tm", 0), "#B4620A"),
         ("TNP flags", c.get("tnp", 0), "#B4620A"),
         ("Predicted yield", c.get("yield", 0), "#B4620A"),
@@ -663,7 +694,7 @@ def s_live(st):
 <h2>Where the designs ended up</h2>
 <div class="row" style="gap:48px">
 <div class="col" style="width:860px;gap:10px">
-{hbars(rows, max_w=280, label_w=340, bar_h=34, gap=9)}
+{hbars(rows, max_w=280, label_w=380, bar_h=32, gap=7)}
 </div>
 <div class="col" style="flex:1;gap:12px">
 {right}
@@ -724,7 +755,7 @@ def s_final(st):
 </div>
 </div>
 {foot("Sources: results/denovo/submission_top20_pareto.csv, dde_pose_check.csv.")}
-{note("Plain statement: the list is the best of what we made by our own filters, not evidence of binding. Nineteen of twenty are below the decoy line on at least half of the measured iPTM and ipSAE values, which is why the flag is shown rather than hidden. The open question is a judgment call: one design reproduces the designed pose in OpenDDE, which is the closest thing we have to independent support for a designed binding mode.")}
+{note("Plain statement: the list is the best of what we made by our own filters, not evidence of binding. " + f"{below} of {n} are below the decoy line on at least half of the measured iPTM and ipSAE values" + ", which is why the flag is shown rather than hidden. The open question is a judgment call: one design reproduces the designed pose in OpenDDE, which is the closest thing we have to independent support for a designed binding mode.")}
 </section>'''
 
 
@@ -735,7 +766,7 @@ def s_limits(st):
         ["BoltzGen designs", "Raw designs have no Cys. Stopped to focus on RFD4; kept as the CDR3 length reference.", "parked_boltzgen*.csv"],
         ["RFD4 on the team VM", "Ruled out. RFD4 ran only on JapanFold.", "CONTRACT.md"],
         ["JapanFold scores for ranking", "Untemplated and decoy-like. Demoted: only OpenDDE remains, as a gate.", "score_of3.csv"],
-        ["OpenDDE as epitope evidence", (f"Its pose is {po['rmsd']:.0f} Å from the designed pose." if po else "Pose check pending.") + " It does not show epitope preservation.", "dde_pose_check.csv"],
+        ["OpenDDE as epitope evidence", (f"Its pose is {po['rmsd']:.0f} Å from the designed pose, {st['cropd']['pose']:.0f} Å on the cropped HER2." if po and st.get("cropd") and st["cropd"]["pose"] else "Pose check pending.") + " Weak evidence of epitope preservation.", "dde_pose_check.csv"],
     ]
     return f'''<section id="limits" style="gap:24px">
 <p class="eyebrow">WHAT WE DROPPED, AND THE RISKS</p>
@@ -815,43 +846,44 @@ def collect3(st):
 
 
 def s_pose(st):
-    pc, cr, same = st.get("posechk") or {}, st.get("crop") or {}, st.get("crop_same") or {}
-    name = {"vmof3": "OpenFold3 OpenBind, template, no MSA (VM)", "vmesm2": "ESMFold-2 (VM)", "opendde": "OpenDDE-abag (JapanFold)"}
+    pc, cr, same, jk = st.get("posechk") or {}, st.get("crop") or {}, st.get("crop_same") or {}, st.get("jakob")
+    name = {"vmof3": "OpenFold3 OpenBind, no MSA (VM)", "vmesm2": "ESMFold-2 (VM)", "opendde": "OpenDDE-abag (JapanFold)"}
     fm = lambda v, d=0: "–" if v is None else f"{v:.{d}f}"  # noqa: E731
 
     def row(label, where, r):
         if not r:
-            return [label, where, "pending", "", "", "", ""]
-        return [label, where, f"{r['n']}", fm(r["pose"]), f"{r['le20']} of {r['n']}", fm(r["scr"], 1), fm(r["pq"], 2)]
-    rows = [row(name[k], "full 489–607", pc.get(k)) for k in ("vmof3", "vmesm2", "opendde")]
-    rows += [row(name[k].split(" (")[0], "cropped 539–607", cr.get(k)) for k in ("vmof3", "opendde")]
-    if pc.get("vmof3") and pc["vmof3"]["scr"] is not None:
-        ftxt = (f"Without an MSA, OpenFold3 misfolds the VHH itself (median scRMSD {pc['vmof3']['scr']:.1f} Å, {pc['vmof3']['scr3']} of {pc['vmof3']['n']} within 3 Å), "
-                "so its interface scores sit on a wrong VHH. ESMFold-2 and OpenDDE fold the VHH as designed but place it elsewhere. No scorer reproduces the designed pose.")
-    else:
-        ftxt = "Pose comparison pending."
+            return [label, where, "pending", "", "", ""]
+        return [label, where, f"{r['n']}", fm(r["pose"]), f"{r['le20']} of {r['n']}", fm(r["scr"], 1)]
+    rows = [row(name[k], "full", pc.get(k)) for k in ("vmof3", "vmesm2", "opendde")]
+    rows += [row(name[k].split(" (")[0], "cropped", cr.get(k)) for k in ("vmof3", "opendde")]
+    scr = pc.get("vmof3", {}).get("scr")
+    cap = ("Pose: VHH CA RMSD to the designed VHH after fitting the predicted HER2 on the designed HER2, median over designs; cropped HER2 is 539–607. "
+           + (f"OpenFold3 without an MSA misfolds the VHH (scRMSD median {scr:.1f} Å). " if scr is not None else "")
+           + "ESMFold-2 and OpenDDE fold it but place it elsewhere. No scorer reproduces the designed pose; the evidence is weak and computational only.")
     parts = []
-    for key, lab in (("vmof3", "OpenFold3"), ("opendde", "OpenDDE")):
+    for key, lab in (("opendde", "OpenDDE"), ("vmof3", "OpenFold3")):
         if key in same:
             r = same[key]
-            parts.append(f"{lab} on the same {r['n']} designs: pose median {r['full']:.0f} Å on the full domain, {r['crop']:.0f} Å cropped; within 20 Å {r['full20']} against {r['crop20']}.")
-    ctxt = " ".join(parts) if parts else "Cropped re-run pending: HER2 residues 489–538 removed so the models have less room to place the VHH somewhere random."
+            parts.append(f"{lab} on the same {r['n']} designs: pose median {r['full']:.0f} Å full, {r['crop']:.0f} Å cropped; within 20 Å {r['full20']} against {r['crop20']}.")
+    ctxt = " ".join(parts) if parts else "Cropped re-run pending."
+    jtxt = (f"Jakob’s paired-Fv trastuzumab redesigns recover the crystal pose in our OpenDDE settings: {jk['fv_ok3']}/{jk['fv_n']} within 3 Å, median {jk['fv_med']:.1f} Å. "
+            f"The same VH as a single chain: {jk['vh_ok10']}/{jk['vh_n']} within 10 Å, median {jk['vh_med']:.0f} Å, ipTM {jk['vh_iptm']:.2f}. "
+            "So the settings are not the cause; for a lone de novo VHH, ipTM carries no pose information (Spearman 0.08).") if jk else "Branch check pending."
     return f'''<section id="pose">
-<p class="eyebrow">DOES ANY SCORER REPRODUCE THE DESIGNED POSE?</p>
-<h2>Pose recovery on the full HER2 domain and on a cropped HER2</h2>
+<p class="eyebrow">POSE RECOVERY</p>
+<h2>No scorer recovers the designed poses</h2>
 <div class="row" style="gap:48px">
-<div class="col" style="width:1060px;gap:16px">
-{table(["Scorer", "HER2", "Designs", "Pose Å", "≤ 20 Å", "scRMSD Å", "pDockQ2"], rows, [34, 17, 10, 9, 12, 10, 8], fs=24)}
-<p class="small">Pose = VHH CA RMSD to the designed VHH after fitting the predicted HER2 on the designed HER2; medians over designs. Cropped = HER2 539–607, which keeps every epitope residue.</p>
+<div class="col" style="width:960px;gap:14px">
+{table(["Scorer", "HER2", "Designs", "Pose Å", "≤ 20 Å", "scRMSD Å"], rows, [40, 12, 12, 12, 14, 10], fs=24)}
+<p class="small">{E(cap)}</p>
 </div>
-<div class="col" style="flex:1;gap:16px">
-<div class="card-dark" style="padding:24px"><p class="card-title" style="font-size:30px">Full domain</p><p class="card-text" style="font-size:24px">{E(ftxt)}</p></div>
-<div class="card" style="padding:24px"><p class="card-title" style="font-size:30px">Cropped re-run</p><p class="card-text" style="font-size:24px">{E(ctxt)}</p></div>
+<div class="col" style="flex:1;gap:14px">
+<div class="card-dark" style="padding:22px"><p class="card-title" style="font-size:30px">Cropping HER2 helps a little</p><p class="card-text" style="font-size:24px">{E(ctxt)}</p></div>
+<div class="card" style="padding:22px"><p class="card-title" style="font-size:30px">Jakob’s branch as a check</p><p class="card-text" style="font-size:24px">{E(jtxt)}</p></div>
 </div>
 </div>
-<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">The binding scores are filters of unknown validity, not pose or affinity predictors.</p></div>
-{foot("Sources: denovo/validation/pose_check_vm.py, denovo/vm_templated/make_crop.py and collect_crop.py, denovo/s3_score/run_crop.py; results/denovo/pose_check_vm.csv, crop/of3_crop.csv, crop/dde_crop.csv.")}
-{note("The open question was whether the templated OpenFold3 reproduces the designed binding pose better than the other scorers, in which case the others would be dropped from the ranking. It does not on the full domain, so none was dropped. The cropped re-run asks a different question: if the models cannot place the VHH on the far side of the domain, do they find the designed pose? The table shows both runs side by side, and the card compares the full and cropped runs on exactly the same designs, because the cropped set is a prioritised subset (gate passers first). Whether the cropped scores enter the ranking is a separate, recorded decision.")}
+{foot("Sources: results/denovo/pose_check_vm.csv, crop/, jakob_check.csv; CONTRACT.md decisions 16:27 and 17:0x.")}
+{note("We asked every scorer to find the pose we designed and none does. OpenFold3 without an MSA misfolds the VHH; ESMFold-2 and OpenDDE place it far from the designed site; cropping HER2 so the models cannot wander improves OpenDDE only partly. Jakob’s branch shows the settings are not at fault: paired-Fv redesigns of trastuzumab are recovered, a single-chain VH is not. So the binding axis ranks designs, but none of its scores is a validated pose or affinity predictor.")}
 </section>'''
 
 

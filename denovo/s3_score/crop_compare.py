@@ -1,5 +1,5 @@
 """Compare OpenDDE-abag on the cropped HER2 (results/denovo/crop/dde_crop.csv) with the full-domain OpenDDE runs on the same designs, and
-print the decoy-based gate thresholds on the crop.   baseline/.venv/bin/python denovo/s3_score/crop_compare.py"""
+print the decoy-based gate thresholds on the crop.   denovo/.venv/bin/python denovo/s3_score/crop_compare.py"""
 import numpy as np
 import pandas as pd
 

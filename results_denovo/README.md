@@ -1,6 +1,6 @@
 # Snapshot of the de novo pipeline results
 
-Written 2026-11-14 16:50 (local time) by `denovo/snapshot.py` from the pipeline's `results/denovo` folder. Scores are filters, not binding evidence: nothing here has been measured in the lab.
+Written 2026-11-14 16:53 (local time) by `denovo/snapshot.py` from the pipeline's `results/denovo` folder. Scores are filters, not binding evidence: nothing here has been measured in the lab.
 
 | file | rows | what |
 |---|---|---|
@@ -29,6 +29,6 @@ Written 2026-11-14 16:50 (local time) by `denovo/snapshot.py` from the pipeline'
 | `validity.csv` | 1480 | structure / sequence validity checks of the RFD4 outputs |
 | `gapcheck.csv` | 2080 | distance of each designed VHH to the unresolved HER2 loop 581-590 (AlphaFold loop) |
 | `crop/dde_crop.csv` | 170 | cropped-HER2 (539-607) re-run: scores / metrics |
-| `crop/of3_crop.csv` | 153 | cropped-HER2 (539-607) re-run: scores / metrics |
+| `crop/of3_crop.csv` | 170 | cropped-HER2 (539-607) re-run: scores / metrics |
 | `crop/set.csv` | 170 | cropped-HER2 (539-607) re-run: design set |
-| `dde_compare.csv` | 6 | designed vs OpenDDE pose of the top 10 (the PyMOL session itself is not stored) |
+| `dde_compare.csv` | 10 | designed vs OpenDDE pose of the top 10 (the PyMOL session itself is not stored) |
