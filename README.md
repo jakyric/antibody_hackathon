@@ -7,6 +7,15 @@ framework, so anyone can run it.
 This is one person's branch of the shared repository. It holds methods and tests only: no data, no model
 outputs and no candidate lists.
 
+The measured numbers behind the write-up are in `results/`, so any claim in it
+can be recomputed rather than believed: `folding/calibration.csv` (does a score
+order variants whose affinity is known), `folding/agreement.csv` (do the models
+agree with each other), `folding/vs_trastuzumab.csv` (how each design compares
+with the clinical baseline), `folding/scores.csv` (every score, every model) and
+`epitope/epitope.csv` (contact overlap). Sequence columns are stripped by
+`scripts/share_results.py` before anything is copied here, and a test asserts
+that none survive.
+
 **Start with [FINDINGS.md](FINDINGS.md).** It is the single record of what we measured and what it means,
 including the things that did not work. The code here is what produced those numbers; the write-up is where
 they are interpreted, with their intervals and their caveats. Where the two disagree, the write-up is the
