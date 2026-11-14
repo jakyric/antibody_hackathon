@@ -1,0 +1,3 @@
+# name      git remote                                              pinned commit   installed with
+TNP         https://github.com/oxpig/TNP                           ea619d1         pip install -e tools/TNP        (inside env `tnp`)
+nanomelt    https://gitlab.doc.ic.ac.uk/sormanni-lab/nanomelt      dc6a141         pip install -e tools/nanomelt   (inside env `nanomelt`)

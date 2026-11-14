@@ -18,3 +18,7 @@ optimization/baseline/.venv/
 /results/
 /nebius-runs/
 denovo/STOP
+
+# de novo run state (pids, logs) and caches
+denovo/.run/
+denovo/**/cache/

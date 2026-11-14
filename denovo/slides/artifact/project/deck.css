@@ -1,0 +1,97 @@
+:root {
+  --ink: #12212F;
+  --ink2: #1D3349;
+  --paper: #F4F3EE;
+  --card: #FBFAF6;
+  --line: #D7D5CA;
+  --text: #1B2733;
+  --muted: #4F5C69;
+  --teal: #0C7473;
+  --teal-l: #5ED3C7;
+  --amber: #B4620A;
+  --amber-l: #F4B55F;
+  --red: #A63A2B;
+  --soft-teal: #D5ECE9;
+  --soft-amber: #F6E3C6;
+  --soft-red: #F3D9D3;
+}
+
+body { font-family: 'Inter', Arial, sans-serif; color: #1B2733; }
+
+section {
+  background: #F4F3EE;
+  color: #1B2733;
+  padding: 128px 128px 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  counter-increment: page;
+  font-family: 'Inter', Arial, sans-serif;
+}
+section::after {
+  content: counter(page);
+  position: absolute;
+  right: 128px;
+  bottom: 64px;
+  font-size: 24px;
+  color: #4F5C69;
+}
+section.dark { background: #12212F; color: #EAF0F4; }
+section.dark::after { color: #9FB3C3; }
+
+section h1 { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 92px; font-weight: 600; line-height: 1.05; color: #EAF0F4; }
+section h2 { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 60px; font-weight: 600; line-height: 1.08; color: #12212F; }
+section h3 { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 34px; font-weight: 600; line-height: 1.15; color: #12212F; }
+section.dark h2, section.dark h3 { color: #EAF0F4; }
+
+.eyebrow { font-size: 24px; font-weight: 600; letter-spacing: 2px; color: #0C7473; }
+section.dark .eyebrow { color: #5ED3C7; }
+.lead { font-size: 32px; line-height: 1.35; color: #4F5C69; }
+section.dark .lead { color: #B7C7D4; }
+.body { font-size: 28px; line-height: 1.38; color: #1B2733; }
+.muted { font-size: 28px; line-height: 1.38; color: #4F5C69; }
+.small { font-size: 24px; line-height: 1.35; color: #4F5C69; }
+section.dark .small { color: #9FB3C3; }
+
+.row { display: flex; gap: 32px; }
+.col { display: flex; flex-direction: column; gap: 20px; }
+
+.card { background: #FBFAF6; border: 1px solid #D7D5CA; border-radius: 16px; padding: 32px; display: flex; flex-direction: column; gap: 12px; }
+.card-dark { background: #1D3349; border: 1px solid #2D4A66; border-radius: 16px; padding: 32px; display: flex; flex-direction: column; gap: 12px; }
+.card-title { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 34px; font-weight: 600; line-height: 1.15; color: #12212F; }
+.card-text { font-size: 28px; line-height: 1.35; color: #4F5C69; }
+.card-dark .card-title { color: #EAF0F4; }
+.card-dark .card-text { color: #B7C7D4; }
+
+.num { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 112px; font-weight: 600; line-height: 1; color: #0C7473; }
+.num-amber { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 112px; font-weight: 600; line-height: 1; color: #B4620A; }
+.num-red { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 112px; font-weight: 600; line-height: 1; color: #A63A2B; }
+.cap { font-size: 26px; line-height: 1.3; color: #4F5C69; }
+
+.pill { font-size: 24px; font-weight: 600; padding: 8px 20px; border-radius: 999px; background: #D5ECE9; color: #0A4F4E; }
+.pill-amber { font-size: 24px; font-weight: 600; padding: 8px 20px; border-radius: 999px; background: #F6E3C6; color: #6B3A05; }
+.pill-red { font-size: 24px; font-weight: 600; padding: 8px 20px; border-radius: 999px; background: #F3D9D3; color: #7A2418; }
+.pill-dark { font-size: 24px; font-weight: 600; padding: 8px 20px; border-radius: 999px; background: #2D4A66; color: #EAF0F4; }
+
+.stage { background: #FBFAF6; border: 1px solid #D7D5CA; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.stage-num { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 24px; font-weight: 600; letter-spacing: 2px; color: #0C7473; }
+.stage-name { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 40px; font-weight: 600; color: #12212F; }
+.stage-text { font-size: 26px; line-height: 1.3; color: #4F5C69; }
+
+.bar { border-radius: 8px 8px 0 0; }
+.hbar { border-radius: 0 8px 8px 0; height: 44px; }
+.lab { font-size: 26px; line-height: 1.25; color: #1B2733; }
+.val { font-family: 'Space Grotesk', 'Inter', Arial, sans-serif; font-size: 28px; font-weight: 600; color: #12212F; }
+
+.foot { position: absolute; left: 128px; bottom: 64px; width: 1500px; font-size: 24px; color: #4F5C69; }
+section.dark .foot { color: #9FB3C3; }
+
+.prelim { font-size: 24px; font-weight: 600; letter-spacing: 1px; padding: 8px 18px; border-radius: 8px; background: #F6E3C6; color: #6B3A05; }
+.live { font-size: 24px; font-weight: 600; letter-spacing: 1px; padding: 8px 18px; border-radius: 8px; background: #D5ECE9; color: #0A4F4E; }
+
+.box { border: 2px solid #0C7473; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; background: #FBFAF6; }
+.box-k { font-size: 24px; font-weight: 600; color: #0C7473; }
+.box-v { font-size: 26px; line-height: 1.25; color: #1B2733; }
+.box-free { border: 2px dashed #C2C0B4; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; background: #F4F3EE; }
+.box-free .box-k { color: #6C7783; }
+.box-free .box-v { color: #6C7783; }

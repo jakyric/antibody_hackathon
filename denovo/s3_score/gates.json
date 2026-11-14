@@ -1,0 +1,41 @@
+{
+ "models": {
+  "af2ig": {
+   "metric": "interface_pae",
+   "direction": "low",
+   "thr": 16.15217,
+   "epi_min": 0.5,
+   "n_decoys": 34,
+   "recall_cognate_vhh": 0.2,
+   "auc_vhh_real": 0.4426470588235294
+  },
+  "dde": {
+   "metric": "min_ipae",
+   "direction": "low",
+   "thr": 0.43381957709789276,
+   "epi_min": 0.5,
+   "n_decoys": 46,
+   "recall_cognate_vhh": 0.4,
+   "auc_vhh_real": 0.725
+  },
+  "esm2": {
+   "metric": "ipsae_chn15",
+   "direction": "high",
+   "thr": 0.8479893654584885,
+   "epi_min": 0.5,
+   "n_decoys": 46,
+   "recall_cognate_vhh": 0.2,
+   "auc_vhh_real": 0.6367647058823529
+  },
+  "of3": {
+   "metric": "ipsae_chn15",
+   "direction": "high",
+   "thr": 0.47350412607192993,
+   "epi_min": 0.5,
+   "n_decoys": 77,
+   "recall_cognate_vhh": 0.3,
+   "auc_vhh_real": 0.5897058823529412
+  }
+ },
+ "note": "thr = 95th percentile of decoys (vhh negatives + lysozyme decoys + framework-only VHHs)"
+}

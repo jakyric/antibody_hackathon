@@ -1,0 +1,10 @@
+# Python packages for the de novo pipeline (installed into denovo/.venv by denovo/setup.sh).
+# NanoMelt and TNP live in their own micromamba environments (denovo/env/), not here.
+numpy>=2.0
+pandas>=2.2
+scipy>=1.11
+pyarrow>=15
+rapidfuzz>=3.9
+biopython>=1.83
+requests>=2.31
+immunum==2.0.0      # pinned: the abguard build uses immunum 2.0.0; the S2 gate replica must number sequences identically
