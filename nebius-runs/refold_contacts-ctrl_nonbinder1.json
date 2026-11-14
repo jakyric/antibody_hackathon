@@ -1,0 +1,11 @@
+{
+ "label": "refold_contacts-ctrl_nonbinder1",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold_contacts-ctrl_nonbinder1",
+ "kind": "inline",
+ "submitted_at": 1794654726.6322837,
+ "operation_id": "op-baf7ffa7a361fa15",
+ "state": "succeeded",
+ "total_seconds": 64
+}

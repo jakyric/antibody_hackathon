@@ -1,0 +1,11 @@
+{
+ "label": "refold-cand05",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold-cand05",
+ "kind": "inline",
+ "submitted_at": 1794653319.3370032,
+ "operation_id": "op-d3ce348a5be8e222",
+ "state": "succeeded",
+ "total_seconds": 126
+}

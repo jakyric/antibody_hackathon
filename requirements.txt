@@ -1,0 +1,7 @@
+numpy
+pandas
+scipy
+scikit-learn
+h5py
+blosum
+immunum

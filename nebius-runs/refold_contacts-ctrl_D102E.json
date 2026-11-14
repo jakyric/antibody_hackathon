@@ -1,0 +1,11 @@
+{
+ "label": "refold_contacts-ctrl_D102E",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold_contacts-ctrl_D102E",
+ "kind": "inline",
+ "submitted_at": 1794654694.438556,
+ "operation_id": "op-4d0b37fcc52dc612",
+ "state": "succeeded",
+ "total_seconds": 64
+}

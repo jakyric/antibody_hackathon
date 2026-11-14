@@ -1,0 +1,11 @@
+{
+ "label": "refold-ctrl_D102E",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold-ctrl_D102E",
+ "kind": "inline",
+ "submitted_at": 1794653615.8732781,
+ "operation_id": "op-b69fea6eb609fef2",
+ "state": "succeeded",
+ "total_seconds": 127
+}

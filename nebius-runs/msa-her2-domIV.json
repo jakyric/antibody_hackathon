@@ -1,0 +1,11 @@
+{
+ "label": "msa-her2-domIV",
+ "model": "msa-search-pdb70",
+ "tool": "msa_search_native",
+ "key": "oslo-msa-search-pdb70-msa-her2-domIV",
+ "kind": "inline",
+ "submitted_at": 1794653163.0050519,
+ "operation_id": "op-f13022af8b78bb06",
+ "state": "succeeded",
+ "total_seconds": 32
+}

@@ -1,0 +1,10 @@
+# data, environments and secrets stay local
+data/
+baseline/.venv/
+__pycache__/
+*.zip
+*.joblib
+*.private.json
+participant-*/
+.claude/
+.env

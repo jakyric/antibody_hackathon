@@ -1,0 +1,11 @@
+{
+ "label": "fold-1zvy",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-fold-1zvy",
+ "kind": "inline",
+ "submitted_at": 1794650222.0402815,
+ "operation_id": "op-afa6145b4f908dbf",
+ "state": "succeeded",
+ "total_seconds": 125
+}

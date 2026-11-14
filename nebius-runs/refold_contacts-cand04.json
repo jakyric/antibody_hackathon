@@ -1,0 +1,11 @@
+{
+ "label": "refold_contacts-cand04",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold_contacts-cand04",
+ "kind": "inline",
+ "submitted_at": 1794654418.8642464,
+ "operation_id": "op-b8edc47b0f9fe1dd",
+ "state": "succeeded",
+ "total_seconds": 171
+}

@@ -1,0 +1,11 @@
+{
+ "label": "refold-ctrl_wt",
+ "model": "boltz2",
+ "tool": "boltz2_predict_native",
+ "key": "oslo-boltz2-refold-ctrl_wt",
+ "kind": "inline",
+ "submitted_at": 1794653705.1632512,
+ "operation_id": "op-f468477fbca1d91f",
+ "state": "succeeded",
+ "total_seconds": 125
+}

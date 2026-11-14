@@ -1,0 +1,11 @@
+pos,wt,her2_dist_A,facs_logit_if_mutated,spr_logit_if_mutated,contact,worst_case,chosen
+1,W,4.1,-0.14,-1.69,True,-1.69,False
+2,G,7.0,-0.85,-0.78,False,-0.85,True
+3,G,5.9,-0.95,0.26,False,-0.95,True
+4,D,5.1,0.19,0.92,False,0.19,True
+5,G,2.4,-0.03,-0.93,True,-0.93,False
+6,F,4.3,-0.48,-1.39,True,-1.39,False
+7,Y,3.3,-0.06,-1.95,True,-1.95,False
+8,A,6.8,-0.68,-0.4,False,-0.68,True
+9,M,9.4,-0.04,-0.69,False,-0.69,True
+10,D,9.3,-1.53,0.07,False,-1.53,False
