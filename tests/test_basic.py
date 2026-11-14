@@ -10,6 +10,9 @@ from pipeline.common import VERNIER, WT_H3, WT_VH, WT_VL, build_fv, mutations, o
 from pipeline.s1_enumerate import liabilities, substitution_table  # noqa: E402
 from pipeline.s2_panel import vernier_options  # noqa: E402
 from pipeline.s6_score import d0, ipsae, ilis  # noqa: E402
+from pipeline.s5b_pose import kabsch, rmsd  # noqa: E402
+from pipeline.s7_rank import apply_salt_bridge_rule  # noqa: E402
+import pandas as pd  # noqa: E402
 
 
 def test_mutations_and_fv():
@@ -50,6 +53,24 @@ def test_ipsae_ilis_extremes():
 
 def test_onehot_shape():
     assert onehot(["WGGDGFYAMD"]).sum() == 10
+
+
+def test_salt_bridge_rule():
+    bridge = pd.Series([True, True, False, False, False, False])
+    p10 = pd.Series([False, True, True, False, True, False])       # position 10 changed
+    h94 = pd.Series([False, False, True, False, False, True])      # H94 swapped
+    r = apply_salt_bridge_rule(bridge, p10, h94).tolist()
+    assert r == ["salt bridge present", "salt bridge present", "both partners mutated", "excluded", "excluded", "excluded"]
+
+
+def test_kabsch_recovers_a_rigid_motion():
+    rng = np.random.default_rng(1)
+    P = rng.normal(size=(40, 3))
+    th = 0.7
+    R0 = np.array([[np.cos(th), -np.sin(th), 0], [np.sin(th), np.cos(th), 0], [0, 0, 1]])
+    Q = P @ R0.T + np.array([3.0, -2.0, 1.0])
+    R, t = kabsch(P, Q)
+    assert rmsd(P @ R.T + t, Q) < 1e-9
 
 
 if __name__ == "__main__":

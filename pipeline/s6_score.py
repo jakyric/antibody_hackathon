@@ -1,6 +1,7 @@
-"""Stage 6: ipSAE and iLIS from the PAE matrices of the designs that pass the contact pre-filter.
+"""Stage 6: ipSAE and iLIS from the PAE matrices.
 
-PAE matrices are large (~1.4 MB), so only designs that are docked (ipTM) and keep the crystal contacts are downloaded.
+PAE matrices are large (~1.4 MB each). `score.scope: all` (default) scores every fold so the plots cover the whole panel;
+`filtered` downloads only designs that are docked (ipTM) and keep the crystal contacts.
   ipSAE (Dunbrack 2025, d0res form, PAE cut-off 10 A): max over residues of the mean TM-like score over partner
          residues with PAE < cut-off; asymmetric values are combined by max.
   iLIS  (Kim et al.): sqrt(LIS * cLIS), LIS = mean of (12 - PAE)/12 over PAE < 12 A, cLIS the same restricted to
@@ -70,20 +71,27 @@ def score_one(npz, pdb) -> dict:
 
 def prefilter(cfg: dict) -> pd.DataFrame:
     r = cfg["rank"]
-    d = pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "contacts.csv")), on="id")
+    d = (pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "contacts.csv")), on="id")
+         .merge(pd.read_csv(out(cfg, "pose.csv")), on="id"))
     design = ~d.id.str.startswith("ctrl_")
-    ok = ((d.iptm >= r["min_iptm"]) & (d.if_recall >= r["min_interface_recall"]) & (d.if_h3_missing <= r["max_h3_pairs_missing"])
+    ok = ((d.iptm >= r["min_iptm"]) & (d.epitope_rmsd <= r["max_epitope_rmsd"]) & (d.if_recall >= r["min_interface_recall"]) & (d.if_h3_missing <= r["max_h3_pairs_missing"])
           & (d.in_recall >= r["min_h3_rest_recall"]) & (d.in_polar_recall >= r["min_h3_rest_polar_recall"]))
     return d[(design & ok) | ~design]
 
 
 def run(cfg: dict) -> None:
-    sel = prefilter(cfg)
-    print(f"  {int((~sel.id.str.startswith('ctrl_')).sum())} designs pass the contact pre-filter (+ controls)")
+    scope = cfg.get("score", {}).get("scope", "all")            # all: score every fold (plots); filtered: only designs passing the contacts
+    sel = prefilter(cfg) if scope == "filtered" else pd.read_csv(out(cfg, "fold_scores.csv"))
+    print(f"  scoring {int((~sel.id.str.startswith('ctrl_')).sum())} designs (+ controls), scope={scope}")
     job = out(cfg, "job_id.txt").read_text().strip()
     pae_dir = out(cfg, "pae")
     JapanFold(cfg["fold"]["base_url"]).fetch_many(job, [f"{i}_pae.npz" for i in sel.id], pae_dir)
     rows = [dict(id=i, **score_one(pae_dir / f"{i}_pae.npz", out(cfg, "structures") / f"{i}.pdb")) for i in sel.id]
     pd.DataFrame(rows).to_csv(out(cfg, "scores.csv"), index=False)
-    save_summary(cfg, n_pass_contacts=int((~sel.id.str.startswith("ctrl_")).sum()),
-                 n_pass_contacts_h3=int(sel[~sel.id.str.startswith("ctrl_")].id.str.split("_").str[0].nunique()))
+    pf = prefilter(cfg)
+    pf = pf[~pf.id.str.startswith("ctrl_")]
+    allf = pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "pose.csv")), on="id")
+    allf = allf[~allf.id.str.startswith("ctrl_")]
+    save_summary(cfg, n_epitope_ok=int(((allf.iptm >= cfg["rank"]["min_iptm"]) & (allf.epitope_rmsd <= cfg["rank"]["max_epitope_rmsd"])).sum()),
+                 n_epitope_ok_any_iptm=int((allf.epitope_rmsd <= cfg["rank"]["max_epitope_rmsd"]).sum()))
+    save_summary(cfg, n_pass_contacts=int(len(pf)), n_pass_contacts_h3=int(pf.id.str.split("_").str[0].nunique()))

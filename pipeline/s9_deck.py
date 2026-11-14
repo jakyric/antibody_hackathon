@@ -163,7 +163,8 @@ def run(cfg: dict) -> None:
     top = json.load(open(fin / "top_candidates.json"))["candidates"]
     fig = out(cfg, "figures")
     pose = json.load(open(fig / "pose_rmsd.json"))
-    folds = pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "contacts.csv")), on="id", how="left")
+    folds = (pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "contacts.csv")), on="id", how="left")
+             .merge(pd.read_csv(out(cfg, "pose.csv")), on="id", how="left"))
     scores = pd.read_csv(out(cfg, "scores.csv"))
     meta = pd.read_csv(out(cfg, "panel_meta.csv"))
     ctrl = folds[folds.id.str.startswith("ctrl_")].merge(scores, on="id", how="left").set_index("id")
@@ -188,7 +189,8 @@ def run(cfg: dict) -> None:
         [("CDR-H3: ", True), (f"BLOSUM-45 substitutions (Moritz's recipe) at the {len(cfg['design']['positions'])} positions that do not touch HER2, 3–4 changes from the base", False)],
         [("Vernier zone: ", True), ("conservative BLOSUM-45 swaps at H94, H93, H47, L36, L46, L49, only where they touch a changed H3 position", False)],
         [("Evaluation: ", True), ("OpenDDE folds scored with ipTM, ipSAE, iLIS and GetContacts (Fv–HER2 and CDR-H3 against the rest, vs the crystal)", False)],
-        [("Result: ", True), (f"{S['n_top']} candidates ({S['n_top_h3']} distinct CDR-H3); {S['n_top_salt_bridge']} keep the R98–D108 salt bridge", False)]], size=18, space=10)
+        [("Rule: ", True), ("a design is kept only if the R98–position-10 salt bridge is present, or if both partners are mutated", False)],
+        [("Result: ", True), (f"{S['n_top']} candidates ({S['n_top_h3']} distinct CDR-H3): {S['n_top_salt_bridge']} keep the salt bridge, {S['n_top_both_mutated']} mutate both partners", False)]], size=18, space=10)
     # 3 starting point
     s = D.slide("Heading and text (2 columns)", "Starting point and constraints")
     D.fill(D.ph(s, 1).text_frame, [[("Rules a design has to pass", True)],
@@ -215,7 +217,7 @@ def run(cfg: dict) -> None:
     s = D.slide("Heading and Text (3 columns)", "CDR-H3 redesign rationale")
     D.fill(D.ph(s, 1).text_frame, [[("Start", True)], f"The best tested loop {base}, not wild type", "Mutations are counted from it, so every design stays ≥3 edits from all known loops"], size=16, space=8)
     D.fill(D.ph(s, 11).text_frame, [[("Restrict", True)], "Positions 1, 5, 6, 7 touch HER2 and stay fixed", "Substitutions follow the paper's BLOSUM-45 recipe: P(b|a) ∝ f_b·exp(0.25·s_ab), top 6 per position"], size=16, space=8)
-    D.fill(D.ph(s, 10).text_frame, [[("Filter", True)], "No Cys, no extra liabilities, novelty vs the 525k known sequences, then abguard", "D10 is allowed on request, although no non-D10 loop beat WT in the SPR data"], size=16, space=8)
+    D.fill(D.ph(s, 10).text_frame, [[("Filter", True)], "No Cys, no extra liabilities, novelty vs the 525k known sequences, then abguard", "D10 is allowed, but a design needs the R98–position-10 salt bridge, or both partners mutated"], size=16, space=8)
     # 6 Vernier
     s = D.slide("Heading and Graphic (1 column)", "Vernier-zone rationale")
     D.drop(s, 1)
@@ -230,27 +232,29 @@ def run(cfg: dict) -> None:
     D.drop(s, 1)
     steps = [(f"{S['n_raw']:,}", f"designs: 3–4 BLOSUM-45 changes from {base} at the H3 positions"), (f"{S['n_enum']:,}", "no Cys, liabilities ≤ WT, ≥3 from every known sequence"),
              (f"{S['n_panel']}", f"sequences: {S['n_shortlist']} diverse H3 variants × Vernier genotypes"), (f"{S['n_valid']}", f"pass abguard ({S['n_valid_h3']} H3 variants)"),
-             (f"{S['n_folded']}", "folded with OpenDDE (incl. 4 controls)"), (f"{S['n_docked']}", "docked: ipTM ≥ 0.9"),
-             (f"{S['n_pass_contacts']}", f"keep the crystal contacts ({S['n_pass_contacts_h3']} H3 variants)"), (f"{S['n_top']}", "best by iLIS, ≤3 per H3")]
+             (f"{S['n_folded']}", "folded with OpenDDE (incl. 4 controls)"), (f"{S['n_epitope_ok']}", f"docked (ipTM ≥ 0.9) on the crystal epitope (RMSD ≤ {cfg['rank']['max_epitope_rmsd']:g} Å)"),
+             (f"{S['n_pass_contacts']}", f"keep the crystal contacts ({S['n_pass_contacts_h3']} H3 variants)"), (f"{S['n_after_salt_rule']}", f"salt-bridge rule: bridge present or both partners mutated ({S['n_after_salt_rule_h3']} H3)"),
+             (f"{S['n_top']}", "best by iLIS, ≤3 per H3")]
     y = 1.2
     for i, (n, t) in enumerate(steps):
-        r = D.box(s, 0.92, y, 2.1, 0.58, [DB, BL, BL, TE, TE, GR, GR, GR][i], MSO_SHAPE.ROUNDED_RECTANGLE)
+        r = D.box(s, 0.92, y, 2.1, 0.54, [DB, BL, BL, TE, TE, GR, GR, GR, GR][i], MSO_SHAPE.ROUNDED_RECTANGLE)
         r.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
         p = r.text_frame.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run_ = p.add_run()
         run_.text, run_.font.size, run_.font.bold, run_.font.color.rgb = n, Pt(22), True, WHITE
         D.text(s, 3.25, y + 0.05, 9.2, 0.5, [t], size=16, anchor=MSO_ANCHOR.MIDDLE)
-        y += 0.68
+        y += 0.62
     # 8 controls table
     s = D.slide("Heading and Graphic (1 column)", "Calibration on measured controls")
     D.drop(s, 1)
     names = {"ctrl_base": "Base loop (0.023 nM)", "ctrl_wt": "Trastuzumab (0.11 nM)", "ctrl_nonbinder1": "Non-binder 1", "ctrl_nonbinder2": "Non-binder 2"}
     rows = [[names[i], f"{ctrl.loc[i, 'iptm']:.3f}", f"{ctrl.loc[i, 'ipsae']:.3f}", f"{ctrl.loc[i, 'ilis']:.3f}", f"{ctrl.loc[i, 'if_recall']:.2f}",
-             f"{ctrl.loc[i, 'in_recall']:.2f}", "yes" if ctrl.loc[i, "salt_bridge_r98_pos10"] else "no"] for i in names]
-    D.table(s, 0.92, 1.3, [2.7, 1.2, 1.2, 1.2, 1.7, 1.9, 1.6], rows, ["Control", "ipTM", "ipSAE", "iLIS", "HER2 contacts kept", "H3-vs-rest kept", "R98–D108 salt bridge"], size=13, rowh=0.5)
+             f"{ctrl.loc[i, 'in_recall']:.2f}", f"{ctrl.loc[i, 'epitope_rmsd']:.1f}", "yes" if ctrl.loc[i, "salt_bridge_r98_pos10"] else "no"] for i in names]
+    D.table(s, 0.92, 1.3, [2.5, 0.95, 0.95, 0.95, 1.55, 1.6, 1.5, 1.5], rows, ["Control", "ipTM", "ipSAE", "iLIS", "HER2 contacts kept", "H3-vs-rest kept", "Epitope RMSD (Å)", "R98–D108 salt bridge"], size=12, rowh=0.5)
     D.text(s, 0.92, 4.3, 11.5, 2.2, ["Only the base loop docks in the crystal pose; the wild-type prediction scores like the non-binders, so these metrics measure \"looks like the base loop and docks\", not affinity.",
            "Contacts kept: share of the crystal's 27 Fv–HER2 residue pairs (interface) and of its CDR-H3-vs-rest pairs found in the prediction.",
+           "Epitope RMSD: C-alpha RMSD of the 19 crystal HER2 epitope residues after fitting the Fv framework; the base loop is 1.3 Å, trastuzumab's own prediction binds elsewhere.",
            "The base loop's own prediction sets the pass level for the contact filter."], size=14)
     # 9 GetContacts chart
     s = D.slide("Heading and Graphic (1 column)", "GetContacts: interface and CDR-H3 against the rest")
@@ -260,6 +264,21 @@ def run(cfg: dict) -> None:
     D.text(s, 8.6, 1.3, 3.9, 5.0, [[("Two views: ", True), (f"Fv vs HER2 ({S['crystal_if_pairs']} crystal pairs) and CDR-H3 vs the rest of the Fv ({S['crystal_intra_pairs']} pairs).", False)],
            [("CDR-H3 vs rest ", True), ("covers the Vernier contacts, the VL contacts of positions 8–9 and the R98–D108 salt bridge.", False)],
            [("Filter: ", True), (f"≥{cfg['rank']['min_interface_recall']:.0%} of interface pairs, ≤{cfg['rank']['max_h3_pairs_missing']} H3–HER2 pair missing, ≥{cfg['rank']['min_h3_rest_recall']:.0%} of CDR-H3-vs-rest pairs.", False)]], size=14)
+    # 9b score distributions with trastuzumab marked
+    s = D.slide("Heading and Graphic (1 column)", "Scores and contacts with trastuzumab marked")
+    D.drop(s, 1)
+    D.picture(s, fig / "fig_distributions.png", 0.92, 1.15, 8.4, 5.4)
+    D.text(s, 9.45, 1.3, 3.2, 5.2, [[("Red: ", True), ("trastuzumab, predicted by the same model as the designs.", False)],
+           [("Dotted: ", True), (f"the crystal, {S['crystal_if_pairs']} Fv–HER2 and {S['crystal_intra_pairs']} CDR-H3-vs-rest pairs.", False)],
+           [("Dashed green: ", True), ("the best tested loop.", False)],
+           "The wild-type prediction does not dock (ipSAE ≈ 0.02, epitope 30 Å away), so it sits at the low end of every score.",
+           f"Every design with ipTM ≥ {cfg['rank']['min_iptm']} lies within 3 Å of the crystal epitope: if a design docks, it docks on the same epitope."], size=12)
+    s = D.slide("Heading and Graphic (1 column)", "ipSAE against iLIS")
+    D.drop(s, 1)
+    D.picture(s, fig / "fig_ipsae_ilis.png", 0.92, 1.15, 7.4, 5.4)
+    D.text(s, 8.6, 1.3, 3.9, 5.2, [[("Two populations: ", True), ("designs that dock (high ipSAE) and designs that do not.", False)],
+           [("Colour: ", True), ("number of Fv–HER2 residue-pair contacts.", False)],
+           [("Orange rings: ", True), ("the final list. Star: trastuzumab; square: best tested loop; crosses: measured non-binders.", False)]], size=13)
     # 10 vernier effects
     s = D.slide("Heading and Graphic (1 column)", "Vernier swaps in the OpenDDE folds")
     D.drop(s, 1)
@@ -285,9 +304,9 @@ def run(cfg: dict) -> None:
         rows = []
         for c in top[lo:lo + 10]:
             runs = [(m["mutation"] + " ", m["origin"] == "new in this work") for m in c["mutations_vs_wt"]]
-            rows.append([str(c["rank"]), c["cdrh3"], runs, c["vernier_mutations"][0] if c["vernier_mutations"] else "none (WT)", f"{c['ilis']:.3f}", f"{c['ipsae']:.3f}", "yes" if c["salt_bridge_r98_pos10"] else "no"])
-        D.table(s, 0.92, 1.2, [0.7, 1.9, 4.0, 1.5, 1.0, 1.0, 1.4], rows, ["Rank", "CDR-H3", "CDR-H3 mutations vs WT", "Vernier", "iLIS", "ipSAE", "Salt bridge"], size=12, rowh=0.45, bold_cols=(1,))
-        D.text(s, 0.92, 6.3, 11.5, 0.5, [f"Bold = new in this work, regular = from the base loop. Salt bridge: R98 (H94) – position 10. Ranked by iLIS (ipSAE tie-break), ≤{cfg['rank']['max_per_h3']} per CDR-H3."], size=11, color=GY)
+            rows.append([str(c["rank"]), c["cdrh3"], runs, c["vernier_mutations"][0] if c["vernier_mutations"] else "none (WT)", f"{c['ilis']:.3f}", f"{c['ipsae']:.3f}", "present" if c["salt_bridge_rule"] == "salt bridge present" else "both mutated"])
+        D.table(s, 0.92, 1.2, [0.7, 1.9, 3.8, 1.4, 0.9, 0.9, 1.9], rows, ["Rank", "CDR-H3", "CDR-H3 mutations vs WT", "Vernier", "iLIS", "ipSAE", "R98–pos 10"], size=12, rowh=0.45, bold_cols=(1,))
+        D.text(s, 0.92, 6.3, 11.5, 0.5, [f"Bold = new in this work, regular = from the base loop. R98–pos 10: salt bridge present, or both partners mutated. Ranked by iLIS (ipSAE tie-break), ≤{cfg['rank']['max_per_h3']} per CDR-H3."], size=11, color=GY)
     # 14 pipeline
     s = D.slide("Heading and Graphic (1 column)", "Reproducible pipeline")
     D.drop(s, 1)
@@ -299,7 +318,7 @@ def run(cfg: dict) -> None:
     # 15 caveats
     s = D.slide("Heading and text (2 columns)", "Caveats and next steps")
     D.fill(D.ph(s, 1).text_frame, [[("Caveats", True)], ("Single-seed folds: top scores are within noise", 1), ("ipTM, ipSAE, iLIS and contacts all come from one model; none predicts affinity", 1),
-           (f"The base loop has one SPR replicate; trastuzumab has eight", 1), (f"Only {S['n_top_salt_bridge']} of the top {S['n_top']} keep the R98–D108 salt bridge; no non-D10 loop beat WT in the data", 1)], size=15, space=8)
+           (f"The base loop has one SPR replicate; trastuzumab has eight", 1), (f"{S['n_top_both_mutated']} designs have no salt bridge but mutate both partners (D10 + H94); the compensation is untested", 1), ("No non-D10 loop beat WT in the SPR data", 1)], size=15, space=8)
     D.fill(D.ph(s, 2).text_frame, [[("Next steps", True)], ("Repeat the folds with 3 seeds for the shortlist", 1), ("Independent ΔΔG estimate (FoldX or Rosetta)", 1),
            ("Prefer designs that keep the salt bridge", 1), ("Choose submissions for diversity, not rank alone", 1)], size=15, space=8)
     path = out(cfg, "final") / "HER2_H3_Vernier_redesign.pptx"

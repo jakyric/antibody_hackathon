@@ -20,12 +20,14 @@ STAGES = [  # name, module, one-line description
     ("validate", "s3_validate", "organisers' abguard gate (novelty, liabilities, Cys parity)"),
     ("fold", "s4_fold", "JapanFold OpenDDE antibody-antigen folds of all sequences + controls"),
     ("contacts", "s5_contacts", "GetContacts: Fv-HER2 interface and CDR-H3-vs-rest, vs the crystal"),
+    ("pose", "s5b_pose", "RMSD to the crystal after fitting the Fv framework: same HER2 epitope?"),
     ("score", "s6_score", "ipSAE and iLIS from PAE for designs passing the contact pre-filter"),
     ("rank", "s7_rank", "final filter, ranking and export (JSON / FASTA / CSV)"),
     ("figures", "s8_figures", "PyMOL structure figures (optional)"),
+    ("plots", "s10_plots", "score distributions and ipSAE-iLIS plane with trastuzumab marked (optional)"),
     ("deck", "s9_deck", "PowerPoint summary from a template (optional)"),
 ]
-DEFAULT = [s[0] for s in STAGES[:7]]
+DEFAULT = [s[0] for s in STAGES[:8]]
 
 
 def main() -> None:

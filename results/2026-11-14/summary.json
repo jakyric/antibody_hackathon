@@ -17,5 +17,11 @@
  "n_pass_contacts_h3": 16,
  "n_top": 20,
  "n_top_h3": 11,
- "n_top_salt_bridge": 11
+ "n_top_salt_bridge": 17,
+ "n_after_salt_rule": 24,
+ "n_after_salt_rule_h3": 11,
+ "n_top_both_mutated": 3,
+ "n_epitope_residues": 19,
+ "n_epitope_ok": 201,
+ "n_epitope_ok_any_iptm": 222
 }

@@ -19,9 +19,10 @@ best tested CDR-H3 (WGSQGFYAYD, SPR 0.023 nM; trastuzumab 0.114 nM)
    │ 3 validate    organisers' abguard (edit-distance novelty, liabilities, Cys parity)
    │ 4 fold        JapanFold OpenDDE antibody-antigen, + 4 controls (WT, base loop, 2 measured non-binders)
    │ 5 contacts    GetContacts on every fold: Fv–HER2 interface and CDR-H3-vs-rest, compared with 1N8Z
-   │ 6 score       ipSAE and iLIS from PAE (only for designs that pass the contact pre-filter)
-   │ 7 rank        filter → rank by iLIS (ipSAE tie-break, ≤3 per CDR-H3) → JSON / FASTA / CSV
-   └ 8 figures, 9 deck   optional: PyMOL figures and a PowerPoint summary
+   │ 5b pose       RMSD to the crystal after fitting the Fv framework: HER2 epitope RMSD, HER2 RMSD, CDR-H3 RMSD
+   │ 6 score       ipSAE and iLIS from PAE for every fold (score.scope: filtered limits it to designs passing the contacts)
+   │ 7 rank        epitope RMSD → contact filter → salt-bridge rule → rank by iLIS (ipSAE tie-break, ≤3 per CDR-H3) → JSON / FASTA / CSV
+   └ 8 figures, 9 deck, 10 plots   optional: PyMOL figures, a PowerPoint summary, score distributions with trastuzumab marked
 ```
 
 Stages are decoupled by files in `paths.out_dir`, so any stage can be re-run alone.
@@ -36,7 +37,7 @@ export JAPANFOLD_API_KEY=...                                # https://japanfold.
 python run_pipeline.py --list
 python run_pipeline.py --stages enumerate panel             # data-only stages, no network
 python run_pipeline.py                                      # stages 1-7
-python run_pipeline.py --stages figures deck                # optional
+python run_pipeline.py --stages figures plots deck          # optional
 python tests/test_basic.py                                  # data-free unit tests
 ```
 
@@ -69,9 +70,23 @@ python tests/test_basic.py                                  # data-free unit tes
   CDR-H3). *Intra*: CDR-H3 (99–108) vs the rest of the Fv (22 pairs), which covers the Vernier and VL contacts and the
   R98–D108 salt bridge. HER2 residues 581–590 are unresolved in the crystal and ignored when counting new contacts.
   The base loop's own prediction sets the pass level (85% of interface pairs, 1 H3–HER2 pair missing).
+* **Same epitope (pose RMSD).** Every prediction is superposed on the 1N8Z crystal with the C-alpha atoms of the Fv
+  framework (VH without CDR-H3 + VL). `epitope_rmsd` is then the C-alpha RMSD of the 19 HER2 residues that touch the
+  crystal Fv; `her2_rmsd` covers all resolved HER2 residues and `h3_rmsd` the loop. The filter is epitope RMSD ≤ 3 Å
+  (the best tested loop's prediction is 1.3 Å; trastuzumab's own prediction is 30 Å away because it does not dock).
+  Every design with ipTM ≥ 0.9 is within 3 Å (median 1.2 Å), so in this run docking and binding the crystal epitope
+  coincide.
 * **ipSAE / iLIS** are re-implementations (Dunbrack d0res form, PAE < 10 Å; iLIS = √(LIS·cLIS), PAE < 12 Å, C-beta
   contacts < 8 Å). They have not been checked against the authors' code. In the controls both put the wild-type
   prediction in the non-binder range, so they read as "docks like the base loop", not as affinity.
+* **Salt-bridge rule (hard filter on the final list).** The R98 (H94) - position-10 salt bridge is the prominent
+  CDR-H3-to-framework contact. A design is kept if GetContacts finds that salt bridge in its fold; if it does not, the
+  design is kept only when **both** partners are mutated (an H94 swap *and* a changed position 10); a design with just
+  one mutated partner and no bridge is excluded. Keeping both partners mutated is a compensation hypothesis that no
+  data here can confirm.
+* **Plots.** `fig_distributions.png` shows iLIS, ipSAE and the contact counts (Fv-HER2 and CDR-H3-vs-rest residue
+  pairs) for all folded designs; `fig_ipsae_ilis.png` the ipSAE-iLIS plane. Trastuzumab is marked as the prediction of
+  its sequence (same model and pipeline as the designs) and, for contact counts, as the crystal value (27 and 22 pairs).
 * **Ridge ranking aid.** `ridge_sum` is an additive ridge model on log10 K_D of the 180 SPR designs (alpha 10); it is
   informative but weak on new combinations (Spearman ~0.36) and is not used for selection.
 
@@ -83,44 +98,44 @@ python tests/test_basic.py                                  # data-free unit tes
 | after no-Cys, liabilities ≤ WT, ≥3 from all known sequences | 5,247 |
 | shortlist × Vernier genotypes | 36 H3 → 528 sequences |
 | pass abguard | 517 (35 H3) |
-| folded (+4 controls) / docked (ipTM ≥ 0.9) | 521 / 201 |
+| folded (+4 controls) | 521 |
+| docked (ipTM ≥ 0.9) and within 3 Å of the crystal epitope | 201 |
 | keep the crystal contacts | 38 designs, 16 H3 |
-| final list | 20 designs, 11 distinct H3; 11 keep the R98–D108 salt bridge |
+| salt-bridge rule | 24 designs, 11 H3 |
+| final list | 20 designs, 11 distinct H3; 17 with the R98–pos 10 salt bridge, 3 with both partners mutated |
 
 Controls (single seed):
 
-| Control | ipTM | ipSAE | iLIS | Fv–HER2 pairs kept | CDR-H3-vs-rest pairs kept |
-|---|---|---|---|---|---|
-| base loop `WGSQGFYAYD` | 0.947 | 0.938 | 0.647 | 0.85 | 0.91 |
-| trastuzumab | 0.687 | 0.021 | 0.103 | 0.15 | 0.82 |
-| non-binder 1 | 0.655 | 0.016 | 0.035 | 0.15 | 0.77 |
-| non-binder 2 | 0.622 | 0.000 | 0.006 | 0.00 | 0.68 |
+| Control | ipTM | ipSAE | iLIS | Fv–HER2 pairs kept | CDR-H3-vs-rest pairs kept | epitope RMSD (Å) |
+|---|---|---|---|---|---|---|
+| base loop `WGSQGFYAYD` | 0.947 | 0.938 | 0.647 | 0.85 | 0.91 | 1.3 |
+| trastuzumab | 0.687 | 0.021 | 0.103 | 0.15 | 0.82 | 29.8 |
+| non-binder 1 | 0.655 | 0.016 | 0.035 | 0.15 | 0.77 | 11.2 |
+| non-binder 2 | 0.622 | 0.000 | 0.006 | 0.00 | 0.68 | 33.5 |
 
 Top 10 (full list with all scores and VH/VL sequences: `top_candidates.json`, `.fasta`, `top_mutations.csv`):
 
-| # | CDR-H3 | mutations vs WT | Vernier | iLIS | ipSAE | R98–pos10 salt bridge |
-|---|---|---|---|---|---|---|
-| 1 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L46L>M | 0.743 | 0.940 | yes |
-| 2 | `WGSSGFYAWY` | G3S D4S M9W D10Y | H93S>T | 0.737 | 0.944 | no |
-| 3 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L49Y>F | 0.734 | 0.948 | yes |
-| 4 | `WGSSGFYAWY` | G3S D4S M9W D10Y | – | 0.731 | 0.941 | no |
-| 5 | `WGSSGFYAWY` | G3S D4S M9W D10Y | H93S>A | 0.729 | 0.938 | no |
-| 6 | `WSSQGFYGRD` | G2S G3S D4Q A8G M9R | H47W>F | 0.724 | 0.926 | yes |
-| 7 | `WDSQGFYAWR` | G2D G3S D4Q M9W D10R | H93S>N | 0.719 | 0.934 | no |
-| 8 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L49Y>H | 0.718 | 0.949 | yes |
-| 9 | `WYYQGFYAYN` | G2Y G3Y D4Q M9Y D10N | L46L>I | 0.712 | 0.927 | no |
-| 10 | `WGRQGFYADS` | G3R D4Q M9D D10S | H47W>F | 0.710 | 0.936 | no |
+| # | CDR-H3 | mutations vs WT | Vernier | iLIS | ipSAE | epitope RMSD (Å) | R98–pos 10 |
+|---|---|---|---|---|---|---|---|
+| 1 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L46L>M | 0.743 | 0.940 | 1.44 | salt bridge present |
+| 2 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L49Y>F | 0.734 | 0.948 | 1.51 | salt bridge present |
+| 3 | `WSSQGFYGRD` | G2S G3S D4Q A8G M9R | H47W>F | 0.724 | 0.926 | 1.18 | salt bridge present |
+| 4 | `WGSSGFYAWY` | G3S D4S M9W D10Y | H94R>K | 0.723 | 0.941 | 0.63 | both partners mutated |
+| 5 | `WDYQGFYYYD` | G2D G3Y D4Q A8Y M9Y | L49Y>H | 0.718 | 0.949 | 1.49 | salt bridge present |
+| 6 | `WGYQGFYGDD` | G3Y D4Q A8G M9D | H93S>T | 0.680 | 0.943 | 1.26 | salt bridge present |
+| 7 | `WGDQGFYYYY` | G3D D4Q A8Y M9Y D10Y | H94R>Q | 0.678 | 0.932 | 0.93 | both partners mutated |
+| 8 | `WGYQGFYGDD` | G3Y D4Q A8G M9D | L46L>F | 0.676 | 0.933 | 1.49 | salt bridge present |
+| 9 | `WDSQGFYAWR` | G2D G3S D4Q M9W D10R | H94R>Q | 0.675 | 0.924 | 1.39 | both partners mutated |
+| 10 | `WGSAGFYGWD` | G3S D4A A8G M9W | L49Y>H | 0.670 | 0.942 | 1.3 | salt bridge present |
 
-What the run says about the Vernier zone: single swaps barely move ipTM on average (median change −0.006 to +0.003 per
-site), but for 9 of the 19 top designs with a swap the same CDR-H3 with WT Vernier does **not** dock (ipTM 0.63–0.69)
-and the swap restores docking (0.94–0.95).
+What the run says about the Vernier zone: single swaps barely move ipTM on average (median change −0.006 to +0.003 per site), but for 9 of the 20 final designs with a swap the same CDR-H3 with WT Vernier does **not** dock (ipTM below 0.9) and the swap restores docking.
 
 ### Caveats
 
 * One seed per complex; the top of the list is within noise. ipTM jumps between ≈0.6 (not docked) and ≈0.95 (docked).
 * No metric here predicts affinity. In the SPR data no loop with a non-acidic residue at position 10 beat wild type, and
-  in the FACS screen Ser at position 10 is the least enriched residue; 9 of the 20 designs change D10 and lose the
-  R98–D108 salt bridge. Prefer the 11 that keep it unless you want to test that risk.
+  in the FACS screen Ser at position 10 is the least enriched residue. The salt-bridge rule keeps 3 designs without the
+  bridge (D10Y with H94 K or Q, D10R with H94Q), whose partners are both mutated; that compensation is a hypothesis.
 * `abguard` is the organisers' demo build; the jury's checker may differ. Its CDR-3 string includes the H94 anchor, so a
   swap at H94 can make an otherwise failing loop pass.
 * The base loop has one SPR replicate.
@@ -129,7 +144,7 @@ and the swap restores docking (0.94–0.95).
 
 ```
 run_pipeline.py            stage runner
-pipeline/                  s1_enumerate … s9_deck, japanfold.py (client), common.py, pymol_prep.py, pymol_figures.py
+pipeline/                  s1_enumerate … s5b_pose … s10_plots, japanfold.py (client), common.py, pymol_prep.py, pymol_figures.py
 config/pipeline.example.yaml
 reference/her2_fv_1n8z.cif trastuzumab Fv + HER2 domain IV (PDB 1N8Z)
 results/2026-11-14/        outputs of the run above (no structures or PAE matrices)

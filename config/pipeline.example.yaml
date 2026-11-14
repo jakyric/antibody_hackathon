@@ -42,11 +42,16 @@ contacts:
   pymol: pymol                             # used to add hydrogens and to renumber chains
   jobs: 8
 
+score:
+  scope: all                   # all | filtered: score every fold (needed for the plots) or only designs passing the contacts
+
 rank:
   min_iptm: 0.9
+  max_epitope_rmsd: 3.0        # A; C-alpha RMSD of the crystal HER2 epitope after fitting the Fv framework (base loop prediction: 1.3 A)
   min_interface_recall: 0.85   # share of the 27 crystal Fv-HER2 residue pairs recovered
   max_h3_pairs_missing: 1      # of the 6 crystal CDR-H3 - HER2 pairs
   min_h3_rest_recall: 0.80     # share of the crystal CDR-H3-vs-rest pairs recovered
   min_h3_rest_polar_recall: 0.70
+  salt_bridge_rule: true       # keep only designs with the R98-pos10 salt bridge, or with both partners mutated
   max_per_h3: 3
   top_n: 20
