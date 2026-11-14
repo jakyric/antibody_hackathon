@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fabsolutely binding</title>
+<meta name="description" content="fabsolutely binding: de novo and optimised antibodies against HER2 domain IV. AI x Antibodies Hackathon, Oslo, 14 Nov 2026.">
+<meta name="color-scheme" content="light dark">
+<style>
+:root{
+  --bg:#f5f6fb; --surface:#ffffff; --surface2:#eceff9; --ink:#11152a; --muted:#566079; --line:rgba(17,21,42,.11);
+  --a1:#5b5bf0; --a2:#10b2a0; --a3:#f0568a; --a4:#8b5cf6; --amber:#f5a524;
+  --nav:rgba(245,246,251,.80); --shadow:0 12px 34px rgba(40,50,110,.10); --btn-ink:#ffffff;
+  --blob1:rgba(91,91,240,.22); --blob2:rgba(16,178,160,.20); --blob3:rgba(240,86,138,.16);
+  --warn-bg:#fff6e5; --warn-line:#f1d29a; --warn-ink:#6b4a0b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0e1d; --surface:#121833; --surface2:#182044; --ink:#eef0ff; --muted:#a4adca; --line:rgba(255,255,255,.11);
+    --a1:#8b8bff; --a2:#2dd4bf; --a3:#ff7aa8; --a4:#b794ff; --amber:#fbbf24;
+    --nav:rgba(10,14,29,.74); --shadow:0 12px 34px rgba(0,0,0,.45); --btn-ink:#0a0e1d;
+    --blob1:rgba(139,139,255,.20); --blob2:rgba(45,212,191,.14); --blob3:rgba(255,122,168,.12);
+    --warn-bg:#2a2210; --warn-line:#5b4a1d; --warn-ink:#f2d595;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e1d; --surface:#121833; --surface2:#182044; --ink:#eef0ff; --muted:#a4adca; --line:rgba(255,255,255,.11);
+  --a1:#8b8bff; --a2:#2dd4bf; --a3:#ff7aa8; --a4:#b794ff; --amber:#fbbf24;
+  --nav:rgba(10,14,29,.74); --shadow:0 12px 34px rgba(0,0,0,.45); --btn-ink:#0a0e1d;
+  --blob1:rgba(139,139,255,.20); --blob2:rgba(45,212,191,.14); --blob3:rgba(255,122,168,.12);
+  --warn-bg:#2a2210; --warn-line:#5b4a1d; --warn-ink:#f2d595;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);overflow-x:clip;
+  font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--a1)}
+h1,h2,h3{line-height:1.12;letter-spacing:-.02em;margin:0}
+p{margin:0 0 1em}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+:focus-visible{outline:3px solid var(--a1);outline-offset:3px;border-radius:6px}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:30;background:var(--nav);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:18px;height:60px}
+.brand{font-weight:750;letter-spacing:-.02em;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand svg{width:22px;height:22px}
+.nav ul{display:flex;gap:4px;list-style:none;margin:0 0 0 auto;padding:0}
+.nav ul a{display:block;padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.92rem;font-weight:550}
+.nav ul a:hover{background:var(--surface2);color:var(--ink)}
+.icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);width:38px;height:38px;border-radius:999px;cursor:pointer;display:grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--surface2)}
+@media (max-width:720px){.nav ul{display:none}.icon-btn{margin-left:auto}}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:56px 0 72px}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;animation:drift 22s ease-in-out infinite alternate}
+.b1{width:520px;height:520px;left:-140px;top:-120px;background:var(--blob1)}
+.b2{width:460px;height:460px;right:-120px;top:40px;background:var(--blob2);animation-duration:27s}
+.b3{width:380px;height:380px;left:38%;bottom:-180px;background:var(--blob3);animation-duration:31s}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(36px,28px,0) scale(1.12)}}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.84rem;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--a2);box-shadow:0 0 0 4px color-mix(in srgb,var(--a2) 25%,transparent)}
+h1{font-size:clamp(2.7rem,8.4vw,5.7rem);font-weight:800;letter-spacing:-.045em;margin:18px 0 14px}
+.fab{color:var(--a1);background:linear-gradient(100deg,var(--a1),var(--a4) 55%,var(--a3));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tagline{font-size:clamp(1.15rem,2.6vw,1.5rem);font-weight:560;color:var(--ink);max-width:30ch;margin-bottom:12px}
+.sub{color:var(--muted);max-width:52ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px;padding:0;list-style:none}
+.chips li{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.9rem;font-weight:560}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:999px;font-weight:650;text-decoration:none;border:1px solid var(--line);color:var(--ink);background:var(--surface);cursor:pointer;font-size:1rem;font-family:inherit;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.btn.primary{background:linear-gradient(100deg,var(--a1),var(--a4));color:var(--btn-ink);border-color:transparent}
+.hero-art{--py:0px;transform:translate3d(0,var(--py),0);will-change:transform;width:100%;max-width:520px;margin:0 auto}
+.hero-art svg{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:.84rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.legend b{width:10px;height:10px;border-radius:50%;display:inline-block}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr}.hero{padding-top:36px}.hero-art{max-width:440px}}
+
+/* svg art animation */
+.ig{animation:floaty 9s ease-in-out infinite}
+.nb{animation:floaty 7s ease-in-out -2.5s infinite}
+.armL{animation:breatheL 7s ease-in-out infinite}
+.armR{animation:breatheR 7s ease-in-out infinite}
+.dock{animation:pulse 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes breatheL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-2.4deg)}}
+@keyframes breatheR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(2.4deg)}}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
+
+/* sections */
+section.block{padding:88px 0;position:relative}
+section.alt{background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--surface2) 70%,transparent) 14%,color-mix(in srgb,var(--surface2) 70%,transparent) 86%,transparent)}
+.kicker{font-size:.82rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--a1);margin-bottom:10px}
+h2{font-size:clamp(1.9rem,4.6vw,3rem);font-weight:780;letter-spacing:-.035em;margin-bottom:14px}
+.lead{font-size:1.12rem;color:var(--muted);max-width:68ch;margin-bottom:34px}
+h3{font-size:1.25rem;font-weight:720;margin-bottom:10px}
+.grid{display:grid;gap:18px}
+.grid>*{min-width:0}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}}
+@media (max-width:640px){.g4,.g2{grid-template-columns:1fr}section.block{padding:60px 0}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:var(--shadow)}
+.card p:last-child{margin-bottom:0}
+.mini h3{font-size:1rem;color:var(--muted);font-weight:650;margin-bottom:6px}
+.mini p{font-size:1.04rem;font-weight:560}
+.stat{font-size:clamp(2rem,4.4vw,2.8rem);font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:8px;background:linear-gradient(100deg,var(--a1),var(--a3));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--a1)}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface2);vertical-align:middle}
+.pill.comp{color:var(--a2);border-color:color-mix(in srgb,var(--a2) 40%,transparent)}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:14px;padding:14px 16px;font-size:.95rem}
+.note strong{font-weight:700}
+
+/* funnel */
+.funnel{display:grid;gap:10px;margin:8px 0 6px}
+.frow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:center}
+.flab{font-size:.95rem;color:var(--muted)}
+.flab b{color:var(--ink);font-weight:650}
+.bar{--w:100%;height:36px;border-radius:12px;background:var(--surface2);overflow:hidden;position:relative}
+.bar i{display:flex;align-items:center;justify-content:flex-end;height:100%;width:var(--w);border-radius:12px;background:linear-gradient(100deg,var(--a1),var(--a4) 60%,var(--a3));color:#fff;font-weight:750;font-style:normal;padding:0 12px;font-variant-numeric:tabular-nums;font-size:.95rem;min-width:56px}
+.js .bar i{width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.js .in .bar i{width:var(--w)}
+.frow.final .bar i{background:linear-gradient(100deg,var(--a2),var(--a1))}
+@media (max-width:640px){.frow{grid-template-columns:1fr;gap:6px}}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+caption{text-align:left;padding:14px 16px;font-weight:650;color:var(--muted);font-size:.9rem}
+th,td{padding:11px 14px;text-align:left;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:color-mix(in srgb,var(--a2) 9%,transparent)}
+
+/* approach cards */
+.apc{display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.apc::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,var(--a1),var(--a4),var(--a3))}
+.badge{display:inline-flex;align-items:center;gap:8px;font-weight:750;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:var(--a1)}
+.badge b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a4));color:var(--btn-ink);font-size:.9rem}
+.method{font-weight:600;font-size:1.04rem}
+.facts{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:.94rem}
+.facts li{padding-left:20px;position:relative;color:var(--muted)}
+.facts li::before{content:"";position:absolute;left:0;top:.62em;width:8px;height:8px;border-radius:3px;background:linear-gradient(135deg,var(--a2),var(--a1))}
+.facts b{color:var(--ink);font-weight:650}
+.apc .note{margin-top:auto}
+.apc.explored{box-shadow:none;border-style:dashed;background:color-mix(in srgb,var(--surface) 55%,transparent)}
+.apc.explored::before{background:linear-gradient(90deg,var(--line),var(--line))}
+.apc.explored .badge{color:var(--muted)}
+.apc.explored .badge b{background:var(--surface2);color:var(--muted)}
+.takes{display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.takes strong{color:var(--ink)}
+
+/* submission */
+.tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:4px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:8px 16px;border-radius:999px;font:inherit;font-weight:650;font-size:.92rem;cursor:pointer}
+.seg button[aria-pressed="true"]{background:linear-gradient(100deg,var(--a1),var(--a4));color:var(--btn-ink)}
+.count{color:var(--muted);font-size:.92rem;margin-right:auto}
+.seq{font-size:.8rem;word-break:break-all;color:var(--ink);background:var(--surface2);padding:4px 7px;border-radius:8px;display:inline-block;max-width:30ch}
+.cp{margin-left:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;font:inherit;font-size:.78rem;font-weight:650;padding:4px 9px;cursor:pointer;vertical-align:middle}
+.cp:hover{background:var(--surface2)}
+.tag{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+.tag.optimization{background:color-mix(in srgb,var(--a1) 16%,transparent);color:var(--a1)}
+.tag.denovo{background:color-mix(in srgb,var(--a2) 16%,transparent);color:var(--a2)}
+#subtable td.desc{min-width:240px;max-width:420px;color:var(--muted)}
+.fail{display:none}
+.fail.show{display:block}
+@media (max-width:720px){
+  #subtable thead{display:none}
+  #subtable,#subtable tbody,#subtable tr,#subtable td{display:block;width:100%}
+  #subtable tr{border-top:1px solid var(--line);padding:12px 4px}
+  #subtable tbody tr:first-child{border-top:0}
+  #subtable td{border:0;padding:5px 12px}
+  #subtable td::before{content:attr(data-label);display:block;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .seq{max-width:100%}
+}
+footer{border-top:1px solid var(--line);padding:34px 0 50px;color:var(--muted);font-size:.92rem}
+footer p{max-width:70ch}
+
+/* reveal */
+.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.js .reveal.in{opacity:1;transform:none}
+.js .reveal.d1{transition-delay:.08s}.js .reveal.d2{transition-delay:.16s}.js .reveal.d3{transition-delay:.24s}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .reveal{opacity:1;transform:none}
+  .js .bar i{width:var(--w)}
+  .hero-art{transform:none}
+}
+@media print{.js .reveal{opacity:1;transform:none}.js .bar i{width:var(--w)}.nav{position:static}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="fabsolutely binding, top of page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a3)"/></linearGradient></defs><path d="M4 3l7.2 8.6V21h1.6v-9.4L20 3h-2.6L12 9.4 6.6 3z" fill="url(#lg)"/></svg>
+      fabsolutely binding
+    </a>
+    <ul>
+      <li><a href="#challenge">Challenge</a></li>
+      <li><a href="#optimization">Optimization</a></li>
+      <li><a href="#denovo">De novo</a></li>
+      <li><a href="#submission">Submission</a></li>
+    </ul>
+    <button class="icon-btn" id="theme" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+<!-- ============ HERO ============ -->
+<section class="hero" aria-label="fabsolutely binding">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><i></i> AI &times; Antibodies Hackathon &middot; Oslo &middot; 14 Nov 2026</span>
+      <h1><span class="fab">fab</span>solutely<br>binding</h1>
+      <p class="tagline">De novo and optimised antibodies against HER2.</p>
+      <p class="sub">Target: HER2 domain IV, the trastuzumab epitope. Two tracks, one submission. Every number on this page is a computational prediction.</p>
+      <ul class="chips">
+        <li>HER2 domain IV</li>
+        <li>Trastuzumab epitope (PDB 1N8Z)</li>
+        <li id="chipcount">2 tracks</li>
+      </ul>
+      <div class="cta">
+        <a class="btn primary" href="#submission">See the designs <span aria-hidden="true">&darr;</span></a>
+        <a class="btn" id="dl-hero" href="../fabsolutely_binding.csv" download>Download CSV</a>
+      </div>
+    </div>
+
+    <div>
+      <div class="hero-art" id="art">
+        <svg viewBox="0 0 560 470" role="img" aria-label="Illustration of an IgG antibody next to a small nanobody docking onto a HER2 domain">
+          <defs>
+            <linearGradient id="gH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a4)"/></linearGradient>
+            <linearGradient id="gL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a2)"/><stop offset="1" style="stop-color:var(--a1)"/></linearGradient>
+            <linearGradient id="gN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--a3)"/><stop offset="1" style="stop-color:var(--a4)"/></linearGradient>
+            <radialGradient id="gR" cx=".35" cy=".3" r=".9"><stop offset="0" style="stop-color:var(--a2);stop-opacity:.95"/><stop offset="1" style="stop-color:var(--a1);stop-opacity:.75"/></radialGradient>
+            <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#2a2f7a" flood-opacity=".22"/></filter>
+          </defs>
+
+          <!-- IgG -->
+          <g class="ig"><g filter="url(#sh)">
+            <!-- Fc -->
+            <rect x="160" y="298" width="26" height="58" rx="13" fill="url(#gH)"/>
+            <rect x="194" y="298" width="26" height="58" rx="13" fill="url(#gH)"/>
+            <rect x="160" y="362" width="26" height="58" rx="13" fill="url(#gH)" opacity=".92"/>
+            <rect x="194" y="362" width="26" height="58" rx="13" fill="url(#gH)" opacity=".92"/>
+            <!-- hinge -->
+            <path d="M173 300 Q173 281 183 266" fill="none" stroke="url(#gH)" stroke-width="7" stroke-linecap="round"/>
+            <path d="M207 300 Q207 281 197 266" fill="none" stroke="url(#gH)" stroke-width="7" stroke-linecap="round"/>
+            <!-- left arm -->
+            <g transform="translate(177 278)"><g class="armL"><g transform="scale(-1 1) rotate(38)">
+              <rect x="-24" y="-70" width="21" height="62" rx="10.5" fill="url(#gH)"/>
+              <rect x="-24" y="-136" width="21" height="62" rx="10.5" fill="url(#gH)"/>
+              <rect x="3" y="-70" width="21" height="62" rx="10.5" fill="url(#gL)"/>
+              <rect x="3" y="-136" width="21" height="62" rx="10.5" fill="url(#gL)"/>
+              <path d="M-21 -128 q-9 -17 4 -19 q10 -1 8 15" fill="none" style="stroke:var(--amber)" stroke-width="4.2" stroke-linecap="round"/>
+              <path d="M5 -128 q-6 -17 6 -19 q10 -1 9 15" fill="none" style="stroke:var(--amber)" stroke-width="4.2" stroke-linecap="round"/>
+            </g></g></g>
+            <!-- right arm -->
+            <g transform="translate(203 278)"><g class="armR"><g transform="rotate(38)">
+              <rect x="-24" y="-70" width="21" height="62" rx="10.5" fill="url(#gH)"/>
+              <rect x="-24" y="-136" width="21" height="62" rx="10.5" fill="url(#gH)"/>
+              <rect x="3" y="-70" width="21" height="62" rx="10.5" fill="url(#gL)"/>
+              <rect x="3" y="-136" width="21" height="62" rx="10.5" fill="url(#gL)"/>
+              <path d="M-21 -128 q-9 -17 4 -19 q10 -1 8 15" fill="none" style="stroke:var(--amber)" stroke-width="4.2" stroke-linecap="round"/>
+              <path d="M5 -128 q-6 -17 6 -19 q10 -1 9 15" fill="none" style="stroke:var(--amber)" stroke-width="4.2" stroke-linecap="round"/>
+            </g></g></g>
+          </g></g>
+
+          <!-- nanobody + HER2 -->
+          <g class="nb"><g filter="url(#sh)">
+            <rect x="404" y="70" width="58" height="104" rx="29" fill="url(#gN)"/>
+            <path d="M420 86 Q428 120 420 158 M447 86 Q439 120 447 158" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="3" stroke-linecap="round"/>
+            <path d="M412 168 q-11 20 3 24 q11 1 9 -17" fill="none" style="stroke:var(--amber)" stroke-width="4.4" stroke-linecap="round"/>
+            <path d="M428 172 q-7 25 6 28 q11 0 8 -22" fill="none" style="stroke:var(--amber)" stroke-width="4.4" stroke-linecap="round"/>
+            <path d="M448 168 q-4 18 8 20 q10 -1 6 -16" fill="none" style="stroke:var(--amber)" stroke-width="4.4" stroke-linecap="round"/>
+          </g></g>
+          <g filter="url(#sh)">
+            <circle cx="404" cy="268" r="32" fill="url(#gR)"/><circle cx="446" cy="252" r="36" fill="url(#gR)"/><circle cx="484" cy="278" r="30" fill="url(#gR)"/>
+            <circle cx="428" cy="304" r="33" fill="url(#gR)"/><circle cx="470" cy="318" r="27" fill="url(#gR)"/><circle cx="392" cy="312" r="24" fill="url(#gR)"/>
+          </g>
+          <circle class="dock" cx="436" cy="214" r="7" style="fill:var(--amber)"/>
+          <circle class="dock" cx="456" cy="220" r="4.5" style="fill:var(--amber);animation-delay:-1.2s"/>
+        </svg>
+      </div>
+      <div class="legend" aria-hidden="false">
+        <span><b style="background:var(--a1)"></b> IgG (trastuzumab-like)</span>
+        <span><b style="background:var(--a3)"></b> VHH nanobody</span>
+        <span><b style="background:var(--a2)"></b> HER2 domain IV</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHALLENGE ============ -->
+<section class="block" id="challenge">
+  <div class="wrap">
+    <div class="kicker reveal">The challenge</div>
+    <h2 class="reveal d1">One target, two tracks.</h2>
+    <p class="lead reveal d2">Bind HER2 domain IV where trastuzumab binds. Either make trastuzumab better, or design something new from scratch. The organisers' lab measures the winners after the event: affinity, epitope preservation and thermostability.</p>
+    <div class="grid g4">
+      <div class="card mini reveal"><h3>Target</h3><p>HER2 domain IV, UniProt P04626 residues 489&ndash;607.</p></div>
+      <div class="card mini reveal d1"><h3>Reference</h3><p>Trastuzumab Fv bound to HER2 (PDB 1N8Z). 19 HER2 residues contact it.</p></div>
+      <div class="card mini reveal d2"><h3>Optimization track</h3><p>Improve trastuzumab, in trastuzumab&rsquo;s own format (paired VH + VL).</p></div>
+      <div class="card mini reveal d3"><h3>De novo track</h3><p>A new HER2 binder, under 70&nbsp;% identity to known antibodies.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OPTIMIZATION ============ -->
+<section class="block alt" id="optimization">
+  <div class="wrap">
+    <div class="kicker reveal">Optimization track</div>
+    <h2 class="reveal d1">CDR-H3 + Vernier redesign of trastuzumab</h2>
+    <p class="lead reveal d2">Start from the best-tested CDR-H3 in the provided SPR data (<span class="mono">WGSQGFYAYD</span>: 0.023&nbsp;nM, one replicate; trastuzumab 0.114&nbsp;nM, eight replicates). Change 3&ndash;4 of the six positions that do not touch HER2 with a BLOSUM-45 recipe, add conservative Vernier-zone swaps where they touch a changed loop position, and keep only designs that dock like the crystal.</p>
+
+    <div class="grid g3" style="margin-bottom:26px">
+      <div class="card reveal"><div class="stat">201 / 521</div><p>folded complexes dock on the crystal epitope (ipTM &ge; 0.9, epitope RMSD &le; 3&nbsp;&Aring;) <span class="pill comp">computational</span></p></div>
+      <div class="card reveal d1"><div class="stat">0.947 vs 0.687</div><p>OpenDDE ipTM of the base loop against trastuzumab&rsquo;s own sequence, which does not dock in this model <span class="pill comp">computational</span></p></div>
+      <div class="card reveal d2"><div class="stat">9 of 20</div><p>final designs with a Vernier swap would not dock with the wild-type Vernier residues; the swap restores docking <span class="pill comp">computational</span></p></div>
+    </div>
+
+    <h3 class="reveal">The funnel <span class="pill">bar length: log scale</span></h3>
+    <div class="funnel reveal" id="funnel">
+      <div class="frow"><div class="flab"><b>Raw variants</b> &ndash; 3&ndash;4 BLOSUM-45 changes at positions 2, 3, 4, 8, 9, 10</div><div class="bar" data-n="23760"><i>23,760</i></div></div>
+      <div class="frow"><div class="flab"><b>Enumerated</b> &ndash; no Cys, liabilities &le; wild type, &ge; 3 edits from all 525,063 known sequences</div><div class="bar" data-n="5247"><i>5,247</i></div></div>
+      <div class="frow"><div class="flab"><b>Panel</b> &ndash; 36 diverse CDR-H3 &times; Vernier genotypes</div><div class="bar" data-n="528"><i>528</i></div></div>
+      <div class="frow"><div class="flab"><b>Valid</b> &ndash; pass the organisers&rsquo; abguard (35 CDR-H3)</div><div class="bar" data-n="517"><i>517</i></div></div>
+      <div class="frow"><div class="flab"><b>Folded</b> &ndash; OpenDDE antibody&ndash;antigen, 517 designs + 4 controls</div><div class="bar" data-n="521"><i>521</i></div></div>
+      <div class="frow"><div class="flab"><b>Docked</b> &ndash; ipTM &ge; 0.9, within 3&nbsp;&Aring; of the crystal epitope</div><div class="bar" data-n="201"><i>201</i></div></div>
+      <div class="frow"><div class="flab"><b>Crystal contacts kept</b> &ndash; 16 distinct CDR-H3</div><div class="bar" data-n="38"><i>38</i></div></div>
+      <div class="frow"><div class="flab"><b>Salt-bridge rule</b> &ndash; R98&ndash;position 10, or both partners mutated (11 CDR-H3)</div><div class="bar" data-n="24"><i>24</i></div></div>
+      <div class="frow"><div class="flab"><b>Ranked list</b> &ndash; by iLIS, ipSAE tie-break, at most 3 per CDR-H3</div><div class="bar" data-n="20"><i>20</i></div></div>
+      <div class="frow final"><div class="flab"><b>Submitted</b> &ndash; 15 sequences in our CSV</div><div class="bar" data-n="15"><i>15</i></div></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:34px;align-items:start">
+      <div class="reveal">
+        <div class="tw"><table>
+          <caption>Controls, OpenDDE prediction, single seed <span class="pill comp">computational</span></caption>
+          <thead><tr><th>Control</th><th class="n">ipTM</th><th class="n">ipSAE</th><th class="n">iLIS</th><th class="n">Epitope RMSD</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Base loop <span class="mono">WGSQGFYAYD</span></td><td class="n">0.947</td><td class="n">0.938</td><td class="n">0.647</td><td class="n">1.3 &Aring;</td></tr>
+            <tr><td>Trastuzumab</td><td class="n">0.687</td><td class="n">0.021</td><td class="n">0.103</td><td class="n">29.8 &Aring;</td></tr>
+            <tr><td>Measured non-binder 1</td><td class="n">0.655</td><td class="n">0.016</td><td class="n">0.035</td><td class="n">11.2 &Aring;</td></tr>
+            <tr><td>Measured non-binder 2</td><td class="n">0.622</td><td class="n">0.000</td><td class="n">0.006</td><td class="n">33.5 &Aring;</td></tr>
+          </tbody></table></div>
+        <p style="color:var(--muted);font-size:.9rem;margin-top:12px">Only OpenDDE antibody&ndash;antigen put both measured binders above both measured non-binders, so it is the only fold model used. OpenFold3 with an MSA was flat (about 0.5); ESMFold-2-fast scored the non-binders above trastuzumab.</p>
+      </div>
+      <div class="reveal d1">
+        <h3>How a design is judged</h3>
+        <ul class="facts">
+          <li><b>Same epitope.</b> Superpose on the 1N8Z Fv framework; the 19 epitope residues must sit within 3&nbsp;&Aring;.</li>
+          <li><b>Same contacts.</b> GetContacts residue-pair comparison with the crystal: 27 Fv&ndash;HER2 pairs, 6 with CDR-H3, plus 22 CDR-H3-to-framework pairs.</li>
+          <li><b>Salt bridge.</b> The R98 (H94) &ndash; position 10 bridge is kept, or both partners must change.</li>
+          <li><b>Rank.</b> iLIS first, ipSAE as tie-break (both are our re-implementations).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note reveal" style="margin-top:28px"><strong>Caveats.</strong> One seed per complex, so the top of the list is within noise (ipTM jumps between about 0.6 and 0.95). No metric here predicts affinity. The salt-bridge rule keeps three designs without the bridge whose partners are both mutated; that compensation is a hypothesis. abguard is the organisers&rsquo; demo build; the jury&rsquo;s checker may differ.</div>
+  </div>
+</section>
+
+<!-- ============ DE NOVO ============ -->
+<section class="block" id="denovo">
+  <div class="wrap">
+    <div class="kicker reveal">De novo track</div>
+    <h2 class="reveal d1">Two approaches submitted, one explored</h2>
+    <p class="lead reveal d2">Three independent pipelines designed new HER2 binders against the trastuzumab epitope, all generating with RFD4-Proteina but differing in scaffold, gates and ranking. Two of them are submitted as de novo VHHs: 7 designs from Approach A and 8 from Approach B. The third is shown as explored work.</p>
+
+    <div class="grid g3">
+      <!-- A -->
+      <article class="card apc reveal">
+        <span class="badge"><b>A</b> Approach A</span>
+        <h3>RFD4-Proteina VHH</h3>
+        <p class="method">A gate-first pipeline designs all three CDRs of a nanobody on an intact framework, then filters, scores and ranks by Pareto dominance.</p>
+        <ul class="facts">
+          <li><b>1,544</b> unique designs on two VHH frameworks (814 caplacizumab-like, 730 hNbBCII10-FGLA).</li>
+          <li><b>Hard gates:</b> CDR3 of 12&ndash;18 aa, no unpaired Cys, canonical disulfide, structural validity, no clash with the unresolved HER2 loop 581&ndash;590, abguard de novo class with a 2-point margin.</li>
+          <li><b>Scored</b> by OpenFold3 (HER2 template, no MSA) and ESMFold-2; OpenDDE on a cropped HER2 (539&ndash;607) as a gate against framework-only decoys.</li>
+          <li><b>Profiled</b> for developability (TNP), melting temperature (NanoMelt) and yield (ESMC-Nb monoyield plus nine CDR rules).</li>
+          <li><b>43</b> designs pass every gate; Pareto over binding, TNP, yield and Tm gives a top 20.</li>
+        </ul>
+        <div class="note"><strong>Honest read.</strong> No predictor reproduced the designed binding poses (OpenDDE median 44&nbsp;&Aring; away, 26 of 768 within 20&nbsp;&Aring;; OpenFold3 none of 571 within 20&nbsp;&Aring;), and all 20 listed designs carry the below-decoy flag. A filter, not evidence of binding.</div>
+        <div class="takes"><span class="pill comp">computational</span> <span><strong>7</strong> designs in the submission</span></div>
+      </article>
+
+      <!-- B -->
+      <article class="card apc reveal d1">
+        <span class="badge"><b>B</b> Approach B</span>
+        <h3>Caplacizumab-framework VHH</h3>
+        <p class="method">RFD4-Proteina designs the three CDRs of a VHH on the caplacizumab framework, aimed at the trastuzumab epitope; two folding models with a HER2 template pick the survivors.</p>
+        <ul class="facts">
+          <li><b>120</b> designs from three seeds; <b>118</b> pass the local gate and the organisers&rsquo; checker (class de novo, identity to trastuzumab 0.63&ndash;0.70).</li>
+          <li><b>Refolded</b> with Boltz-2 and OpenFold3-OpenBind (templated), ranked by the min-iPAE percentile of both.</li>
+          <li><b>Kept</b> only if the refold lands within 10&nbsp;&Aring; of the designed pose with at least 0.2 epitope overlap; one design per CDR3 cluster.</li>
+          <li><b>Calibrated first</b> on 25 variants with measured KD: Boltz-2 Spearman &minus;0.41 (orders loosely, not reliably).</li>
+          <li>The approach delivered <b>6</b> designs in total.</li>
+        </ul>
+        <div class="note"><strong>Honest read.</strong> Only 2 of 120 designs pass the organisers&rsquo; refold oracle in at least one model, and there is no lab data. Ranking separates clearly good from clearly bad, not a precise order.</div>
+        <div class="takes"><span class="pill comp">computational</span> <span><strong>8</strong> designs in the submission</span></div>
+      </article>
+
+      <!-- C: explored, not submitted -->
+      <article class="card apc explored reveal d2">
+        <span class="badge"><b>C</b> Approach C &middot; also explored</span>
+        <h3>Data-trained CDR-H3 on the Fv</h3>
+        <p class="method">RFD4-Proteina co-generates a new CDR-H3 on the trastuzumab Fv; classifiers trained on the measured screens and template-aware refolding pick the winners.</p>
+        <ul class="facts">
+          <li><b>Binder classifier</b> (LightGBM) trained on the 524k-variant FACS screen: test AUC 0.994 on held-out sequence families; extrapolation to loops far from the screen is less certain.</li>
+          <li><b>Refolded</b> with Boltz-2 and Protenix-v2, ranked on min-iPAE plus binder pLDDT because ipTM saturates; trastuzumab&rsquo;s own CDR-H3 lands on the 1N8Z epitope at 2.17&nbsp;&Aring; as a positive control.</li>
+          <li>A shortlist of <b>15</b> designs.</li>
+        </ul>
+        <div class="note"><strong>Why it is not in the de novo list.</strong> Only CDR-H3 is new and the trastuzumab framework stays (about 97&nbsp;% identical to the trastuzumab VH). The organisers&rsquo; checker classes these designs as &lsquo;novel&rsquo;, the optimisation type rather than de novo, and rejected 10 of the 15 shortlisted candidates for CDR-H3 novelty.</div>
+        <div class="takes"><span class="pill">explored</span> <span><strong>0</strong> designs in the submission</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUBMISSION ============ -->
+<section class="block alt" id="submission">
+  <div class="wrap">
+    <div class="kicker reveal">The submission</div>
+    <h2 class="reveal d1">One CSV, both tracks</h2>
+    <p class="lead reveal d2">The format abguard expects: <span class="mono">sequence_id, kind, heavy_sequence, light_sequence, design_description, track</span>. 15 optimization designs and 15 de novo designs (7 from Approach A, 8 from Approach B). Each ID carries a short tag for its source, which only the team can read.</p>
+
+    <div class="tools reveal">
+      <div class="seg" role="group" aria-label="Filter by track" id="seg">
+        <button type="button" data-f="all" aria-pressed="true">All</button>
+        <button type="button" data-f="optimization" aria-pressed="false">Optimization</button>
+        <button type="button" data-f="denovo" aria-pressed="false">De novo</button>
+      </div>
+      <span class="count" id="count" aria-live="polite">Loading&hellip;</span>
+      <a class="btn" id="dl" href="../fabsolutely_binding.csv" download>Download CSV</a>
+    </div>
+
+    <div class="tw reveal" id="tablewrap" hidden>
+      <table id="subtable">
+        <caption class="mono" style="font-size:.82rem">fabsolutely_binding.csv <span class="pill comp">computational designs</span></caption>
+        <thead><tr><th>ID</th><th>Track</th><th>Kind</th><th>Heavy</th><th>Light</th><th>Description</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="note fail" id="fail"><strong>The table could not load the CSV here.</strong> This page reads <span class="mono">fabsolutely_binding.csv</span> over http (GitHub Pages, or <span class="mono">python3 -m http.server</span> from the repository root). Opened straight from a file, browsers block that. Use the download button, or open the CSV in the repository.</div>
+    <noscript><div class="note">The table needs JavaScript. The designs are in <span class="mono">fabsolutely_binding.csv</span>.</div></noscript>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong style="color:var(--ink)">fabsolutely binding</strong> &middot; AI &times; Antibodies Hackathon, Oslo, 14 Nov 2026.</p>
+    <p>Nothing on this page is a laboratory measurement of our designs. Scores are predictions from structure models and trained classifiers; they filter and order candidates, they do not show binding.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  root.classList.add("js");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (s, c) { return (c || document).querySelector(s); };
+
+  /* theme toggle (follows the OS until the visitor picks one) */
+  try { var saved = localStorage.getItem("fb-theme"); if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved); } catch (e) {}
+  $("#theme").addEventListener("click", function () {
+    var cur = root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    var next = cur === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("fb-theme", next); } catch (e) {}
+  });
+
+  /* funnel bar widths: log scale, 23,760 = 100 % */
+  var top = Math.log10(23760);
+  Array.prototype.forEach.call(document.querySelectorAll(".bar[data-n]"), function (b) {
+    var n = +b.getAttribute("data-n");
+    b.style.setProperty("--w", (16 + 84 * Math.log10(n) / top).toFixed(1) + "%");
+  });
+
+  /* scroll reveals */
+  var els = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    Array.prototype.forEach.call(els, function (e) { e.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    Array.prototype.forEach.call(els, function (e) { io.observe(e); });
+  }
+
+  /* light parallax on the hero illustration */
+  var art = $("#art");
+  if (art && !reduce) {
+    var tick = false;
+    window.addEventListener("scroll", function () {
+      if (tick) return; tick = true;
+      requestAnimationFrame(function () {
+        var y = Math.min(window.scrollY, 700);
+        art.style.setProperty("--py", (y * 0.06).toFixed(1) + "px");
+        tick = false;
+      });
+    }, { passive: true });
+  }
+
+  /* ---------- CSV table ---------- */
+  function parseCSV(t) {
+    var rows = [], row = [], f = "", q = false, i, c;
+    t = t.replace(/^﻿/, "");
+    for (i = 0; i < t.length; i++) {
+      c = t[i];
+      if (q) {
+        if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else { q = false; } } else { f += c; }
+      } else if (c === '"') { q = true; }
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && t[i + 1] === "\n") i++;
+        row.push(f); f = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+      } else { f += c; }
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+
+  function toObjects(rows) {
+    var head = rows[0].map(function (h) { return h.trim(); });
+    return rows.slice(1).map(function (r) { var o = {}; head.forEach(function (h, i) { o[h] = (r[i] || "").trim(); }); return o; })
+      .filter(function (o) { return o.sequence_id; });
+  }
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function copyText(txt, btn) {
+    var done = function () { var o = btn.textContent; btn.textContent = "Copied"; setTimeout(function () { btn.textContent = o; }, 1400); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(done, function () { fallback(); }); }
+    else { fallback(); }
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) {} document.body.removeChild(ta);
+    }
+  }
+
+  function seqCell(seq, label) {
+    var td = el("td"); td.setAttribute("data-label", label);
+    if (!seq) { td.textContent = "–"; return td; }
+    var code = el("code", "seq mono", seq.length > 34 ? seq.slice(0, 22) + "…" + seq.slice(-8) : seq);
+    code.title = seq;
+    var len = el("span", null, " " + seq.length + " aa"); len.style.cssText = "color:var(--muted);font-size:.8rem;white-space:nowrap";
+    var b = el("button", "cp", "Copy"); b.type = "button"; b.setAttribute("aria-label", "Copy " + label.toLowerCase() + " sequence");
+    b.addEventListener("click", function () { copyText(seq, b); });
+    td.appendChild(code); td.appendChild(len); td.appendChild(b);
+    return td;
+  }
+
+  var data = [], filter = "all";
+  var tbody = $("#rows"), countEl = $("#count");
+
+  function render() {
+    tbody.textContent = "";
+    var shown = data.filter(function (r) { return filter === "all" || r.track === filter; });
+    shown.forEach(function (r) {
+      var tr = el("tr");
+      var id = el("td", "mono", r.sequence_id); id.setAttribute("data-label", "ID"); id.style.cssText = "font-weight:650;white-space:nowrap"; tr.appendChild(id);
+      var tk = el("td"); tk.setAttribute("data-label", "Track"); var tg = el("span", "tag " + r.track, r.track === "denovo" ? "de novo" : r.track); tk.appendChild(tg); tr.appendChild(tk);
+      var kd = el("td", null, r.kind); kd.setAttribute("data-label", "Kind"); tr.appendChild(kd);
+      tr.appendChild(seqCell(r.heavy_sequence, "Heavy"));
+      tr.appendChild(seqCell(r.light_sequence, "Light"));
+      var ds = el("td", "desc", r.design_description); ds.setAttribute("data-label", "Description"); tr.appendChild(ds);
+      tbody.appendChild(tr);
+    });
+    var o = data.filter(function (r) { return r.track === "optimization"; }).length, d = data.filter(function (r) { return r.track === "denovo"; }).length;
+    countEl.textContent = "Showing " + shown.length + " of " + data.length + " designs (" + o + " optimization, " + d + " de novo)";
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("#seg button"), function (b) {
+    b.addEventListener("click", function () {
+      filter = b.getAttribute("data-f");
+      Array.prototype.forEach.call(document.querySelectorAll("#seg button"), function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      render();
+    });
+  });
+
+  function show(csvUrl, text) {
+    data = toObjects(parseCSV(text));
+    if (!data.length) throw new Error("empty");
+    ["#dl", "#dl-hero"].forEach(function (s) { $(s).setAttribute("href", csvUrl); });
+    $("#tablewrap").hidden = false;
+    $("#chipcount").textContent = data.length + " designs · 2 tracks";
+    render();
+  }
+
+  function fail() {
+    $("#fail").classList.add("show");
+    countEl.textContent = "CSV not loaded";
+  }
+
+  var cands = [];
+  var qp = (location.search.match(/[?&]csv=([^&]+)/) || [])[1];
+  if (qp) { qp = decodeURIComponent(qp); if (/^[\w.\/-]+$/.test(qp) && qp.indexOf("//") < 0) cands.push(qp); }   /* ?csv=relative/path.csv, for local testing only */
+  cands.push("fabsolutely_binding.csv", "../fabsolutely_binding.csv");   /* docs/ copy first, then the repository root */
+
+  (function next(i) {
+    if (i >= cands.length) return fail();
+    fetch(cands[i], { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { if (!/^﻿?sequence_id/.test(t)) throw new Error("not a CSV"); show(cands[i], t); })
+      .catch(function () { next(i + 1); });
+  })(0);
+})();
+</script>
+</body>
+</html>
