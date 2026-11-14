@@ -29,6 +29,7 @@ rd = lambda p, key=None: list(csv.DictReader(open(f"{ROOT}/results/denovo/{p}"))
 S = rd("submission_top20_pareto.csv")[:N]
 D = {r["design_id"]: r for r in rd("designs_rfd4jf.csv")}
 SO = {r["design_id"]: r for r in rd("score_orth.csv")}
+SC = {r["design_id"]: r for r in rd("crop/dde_crop.csv")}   # OpenDDE on the cropped HER2 (539-607)
 num = lambda d, k: float(d[k]) if d.get(k) not in (None, "") else float("nan")  # noqa: E731
 EPI = [int(r["auth_seq"]) for r in json.load(open(f"{ROOT}/denovo/targets/epitope.json"))["residues"]]
 
@@ -77,14 +78,18 @@ for i, r in enumerate(S, start=1):
     did = r["design_id"]
     rk = f"{i:02d}"
     dcif = f"{ROOT}/{D[did]['design_cif']}" if D[did]["design_cif"] else f"{ROOT}/results/denovo/designs/{did}.cif"
-    pcifs = sorted(glob.glob(f"{ROOT}/results/denovo/s3_raw/dde/*/{did}__her2.cif"), key=os.path.getmtime)
+    # prefer the OpenDDE prediction on the CROPPED HER2 (539-607; the gate and the final ranking use it), else the full-domain one
+    pcifs = sorted(glob.glob(f"{ROOT}/results/denovo/crop/s3_raw/ddec/*/{did}__her2c.cif"), key=os.path.getmtime)
+    off = 538 if pcifs else 488                      # predicted HER2 chain B: resi k = HER2 number off + k
+    if not pcifs:
+        pcifs = sorted(glob.glob(f"{ROOT}/results/denovo/s3_raw/dde/*/{did}__her2.cif"), key=os.path.getmtime)
     if not pcifs or not os.path.exists(dcif):
         print("MISSING", did, bool(pcifs), os.path.exists(dcif))
         continue
     pcif = pcifs[-1]
     # transform: OpenDDE HER2 -> designed HER2, by HER2 residue number
     P, Dd = read_ca(pcif), read_ca(dcif)
-    ph = {488 + n: x for c, n, x in P if c == "B"}
+    ph = {off + n: x for c, n, x in P if c == "B"}
     dh = {(488 + n if c == "A" else 590 + n): x for c, n, x in Dd if c in ("A", "C")}
     common = sorted(set(ph) & set(dh))
     Rm, t = kabsch(np.array([ph[k] for k in common]), np.array([dh[k] for k in common]))
@@ -131,10 +136,10 @@ for i, r in enumerate(S, start=1):
     cmd.color("orange", f"{ob_d}_epi and elem C")
     cmd.set("cartoon_transparency", 0.0, ob_d)
     cmd.disable(ob_h)
-    iptm = num(SO.get(did, {}), "dde_iptm")
+    iptm = num(SC.get(did, {}), "dde_c_iptm") if off == 538 else num(SO.get(did, {}), "dde_iptm")
     info.append({"rank": i, "design_id": did, "framework": r["framework"], "pose_rmsd_A": round(pose, 1), "scrmsd_A": round(fold, 2),
-                 "her2_fit_rmsd_A": round(her_fit, 2), "dde_iptm": round(float(iptm), 2), "dde_ipsae_chn15": round(num(SO.get(did, {}), "dde_ipsae_chn15"), 2),
-                 "design_cif": os.path.relpath(dcif, ROOT), "dde_cif": os.path.relpath(pcif, ROOT)})
+                 "her2_fit_rmsd_A": round(her_fit, 2), "dde_iptm": round(float(iptm), 2), "dde_ipsae_chn15": round(num(SC.get(did, {}), "dde_c_ipsae_chn15") if off == 538 else num(SO.get(did, {}), "dde_ipsae_chn15"), 2),
+                 "her2": "crop 539-607" if off == 538 else "full 489-607", "design_cif": os.path.relpath(dcif, ROOT), "dde_cif": os.path.relpath(pcif, ROOT)})
     print(f"{rk} {did}: pose RMSD {pose:.1f} A | scRMSD {fold:.2f} A | HER2 fit {her_fit:.2f} A | OpenDDE iPTM {iptm:.2f}")
     if first is None:
         first = rk
