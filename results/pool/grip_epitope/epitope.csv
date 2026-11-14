@@ -1,0 +1,11 @@
+model,id,group,n_epitope_residues,overlap_vs_tz_same_model,overlap_vs_crystal
+grip-boltz2-s42,trastuzumab,baseline,19,1.0,1.0
+grip-boltz2-s42,tz-grip-01,design,21,0.905,0.905
+grip-boltz2-s42,tz-grip-02,design,20,0.95,0.95
+grip-boltz2-s42,tz-grip-03,design,19,0.9,0.9
+grip-boltz2-s42,tz-grip-04,design,18,0.947,0.947
+grip-boltz2-s42,tz-grip-05,design,18,0.947,0.947
+grip-boltz2-s42,tz-grip-06,design,18,0.947,0.947
+grip-boltz2-s42,tz-grip-07,design,18,0.947,0.947
+grip-boltz2-s42,tz-grip-08,design,19,1.0,1.0
+

@@ -1,0 +1,13 @@
+sequence_id,cdrh3,min_distance_to_provided,nearest_provided,required,passes
+tz-clean-02-stab,RGGEGFYANE,3,CGGEGFYAID,3,yes
+tz-grip-08-stab,WGSEGFYNRD,3,FGSGGFYNFD,3,yes
+tz-clean-01-stab,YGGDYFYGKD,3,LGGDGFYAKD,3,yes
+tz-grip-02-stab,WGSKGFYGPD,3,WGAKGFYKFD,3,yes
+tz-clean-03-stab,FGGGGNYAKD,3,EGEGGFYAKD,3,yes
+tz-clean-07-stab,HGGDRFYKRD,3,CGGDRFYAID,3,yes
+tz-clean-02,RGGEGFYANE,3,CGGEGFYAID,3,yes
+tz-grip-08,WGSEGFYNRD,3,FGSGGFYNFD,3,yes
+tz-clean-01,YGGDYFYGKD,3,LGGDGFYAKD,3,yes
+tz-grip-02,WGSKGFYGPD,3,WGAKGFYKFD,3,yes
+trastuzumab_CONTROL,WGGDGFYAMD,0,WGGDGFYAMD,3,yes
+

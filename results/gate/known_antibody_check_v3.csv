@@ -1,0 +1,13 @@
+sequence_id,imgt_cdrh3,min_edit_distance,nearest,nearest_source,passes
+tz-clean-02-stab,SRRGGEGFYANEY,3,SRCGGEGFYAIDY,tz_her2_facs_3classes_524346,True
+tz-grip-08-stab,SRWGSEGFYNRDY,3,SRFGSGGFYNFDY,tz_her2_facs_3classes_524346,True
+tz-clean-01-stab,SRYGGDYFYGKDY,3,SRLGGDGFYAKDY,tz_her2_facs_3classes_524346,True
+tz-grip-02-stab,SRWGSKGFYGPDY,3,SRWGAKGFYKFDY,tz_her2_facs_3classes_524346,True
+tz-clean-03-stab,SRFGGGGNYAKDY,3,SREGEGGFYAKDY,trastuzumab_her2_spr_all_768,True
+tz-clean-07-stab,SRHGGDRFYKRDY,3,SRCGGDRFYAIDY,tz_her2_facs_3classes_524346,True
+tz-clean-02,SRRGGEGFYANEY,3,SRCGGEGFYAIDY,tz_her2_facs_3classes_524346,True
+tz-grip-08,SRWGSEGFYNRDY,3,SRFGSGGFYNFDY,tz_her2_facs_3classes_524346,True
+tz-clean-01,SRYGGDYFYGKDY,3,SRLGGDGFYAKDY,tz_her2_facs_3classes_524346,True
+tz-grip-02,SRWGSKGFYGPDY,3,SRWGAKGFYKFDY,tz_her2_facs_3classes_524346,True
+trastuzumab_CONTROL,SRWGGDGFYAMDY,0,SRWGGDGFYAMDY,pdb,True
+
