@@ -14,7 +14,7 @@ WHY THIS EXISTS
 THE THREE VERDICTS, AND WHY UNKNOWN IS NOT A PASS
   PASS     we checked it, it holds.
   FAIL     we checked it, it does not hold. The design must not be submitted.
-  UNKNOWN  we cannot check it here, so we say so.
+  UNKNOWN  we cannot check it on this machine, so we say so.
 
   Two requirements are genuinely uncheckable without the organisers' tooling:
   the "under 70% identity to any known antibody" test for the de novo track,
@@ -50,8 +50,11 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from abx.data import TZ_CDRH3_10, provided_cdrh3s  # noqa: E402
 from abx.gate import (  # noqa: E402
@@ -69,14 +72,31 @@ VALID_KINDS = {"vhh", "scfv", "paired", "fab"}
 
 
 def min_distance_to_provided(cdrh3: str, provided: list[str]) -> tuple[int, str]:
-    best, who = len(cdrh3) + 99, ""
+    """Smallest edit distance from `cdrh3` to any provided sequence.
+
+    Edit distance, not Hamming, even where the lengths match. Two 10-mers can
+    differ at several positions and still be two edits apart if one is the
+    other with a residue inserted and another deleted. The official checker
+    aligns, so a design scored 3 by a positional comparison can be rejected
+    at 2 -- and our margin is zero, so that difference decides whether a
+    design is made at all.
+
+    This delegates to `verify_novelty_full`, which does it vectorised over the
+    whole provided set rather than one sequence at a time.
+    """
+    from verify_novelty_full import min_distance_exhaustive
+
+    by_len: dict[int, list[str]] = {}
     for p in provided:
-        d = hamming(p, cdrh3) if len(p) == len(cdrh3) else levenshtein(p, cdrh3)
-        if d < best:
-            best, who = d, p
-            if best == 0:
-                break
-    return best, who
+        by_len.setdefault(len(p), []).append(p)
+    same = by_len.get(len(cdrh3), [])
+    packed = (
+        np.frombuffer("".join(same).encode(), dtype=np.uint8).reshape(len(same), len(cdrh3))
+        if same
+        else np.empty((0, len(cdrh3)), dtype=np.uint8)
+    )
+    other = [p for L, seqs in by_len.items() if L != len(cdrh3) for p in seqs]
+    return min_distance_exhaustive(cdrh3, packed, other)
 
 
 def check_row(row: dict, provided: list[str]) -> dict:

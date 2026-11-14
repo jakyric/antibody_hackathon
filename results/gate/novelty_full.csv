@@ -1,0 +1,12 @@
+sequence_id,cdrh3,min_distance_to_provided,nearest_provided,required,passes
+tz-opt-02-stab,MGPEPFYAMD,3,CGAEGFYAMD,3,yes
+tz-opt-18-stab,WGGWPAYALD,3,WAGGGPYALD,3,yes
+tz-opt-07-stab,FGGWPWYAMD,3,FGGDGIYAMD,3,yes
+tz-opt-15-stab,FGGDMWYWMD,3,FGGDGFYDMD,3,yes
+tz-opt-01-stab,APGDGFQIMD,3,WPGDGFYAMD,3,yes
+tz-opt-03-stab,LGGDGAYMVD,3,FGGDGLYMYD,3,yes
+tz-opt-02,MGPEPFYAMD,3,CGAEGFYAMD,3,yes
+tz-opt-18,WGGWPAYALD,3,WAGGGPYALD,3,yes
+tz-opt-07,FGGWPWYAMD,3,FGGDGIYAMD,3,yes
+tz-opt-01,APGDGFQIMD,3,WPGDGFYAMD,3,yes
+trastuzumab_CONTROL,WGGDGFYAMD,0,WGGDGFYAMD,3,yes

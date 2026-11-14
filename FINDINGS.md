@@ -262,6 +262,83 @@ ipTM between antibody and antigen:
 Boltz-1 points the wrong way. Not significantly so, but a model whose point
 estimate is negative is not a weak ranker, it is no ranker.
 
+### Settled on 101 measured variants
+
+Twenty-five variants could not separate a real effect from noise: every
+interval touched zero. So we ran Boltz-2 over **101** variants with a measured
+KD — every one in the SPR table with a 10-residue loop, which is as many as
+the template allows.
+
+| Signal | n | Spearman | 95 % CI |
+| --- | --- | --- | --- |
+| **edit distance to trastuzumab** | 101 | **+0.50** | **[0.34, 0.62]** |
+| Boltz-2 interface ipTM (ab-ag) | 101 | **+0.35** | **[0.17, 0.53]** |
+
+Both intervals are now clear of zero, and the conclusion is sharper than
+before, in both directions:
+
+- **Co-folding confidence does carry real affinity signal.** At n = 25 we
+  could not say that; at n = 101 we can. A folding model that never saw this
+  assay orders measured affinity better than chance, reliably.
+- **It is still beaten by counting mutations.** +0.50 against +0.35, on
+  exactly the same 101 variants, and the gap is larger than either interval
+  is wide at the point estimate.
+
+A note on how nearly we got this wrong. Both panels number their entries
+`calib-00`, `calib-01`, and so on, but `calib-05` is a different variant in
+each. The first analysis read the 101 new structures against the 25-variant
+panel's KD values and returned +0.19 — a plausible-looking number built from
+mismatched rows. The run now carries its own panel, and a test pins it. Any
+identifier reused across two datasets is a trap of this kind.
+
+Read this carefully, because it cuts both ways.
+
+- Boltz-2's interface confidence **does** carry affinity signal. +0.41 is not
+  nothing, and it is better than the net we trained on half a million FACS
+  labels. A folding model that never saw this assay beats a model that was
+  fitted to it. That is finding 3 again, from a different direction: training
+  on the FACS label bought us nothing for affinity, while a model that never
+  saw the label carries some.
+- But on the same 25 variants, **edit distance still wins**, and its interval
+  is the only one clearly clear of zero. This is the fourth ranking method we
+  have tried and the fourth to lose to counting mutations.
+- pLDDT is close to useless here (+0.18). Whole-structure confidence is not
+  interface quality. If anyone ranks on pLDDT, stop them.
+
+- Every other model's interval contains zero. On this task, with this
+  template, the models are not interchangeable.
+- **The seed moves the headline number by as much as the model's own claim
+  to be useful.** The same Boltz-2 on the same 25 variants gives +0.41 with
+  one seed and +0.34 with another. Any comparison that turns on a difference
+  of 0.07 in Spearman is noise.
+
+The honest summary: **co-folding confidence is a weak second opinion, not a
+ranking function.** We use it to flag designs the folding model dislikes, and
+we keep ranking on distance plus conservative substitution.
+
+### And the models do not agree with each other
+
+The strongest argument against ranking on co-folding is not any single
+correlation. It is that the models, given identical inputs, rank our 20
+designs almost independently of one another:
+
+| Pair | Spearman on the 20 designs, interface ipTM |
+| --- | --- |
+| Boltz-2 vs OpenFold3 | +0.18 |
+| Boltz-2 vs Protenix v2 | +0.17 |
+| OpenFold3 vs Protenix v2 | **+0.02** |
+
+The absolute scales are not comparable either. Trastuzumab's own complex
+scores interface ipTM **0.94 in Boltz-2, 0.37 in Protenix, 0.21 in
+OpenFold3 and 0.12 in Boltz-1** — the same four chains, the same template,
+the same crystal structure behind it. A threshold carried from one model to
+the other is meaningless, and so is any "consensus" built by averaging them.
+
+This is the practical rule: **compare within one model, never across, and
+treat agreement between models as the evidence, not either score alone.**
+Here there is very little agreement, so there is very little evidence.
+
+
 Read this carefully, because it cuts both ways.
 
 - Boltz-2's interface confidence **does** carry affinity signal. +0.41 is not

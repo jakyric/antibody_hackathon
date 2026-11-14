@@ -1,0 +1,19 @@
+abguard team-validate on the committed results/SUBMISSION.csv
+date: 2026-11-14T12:56:25Z
+abguard: /home/hackathon/.cache/uv/archive-v0/jsRWGsUwPztt-JwD/bin/abguard
+md5 of the validated file: 04c1e3ee53942cd479c06333269936d5
+reference: provided.duckdb, built from the provided HER2 data
+
+########## 1. THE TEN ALONE -- every row must pass ##########
+INFO     SUBMISSION_committed: 10/10 design(s) valid
+shape: (10, 5)
+┌────────────────┬────────────────────────┬───────────────────────┬────────┬───────────────────────┐
+│ sequence_id    ┆ heavy_sequence         ┆ design_description    ┆ kind   ┆ light_sequence        │
+>>> EXIT: 0   (0 = every row compliant)
+
+########## 2. PLUS TRASTUZUMAB -- the control MUST fail ##########
+ERROR    SUB_with_tz.csv: submission is not compliant (10 of 11 row(s) pass the schema). Re-run with --drop to discard the offending rows.
+  - [novelty] tz_reference: CDRH3 SRWGGDGFYAMDY is 0 mutation(s) from SRWGGDGFYAMDY in trastuzumab; a novel design needs at least 3
+>>> EXIT: 1   (1 is CORRECT here: trastuzumab must be rejected)
+
+RESULT: gate behaves correctly -- ten pass, the known-bad control is caught.

@@ -1,7 +1,7 @@
 """Exhaustive novelty check: every submitted design against EVERY provided CDRH3.
 
 WHY THIS EXISTS
-  `scripts/build_reference.py` builds the official checker's reference from a 4,579-row
+  `scripts/build_reference.py` builds the official checker reference from a 4,579-row
   subset of the provided data: every sequence within 4 mutations of a design,
   plus random controls. The argument for the shortcut is sound -- a sequence
   more than 4 mutations away cannot set a design's minimum distance -- but it
@@ -56,20 +56,49 @@ def cdrh3_from_heavy(heavy: str) -> str:
     return heavy[start:end]
 
 
+def edit_distances_same_length(query: str, rows: np.ndarray) -> np.ndarray:
+    """Levenshtein distance from `query` to every row of an (N, L) matrix.
+
+    WHY NOT HAMMING
+      Equal length does not mean the alignment is positional. `YPGRYFYTYD`
+      and `YPAGRFYTYD` are both 10-mers differing at four positions, but one
+      is the other with a residue inserted and another deleted: two edits.
+      The official checker aligns, so it sees 2 where a positional comparison sees 4 --
+      and 2 is below the three-mutation floor. Scoring these by Hamming
+      reports a design as novel that the official checker rejects, and a rejected
+      design is never made.
+
+    The dynamic-programming table is walked one query residue at a time with
+    the whole column held as a vector over the N provided sequences, so the
+    cost is (len(query) x L) numpy operations rather than N python loops.
+    """
+    n_rows, width = rows.shape
+    q = np.frombuffer(query.encode(), dtype=np.uint8)
+    prev = np.tile(np.arange(width + 1, dtype=np.int16), (n_rows, 1))
+    cur = np.empty_like(prev)
+    for i in range(1, len(q) + 1):
+        cur[:, 0] = i
+        for j in range(1, width + 1):
+            cost = (rows[:, j - 1] != q[i - 1]).astype(np.int16)
+            np.minimum(prev[:, j] + 1, cur[:, j - 1] + 1, out=cur[:, j])
+            np.minimum(cur[:, j], prev[:, j - 1] + cost, out=cur[:, j])
+        prev, cur = cur, prev
+    return prev[:, width]
+
+
 def min_distance_exhaustive(
     query: str, same_len: np.ndarray, other_len: list[str]
 ) -> tuple[int, str]:
     """True minimum distance of `query` to every provided sequence.
 
     `same_len` is an (N, L) uint8 matrix of the provided sequences whose length
-    equals len(query); those are compared by Hamming, vectorised. `other_len`
-    holds the rest, compared by Levenshtein one at a time. Returns the minimum
-    and the sequence that attains it.
+    equals len(query); those are compared by edit distance, vectorised.
+    `other_len` holds the rest, compared by Levenshtein one at a time. Returns
+    the minimum and the sequence that attains it.
     """
     best, best_seq = len(query) + 99, ""
     if same_len.size:
-        q = np.frombuffer(query.encode(), dtype=np.uint8)
-        dists = (same_len != q).sum(axis=1)
+        dists = edit_distances_same_length(query, same_len)
         i = int(dists.argmin())
         best, best_seq = int(dists[i]), same_len[i].tobytes().decode()
     for seq in other_len:
