@@ -247,13 +247,20 @@ Boltz-2, n = 25, Spearman against -log10(KD), 95 % bootstrap CI:
 | **edit distance to trastuzumab** | **+0.51** | **[0.16, 0.78]** | **0.72** |
 | our FACS-trained net | +0.22 | [-0.23, 0.57] | 0.59 |
 
-OpenFold3 (OpenBind weights), same 25 variants, same template, same seed:
+The other four models, same 25 variants, same template, same seed, interface
+ipTM between antibody and antigen:
 
-| Signal | Spearman | 95 % CI | AUROC |
+| Model | Template | Spearman | 95 % CI |
 | --- | --- | --- | --- |
-| interface ipTM, antibody-antigen | +0.24 | [-0.18, 0.61] | 0.58 |
-| ipTM (whole complex) | +0.15 | [-0.23, 0.51] | 0.56 |
-| pLDDT | -0.02 | [-0.41, 0.40] | 0.50 |
+| Boltz-2 | yes | **+0.41** | [0.00, 0.72] |
+| Boltz-2, second seed | yes | +0.34 | [-0.10, 0.66] |
+| ESMFold2 | no | +0.28 | [-0.14, 0.60] |
+| OpenFold3 OpenBind | yes | +0.24 | [-0.18, 0.61] |
+| Protenix v2 | yes | +0.15 | [-0.24, 0.51] |
+| Boltz-1 | no | **-0.23** | [-0.56, 0.17] |
+
+Boltz-1 points the wrong way. Not significantly so, but a model whose point
+estimate is negative is not a weak ranker, it is no ranker.
 
 Read this carefully, because it cuts both ways.
 
@@ -269,28 +276,33 @@ Read this carefully, because it cuts both ways.
 - pLDDT is close to useless here (+0.18). Whole-structure confidence is not
   interface quality. If anyone ranks on pLDDT, stop them.
 
-- OpenFold3 is weaker than Boltz-2 on every metric and its intervals all
-  contain zero. On this task, with this template, the two models are not
-  interchangeable.
+- Every other model's interval contains zero. On this task, with this
+  template, the models are not interchangeable.
+- **The seed moves the headline number by as much as the model's own claim
+  to be useful.** The same Boltz-2 on the same 25 variants gives +0.41 with
+  one seed and +0.34 with another. Any comparison that turns on a difference
+  of 0.07 in Spearman is noise.
 
 The honest summary: **co-folding confidence is a weak second opinion, not a
 ranking function.** We use it to flag designs the folding model dislikes, and
 we keep ranking on distance plus conservative substitution.
 
-### And the two models do not agree with each other
+### And the models do not agree with each other
 
 The strongest argument against ranking on co-folding is not any single
-correlation. It is that the two models, given identical inputs, rank our
-20 designs almost independently:
+correlation. It is that the models, given identical inputs, rank our 20
+designs almost independently of one another:
 
-| Metric | Boltz-2 vs OpenFold3, Spearman, n = 20 |
+| Pair | Spearman on the 20 designs, interface ipTM |
 | --- | --- |
-| interface ipTM (ab-ag) | +0.18 |
-| pLDDT | +0.34 |
+| Boltz-2 vs OpenFold3 | +0.18 |
+| Boltz-2 vs Protenix v2 | +0.17 |
+| OpenFold3 vs Protenix v2 | **+0.02** |
 
 The absolute scales are not comparable either. Trastuzumab's own complex
-scores interface ipTM **0.94 in Boltz-2 and 0.21 in OpenFold3** — the same
-four chains, the same template, the same crystal structure behind it. A
+scores interface ipTM **0.94 in Boltz-2, 0.37 in Protenix, 0.21 in
+OpenFold3 and 0.12 in Boltz-1** — the same four chains, the same template,
+the same crystal structure behind it. A
 threshold carried from one model to the other is meaningless, and so is any
 "consensus" built by averaging them.
 
@@ -303,19 +315,23 @@ Here there is very little agreement, so there is very little evidence.
 Same run, same template, same seed. Trastuzumab is in the panel as the
 baseline, scored by exactly the same pipeline as the designs:
 
-| Model | Metric | Trastuzumab | Designs, median | Designs, best | Above baseline |
-| --- | --- | --- | --- | --- | --- |
-| Boltz-2 | interface ipTM (ab-ag) | 0.941 | 0.916 | 0.936 | **0 of 20** |
-| Boltz-2 | ipTM | 0.960 | 0.943 | 0.956 | **0 of 20** |
-| Boltz-2 | pLDDT | 97.2 | 96.6 | 97.6 | 4 of 20 |
-| OpenFold3 | interface ipTM (ab-ag) | 0.206 | 0.121 | 0.302 | 2 of 20 |
-| OpenFold3 | ipTM | 0.599 | 0.554 | 0.632 | 2 of 20 |
-| OpenFold3 | pLDDT | 87.7 | 86.8 | 88.9 | 3 of 20 |
+Interface ipTM between antibody and antigen, every model, same 20 designs:
 
-Boltz-2 puts no design above trastuzumab on either interface metric.
-OpenFold3 puts two above. Only one of those two is near the top of the
-Boltz-2 ordering; the other sits mid-table there. Across the top five the
-models share three designs out of five — some signal, not a ranking.
+| Model | Trastuzumab | Designs, median | Designs, best | **Above baseline** |
+| --- | --- | --- | --- | --- |
+| Boltz-2 | 0.941 | 0.916 | 0.936 | **0 of 20** |
+| OpenFold3 | 0.206 | 0.121 | 0.302 | **2 of 20** |
+| Protenix v2 | 0.366 | 0.311 | 0.553 | **6 of 20** |
+| ESMFold2 | 0.245 | 0.181 | 0.779 | **7 of 20** |
+| Boltz-1 | 0.120 | 0.123 | 0.149 | **14 of 20** |
+
+**Zero to fourteen, out of the same twenty designs.** The answer to "do any
+of our designs beat trastuzumab?" is determined by which model is asked, not
+by the designs. Any team that runs one folding model and reports the count
+is reporting their model choice.
+
+Section 10 is what breaks the tie: only one of these five reproduces
+trastuzumab's known epitope, and it is the one that answers zero.
 
 Given section 7 this is **not** a prediction that the designs are worse. The
 metric that produced this table orders known answers at rho 0.41 with an
@@ -390,8 +406,15 @@ so Kabat VH44 is sequential 44. In 1N8Z both are the plain residue numbers.
 Do not copy "Gly100Cys" from a paper: in trastuzumab's humanised FR4 that
 position is **Gln**, not Gly.
 
-Both positions are framework, so neither novelty rule is touched, and two new
-cysteines keep the parity even.
+Both positions are framework, so neither novelty rule is touched. We also
+wrote here that "two new cysteines keep the parity even". **That sentence was
+wrong, and it is why the recommendation failed.** The parity is even over the
+whole molecule but odd *inside each variable domain*, and the official checker
+pairs cysteines per domain. One new cysteine in VH and one in VL means an
+unpaired thiol in both. An interdomain staple is by construction exactly this,
+so no such bridge can pass. Counting cysteines at the wrong level of the
+molecule is the same class of mistake as the missing C-beta: a filter applied
+to the wrong object, giving a clean answer to the wrong question.
 
 ---
 
@@ -410,17 +433,25 @@ contact.
 | Model | Trastuzumab's predicted epitope vs the crystal (Jaccard) |
 | --- | --- |
 | **Boltz-2** | **1.00** |
+| **Boltz-2, second seed** | **1.00** |
 | Boltz-1 (no template) | 0.29 |
 | Protenix v2 | 0.26 |
 | OpenFold3 OpenBind | 0.10 |
+| ESMFold2 (no template) | 0.07 |
 
-The contact cutoff does not decide this. At 4.0, 4.5 and 5.0 A, Boltz-2
+Neither the cutoff nor the seed decides this. At 4.0, 4.5 and 5.0 A, Boltz-2
 scores 0.94, 1.00 and 1.00, while no other model gets above 0.30 at any of
-the three. ESMFold2, which folds from sequence alone with no template, sits
-at 0.06-0.07: it does not assemble the complex at all and cannot be used for
-this target.
+the three, and a second seed gives Boltz-2 the same 1.00. Note the contrast
+with section 7: the seed moved the affinity correlation by 0.07, but moves
+the epitope recovery not at all. The epitope measurement is the more stable
+of the two, which is one reason to lean on it.
 
-Boltz-2 reproduces the crystal epitope exactly. The other three do not come
+ESMFold2, which folds from sequence alone, sits at 0.07: it does not assemble
+the complex at all and cannot be used for this target. That matters for the
+rule of using one templated and one untemplated model: here the untemplated
+ones are not a second opinion, they are noise.
+
+Boltz-2 reproduces the crystal epitope exactly. The other four do not come
 close. **That is the tie-break we were missing:** we are not choosing between
 three equally plausible opinions, we are choosing the one model that can get
 the one case we can check right.
