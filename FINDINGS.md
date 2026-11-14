@@ -767,28 +767,25 @@ split equally between tracks, which pulls the other way.
 
 ### Both tracks, or only optimisation?
 
-Everything we have built so far is optimisation. Our recommendation is to
-**keep optimisation as the primary track, and enter de novo only if two
-things are confirmed by the organisers:**
+This section used to recommend entering de novo only after two questions were
+confirmed with the organisers, and warned that if the novelty rule were measured
+on the whole sequence "nothing we can build in the time left qualifies". Both
+turned out to be wrong in the useful direction, so the recommendation changed:
 
-- **How the de novo novelty rule is computed.** "Under 70 % identity with a
-  known antibody" is straightforward if it is measured on the CDRs. If it is
-  measured on the whole sequence, then nothing we can build in the time left
-  qualifies, because every real antibody framework is far more than 70 %
-  identical to known antibodies. This single answer decides the track.
-- **Whether the four guaranteed lab slots are per team or per track.** If
-  they are per team, splitting two and two halves our shots in a track where
-  only 3.3 % of measured variants beat the baseline (section 1). If they are
-  per track, entering both is close to free.
+- **The rule is measured over the whole sequence, and it is type-aware.** That
+  is why the Fv experiment failed: redesigning all six CDRs on trastuzumab's own
+  framework left whole-sequence identity at 0.877-0.890, and all 47 designs
+  were classified as trastuzumab variants (`novel`), which is the other track.
+  Our worry that no real framework could pass was too pessimistic, though: a
+  nanobody framework is not trastuzumab's, and the VHH designs classify as
+  `de_novo` at 0.63-0.70 identity. The framework is what decides the track.
+- **The guaranteed slots are per team,** as recorded above. Entering both tracks
+  therefore does split four guaranteed shots between them. The prize fund is
+  split equally between the tracks, which pulls the other way.
 
-If both answers come back favourably, the argument for de novo is not
-affinity. It is that the tier system gives credit for **any one** axis, and a
-fresh scaffold has a genuine chance on thermostability where a trastuzumab
-variant is fighting an already-good clinical antibody. That makes de novo a
-cheap ticket on the axis we are strongest on, not a second attempt at the
-axis we are weakest on.
-
-We have queued a de novo experiment that redesigns all six CDRs against HER2
-on an Fv framework, to find out whether such designs pass our own gate at
-all. It is there to answer the question, not to be submitted.
+So we enter both: optimisation as the main track, and six VHH designs for de
+novo. The argument for the second track is not affinity. The tier system gives
+credit for any one axis, and a fresh scaffold has a real chance on
+thermostability where a trastuzumab variant is competing against an
+already-good clinical antibody.
 

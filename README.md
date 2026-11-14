@@ -10,20 +10,53 @@ things we could verify: novelty against the full provided dataset, chemical liab
 organisers' own reference, structural consistency across folding models and seeds, and explicit
 uncertainty on every claim.
 
-We deliver **ten trastuzumab-derived scFv/paired candidates** for experimental evaluation, including a
-controlled investigation of the VL R66G thermostability mutation.
+We deliver candidates in **both tracks**: **ten trastuzumab-derived scFv/paired candidates** for the
+optimisation track, including a controlled investigation of the VL R66G thermostability mutation, and
+**six de novo VHH binders** aimed at the trastuzumab epitope on HER2 domain IV.
 
 Our goal is not to claim that AI has already designed a superior antibody. It is to help scientists make
 better decisions about which antibodies to test.
 
 ```bash
-make setup && make test     # 135 tests, no data needed
+make setup && make test     # 110 pass, 21 skip, no data needed
 make demo                   # a complete run: target in -> ranked candidates out
 ```
 
 **Nothing in this repository is a laboratory measurement of our designs.** Adaptyv measures affinity,
 epitope preservation and thermostability weeks after the event. Every claim is labelled `measured`,
 `predicted`, `literature` or `unknown`, and we never write "binds".
+
+---
+
+## The two tracks are kept apart
+
+The challenge has two tracks with **different entry rules**, and the prize is split between them. We
+keep them separate everywhere — separate specs, separate gate runs, separate result folders and
+separate submission tables — because the rules are not interchangeable.
+
+| | Optimisation | De novo |
+| --- | --- | --- |
+| What it is | trastuzumab made better, in trastuzumab's format | a new HER2 binder from scratch |
+| Novelty rule | CDRH3 under 70 % identity to trastuzumab, and more than 2 mutations from every provided CDRH3 | under 70 % identity to a known antibody |
+| What we submit | 10 scFv / paired designs | 6 VHH designs |
+| `abguard` novelty class | `novel` | `de_novo` |
+| Where it lives | `results/CANDIDATES.md`, `results/SUBMISSION.csv` | `results/denovo/` (kept out of this repository: designs are not shared) |
+
+**Why the separation is not cosmetic.** Our first de novo attempt designed all six CDRs on
+trastuzumab's own Fv framework. Every CDR was new, so it looked de novo — but `abguard` measures
+identity to trastuzumab over the **whole sequence**, not over the CDRs, and those designs came out at
+0.877 to 0.890 identity. It classified all 47 of them as `novel`, that is, trastuzumab variants, which
+is the other track. No amount of CDR redesign gets under 70 % while the framework is trastuzumab's.
+
+A de novo entry therefore needs a different framework. The VHH spec designs three CDRs on a nanobody
+framework against the same four HER2 hotspot atoms the organisers' HER2 example uses, so the binder is
+aimed at trastuzumab's epitope while the scaffold is not trastuzumab. `abguard` classifies those as
+`de_novo` at 0.63 to 0.70 identity, with the nearest known CDRH3 at least 9 mutations away.
+
+The same discipline applies to the ranking. The de novo designs are scored with the organisers'
+`refold-score`, where the `pass` column is populated and a design that refolds far from the pose it was
+designed in is rejected even when its interface score is good — a strong score 40 Å away is a different
+binding site, not the one we asked for.
 
 ---
 
@@ -217,13 +250,14 @@ The other nine rows are in the same form in `results/CANDIDATES.md`.
 
 ```bash
 make setup     # venv + numpy/pytest (bootstraps pip where ensurepip is missing)
-make test      # 135 pass with no data; 155 with the two public tables
+make test      # 110 pass / 21 skip with no data; 125 pass / 6 skip with the tables
 make verify    # the benchmark: does our scorer recover answers we already know?
 ```
 
 `make test` and `make verify` were run **from a clean clone of this branch, on a machine that had never seen
-the project** — **135 passed, 20 skipped** with no data at all, **155 passed** once the two
-public tables are in place, benchmark exit 0, reproducing the headline
+the project** — **110 passed, 21 skipped** with no data at all, **125 passed, 6 skipped** once
+the two public tables are in place, `make demo` exit 0 producing 10 ranked candidates, and `make verify`
+reproducing the headline
 `edit_distance Spearman +0.226` in the legal zone. That run found a real bug: on a stock Debian/Ubuntu
 python, `python3 -m venv` creates an environment *without* pip, and every later step died with "No module
 named pip". `make setup` now bootstraps pip itself, so the repository builds on a machine with no
@@ -451,6 +485,12 @@ binding axis. That is a low bar and an honest one, and it is the first number we
 | `src/abx/model.py`, `rank.py`, `pipeline.py` | The binder model and the ranking |
 | `src/abx/metrics.py` | Spearman, AUROC, top-k precision, bootstrap intervals, no scipy |
 | `src/abx/thermo.py` | Disulfide geometry, building the C-beta glycine does not have |
+| `configs/her2_vhh_denovo.yaml` | **De novo track**: three CDRs on a nanobody framework, aimed at the trastuzumab epitope |
+| `scripts/vhh_framework_cif.py` | Turns the annotated VHH example into a clean framework usable against another target |
+| `scripts/denovo_collect.py`, `denovo_gate.py` | De novo designs gathered with their provenance, then gated |
+| `scripts/denovo_epitope.py` | HER2 interface residues per predicted complex, measured against 1N8Z |
+| `scripts/denovo_vhh_rank.py`, `denovo_rank.py` | Ranking on refold scores, as a percentile within each folding model |
+| `scripts/denovo_select.py`, `denovo_table.py` | The de novo selection rule and its submission table |
 | `scripts/requirement_check.py` | The one command: every entry requirement, per design, with margin |
 | `scripts/verify_novelty_full.py` | Exhaustive novelty against all 525,063 provided CDR-H3s |
 | `scripts/r66_contacts.py` | Arg66 geometry measured in 1N8Z |
