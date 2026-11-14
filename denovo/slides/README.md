@@ -1,13 +1,13 @@
 # Pipeline overview deck
 
-Private Slides artifact (13 slides), created by the publish step; the URL is not stored here. Share it from the page's Share menu if others should open it.
+Private Slides artifact: https://claude.ai/artifact/XnQZswmE7DSG6qpz9Dm1XG (13 slides). Share it from the page's Share menu if others should open it.
 
 Every number is read from `results/denovo/*` and the stage folders when the deck is built, so a refresh is one command plus one re-publish.
 
 ## Refresh
 
 ```bash
-denovo/.venv/bin/python denovo/slides/build_slides.py --plan     # rewrites denovo/slides/artifact/project/slides/*.html, prints the publish plan
+baseline/.venv/bin/python denovo/slides/build_slides.py --plan     # rewrites denovo/slides/artifact/project/slides/*.html, prints the publish plan
 ```
 
 Then publish the slide files to the SAME artifact (Artifact tool, publish): `url` = the URL above, `root` = `denovo/slides/artifact` (absolute path),

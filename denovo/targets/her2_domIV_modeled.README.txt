@@ -1,0 +1,1 @@
+AlphaFold DB P04626 domain IV (AF residues 511-629) superposed on the 1N8Z HER2 CA atoms (RMSD 1.02 A over 109 CA). One chain A, resi k = HER2 number 488+k (489-607), contiguous, loop 581-590 modelled (mean pLDDT 64, low = flexible).

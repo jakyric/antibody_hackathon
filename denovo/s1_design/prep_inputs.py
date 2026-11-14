@@ -1,7 +1,7 @@
 """Build the rfd4 inputs: HER2 domain IV (chains A and C, HER2 numbering, 1N8Z frame) + a VHH framework (chain B)
 pre-placed where trastuzumab's VH sits. Writes frameworks/<fw>.json and inputs/<fw>_on_her2.cif.
 
-Run: denovo/.venv/bin/python denovo/s1_design/prep_inputs.py [--pose-variants]
+Run: baseline/.venv/bin/python denovo/s1_design/prep_inputs.py [--pose-variants]
 
 Why pre-placed: the hosted rfd4 wrapper puts HER2 and the kept framework backbone in ONE rigid coordinate group
 (motif_rmsd of designs vs the submitted structure is ~0.4 A), so the framework pose relative to HER2 is whatever we

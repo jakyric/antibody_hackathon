@@ -21,7 +21,7 @@ if has nb9; then
   $PY python "$S/denovo/s4_props/nanobody_rules.py" --in in.csv --out nb9.csv > nb9.log 2>&1 && echo "nb9 ok" >> status.txt || echo "nb9 FAILED" >> status.txt
 fi
 if has tnp; then
-  $PY python "$S/denovo/s4_props/tnp_batch.py" --in in.csv --out tnp.csv --pdb-dir "$W/tnp_pdbs" --ncores "$NC" > tnp.log 2>&1 \
+  CUDA_VISIBLE_DEVICES= $PY python "$S/denovo/s4_props/tnp_batch.py" --in in.csv --out tnp.csv --pdb-dir "$W/tnp_pdbs" --ncores "$NC" > tnp.log 2>&1 \
     && echo "tnp ok" >> status.txt || echo "tnp FAILED" >> status.txt
 fi
 if has nanomelt; then

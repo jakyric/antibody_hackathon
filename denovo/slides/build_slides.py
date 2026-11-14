@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the pipeline overview deck from the live result files.
 
-    denovo/.venv/bin/python denovo/slides/build_slides.py            # regenerate denovo/slides/artifact/project/*
-    denovo/.venv/bin/python denovo/slides/build_slides.py --plan     # also print the publish plan (JSON)
+    baseline/.venv/bin/python denovo/slides/build_slides.py            # regenerate denovo/slides/artifact/project/*
+    baseline/.venv/bin/python denovo/slides/build_slides.py --plan     # also print the publish plan (JSON)
 
 Every number on a slide is read here from results/denovo/*.csv|json|md and denovo/*/ files at build time; where a stage has not
 produced evidence yet the slide says "pending" instead of showing a made-up value. No credentials, hosts or key paths are read or
@@ -683,7 +683,7 @@ def s_value(st):
 <div class="card"><p class="card-title">Reproduce it</p>
 <p class="body" style="font-size:26px">denovo/CONTRACT.md defines every stage’s inputs and outputs. Each stage folder has a README with its run command. Every score in results/denovo/ traces to a cached job id.</p></div>
 <div class="card-dark"><p class="card-title">Refresh the ranking</p>
-<p class="card-text" style="font-size:26px">denovo/.venv/bin/python denovo/rank.py<br>denovo/.venv/bin/python denovo/pareto.py</p></div>
+<p class="card-text" style="font-size:26px">baseline/.venv/bin/python denovo/rank.py<br>baseline/.venv/bin/python denovo/pareto.py</p></div>
 <div class="row" style="gap:16px"><div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">{E(spent)}</p><p class="cap">JapanFold spend so far, cap $65</p></div>
 <div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">5</p><p class="cap">parallel workers, one file contract</p></div></div>
 </div>

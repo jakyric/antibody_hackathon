@@ -29,7 +29,7 @@ trastuzumab's VH); CDR lengths are drawn from the requested ranges; every design
 ## Run
 
 ```bash
-PY=denovo/.venv/bin/python
+PY=baseline/.venv/bin/python
 export JAPANFOLD_API_KEY=...                                       # never printed or logged
 $PY denovo/s1_design/prep_inputs.py                                # once: frameworks/*.json, inputs/*.cif (needs denovo/targets/READY)
 $PY denovo/s1_design/prep_caa.py                                   # once: wave-2 inputs with C104-A105-A106 kept fixed (grafts A105/A106 onto capla)
@@ -37,8 +37,14 @@ $PY denovo/s1_design/run_design.py --auto --dry-run                # show the ne
 
 # WAVE 1 (historical, uniform grid, stopped): 24 cells x r0-r2, CDR3 block 12-16 / 16-21 starting at IMGT 105 (command was --reps 3 --workers 12)
 
-# WAVE 2 = the campaign: adaptive waves, CDR3 total 17-22 with CAA fixed, re-planned each wave by feedback.py, nothing new after 15:10
-$PY denovo/s1_design/run_design.py --auto --until 15:10 --jobs-per-wave 24 --workers 40 --max-inflight 12 --budget 28
+# WAVE 2 = the campaign: adaptive waves, CAA fixed, CDR3 ranges per framework (final: c3m2 = capla 10-16, bcii10 13-16 designed, IMGT block 12-18),
+# re-planned each wave by feedback.py. RESUME / EXTEND = re-run this (it first collects any finished jobs, then plans new ones with fresh seeds):
+$PY denovo/s1_design/run_design.py --auto --until HH:MM --jobs-per-wave 24 --workers 40 --max-inflight 12 --budget 28
+
+# loop-aware batch (modelled HER2 incl. the 581-590 loop, generator rfd4jf-loop, CIFs in results/denovo/designs_loop/, design_cif empty)
+$PY denovo/s1_design/run_design.py --loop-smoke                    # one job, prints diagnostics, touches no CSV
+$PY denovo/s1_design/run_design.py --loop-batch 9 --loop-rep 0 --until HH:MM   # 9 jobs x 8 designs; use --loop-rep 1 for NEW seeds
+# only ONE process may write designs_rfd4jf.csv at a time (each keeps its rows in memory): stop the other loop before starting this one.
 
 $PY denovo/s1_design/feedback.py                                   # per-cell table: geometry + OF3/consensus, writes feedback.csv
 $PY denovo/s1_design/summary.py                                    # campaign summary
@@ -48,6 +54,12 @@ Resume = re-run the same command. Every job has a stable name (`s1a-<fw>-<hotspo
 cell and repeat), its JapanFold id is cached in `results/denovo/jobs/`, and finished jobs are skipped, so nothing is paid twice.
 To extend a uniform run raise `--reps`; the auto mode continues each cell at its next unused repeat. Spend is accumulated in
 `spend_ledger.jsonl` and `--budget` (default $14 of the $15 cap) is checked across runs.
+
+## End state (15:25)
+
+`results/denovo/designs_rfd4jf.csv`: 1480 rows, all with a unique `vhh_seq` (capla 782, bcii10 698; 72 of them `rfd4jf-loop`); 1092 have an IMGT-block CDR3 of 12-18 aa. 94-149 designs in each framework x hotspot x pose cell.
+Spend 3.7 USD. The CSV is only ever written with unique sequences (asserted on every write; `load_rows()` dedupes at start-up).
+Side files: `duplicates_removed.csv` (986 rows from the seed-overlap bug, see decisions D7), `out_of_range_cdr3.csv` (147 designs collected after the length cap changed), `failed_jobs.jsonl`, `plan_log.jsonl` (14 plans), `cell_table.md`, `feedback.csv`.
 
 ## Grid
 
@@ -94,4 +106,6 @@ the RFD4 VM example; target from `denovo/targets/` (1N8Z). No VM or Foundry dock
   waits. The runner backs off and retries (up to 40 times); a real out-of-credit 402 has different text and fails the job.
 * Re-starting `run_design.py` mid-campaign is safe: every submitted job id is cached and `recover_jobs()` collects finished jobs that were never written.
   (Learned the hard way: a pool with as many threads as in-flight slots blocks on queued jobs while finished ones wait; hence 40 threads, `--max-inflight 12`.)
-* `p1` poses are a gamble: geometry columns show whether they pay off (see decisions.md D5).
+* `p1` poses are a gamble: geometry columns show whether they pay off (see decisions.md D6).
+* A job with seed S makes designs with seeds S..S+7: space job seeds by >= 8 (`new_seed()`), otherwise repeats re-make the same designs (decisions D7).
+* Only one process at a time may write the designs CSV; the runner asserts uniqueness on every write but cannot see another process's rows.

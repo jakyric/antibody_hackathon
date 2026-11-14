@@ -5,12 +5,12 @@ Nothing runs on the team VM; JapanFold is not used.
 
 ## Run
 ```bash
-PY=denovo/.venv/bin/python
+PY=baseline/.venv/bin/python
 $PY denovo/s3d_protenix/build_input.py          # nebius-runs/ptxtop-input.json (38 designs + 4 controls) + manifest.csv
 python3 ~/.claude/skills/nebius-scientific-ai/forge.py submit protenix-v2 \
   --entry 'protenix-input|protenix-input-json/v1|nebius-runs/ptxtop-input.json|application/json' \
   --params '{"checkpoint":"protenix-v2","msa_mode":"none","sample_count":3,"model_seeds":[7]}' --label ptx-top --no-wait
-nohup bash denovo/s3d_protenix/finish.sh > denovo/s3d_protenix/finish.log 2>&1 &   # waits, fetches, parses
+nohup python3 denovo/s3d_protenix/finish.py > denovo/s3d_protenix/finish.log 2>&1 &   # waits for the 16 runs, fetches each, parses
 # by hand: forge.py fetch op-70cf0433a9fbb3f9 --dest results/ptx-top && $PY denovo/s3d_protenix/parse_ptx.py
 ```
 Run id `op-70cf0433a9fbb3f9` (recorded in `nebius-runs/ptx-top.json`; re-running the submit follows the existing run, it never pays twice).

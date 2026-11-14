@@ -92,11 +92,12 @@ def cell_table():
 
 
 def fw_prior():
-    """VM pass rate per framework among designs whose CDR3 block is >= 17 aa (the wave-2 range); fall back to the overall rate."""
+    """VM pass rate per framework among designs whose CDR3 block (incl. AA) is in the current range (capla 12-18, bcii10 15-18); else overall."""
     geom, rules, sc, cdr3len, fwof = load()
     num, den = defaultdict(int), defaultdict(int)
     for did, ok in rules.items():
-        if did in fwof and cdr3len.get(did, 0) >= 17:
+        lo, hi = {"capla": (12, 18), "bcii10": (15, 18)}.get(fwof.get(did), (0, 99))
+        if did in fwof and lo <= cdr3len.get(did, 0) <= hi:
             num[fwof[did]] += int(ok); den[fwof[did]] += 1
     allok = [ok for did, ok in rules.items() if did in fwof]
     overall = sum(allok) / len(allok) if allok else 0.5

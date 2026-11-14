@@ -1,6 +1,6 @@
 """Build the shared HER2 domain IV target files from the 1N8Z crystal (trastuzumab Fv + HER2 domain IV).
 
-Run:  denovo/.venv/bin/python denovo/targets/make_targets.py
+Run:  baseline/.venv/bin/python denovo/targets/make_targets.py
 Writes (in denovo/targets/): ref_1n8z.cif, her2_domIV.cif, her2_domIV.fasta, her2_domIV.a3m, numbering_map.json,
 epitope.json, README.md, READY.
 
@@ -14,9 +14,9 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "optimization" / "data" / "her2" / "her2_fv_1n8z.cif"
+SRC = ROOT / "data" / "her2" / "her2_fv_1n8z.cif"
 OUT = Path(__file__).resolve().parent
-A3M = ROOT / "optimization" / "baseline" / "refold_inputs" / "her2_domIV.a3m"
+A3M = ROOT / "baseline" / "refold_inputs" / "her2_domIV.a3m"
 CUT = 4.5
 THREE = {"ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C", "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H",
          "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W",
@@ -132,7 +132,7 @@ doc = dict(source="1N8Z", cutoff_A=CUT, n_epitope_res=len(ep), n_contact_pairs=i
 * `epitope.json`: HER2 residues within {CUT} A of trastuzumab Fv heavy atoms ({len(ep)} residues, from the crystal, not
   from literature lists) and three hotspot sets: hs1_core (6 most-contacted of the dominant patch), hs2_broad (12 most-contacted),
   hs3_alt_patch (6 of the other patch).
-Regenerate with `denovo/.venv/bin/python denovo/targets/make_targets.py`.
+Regenerate with `baseline/.venv/bin/python denovo/targets/make_targets.py`.
 """)
 (OUT / "READY").write_text("ok\n")
 print("epitope residues:", len(ep), "patches:", {k: [e['auth_seq'] for e in v] for k, v in by_patch.items()})

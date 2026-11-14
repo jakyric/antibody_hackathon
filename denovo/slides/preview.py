@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Local layout check of the deck: renders the generated slides with headless Chromium, four per image.
 
-    denovo/.venv/bin/python denovo/slides/preview.py        # writes denovo/slides/preview/sheet-N.png
+    baseline/.venv/bin/python denovo/slides/preview.py        # writes denovo/slides/preview/sheet-N.png
 
 Approximation of the Slides renderer (plain browser rules; x-shape arrows are not drawn). Used only to catch wraps and overflow.
 """

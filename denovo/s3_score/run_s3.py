@@ -1,10 +1,10 @@
 """S3 runner: refold VHH + HER2 domain IV complexes on JapanFold with OpenFold3 (primary) and orthogonal models,
 parse every structure/PAE into interface metrics, and keep score_of3.csv / score_orth.csv up to date.
 
-  denovo/.venv/bin/python denovo/s3_score/run_s3.py score  --models of3,dde,esm2   # everything unscored now
-  denovo/.venv/bin/python denovo/s3_score/run_s3.py watch  --models of3,dde,esm2   # loop: poll designs_*.csv
-  denovo/.venv/bin/python denovo/s3_score/run_s3.py calib  --models of3,dde,esm2   # calibration complexes only
-  denovo/.venv/bin/python denovo/s3_score/run_s3.py assemble                         # rebuild the CSVs from raw metrics
+  baseline/.venv/bin/python denovo/s3_score/run_s3.py score  --models of3,dde,esm2   # everything unscored now
+  baseline/.venv/bin/python denovo/s3_score/run_s3.py watch  --models of3,dde,esm2   # loop: poll designs_*.csv
+  baseline/.venv/bin/python denovo/s3_score/run_s3.py calib  --models of3,dde,esm2   # calibration complexes only
+  baseline/.venv/bin/python denovo/s3_score/run_s3.py assemble                         # rebuild the CSVs from raw metrics
 
 Re-running is free: jobs are cached by content hash (dn_common.JapanFold.submit) and parsed metrics are append-only in
 results/denovo/s3_raw/metrics.jsonl. The key is read from JAPANFOLD_API_KEY and never printed.
@@ -39,7 +39,7 @@ CALIB = HERE / "calib_set.csv"
 GATES = HERE / "gates.json"
 LOCK = threading.Lock()
 
-HER2 = (ROOT / "optimization" / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
+HER2 = (ROOT / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
 HEWL = ("KVFGRCELAAAMKRHGLDNYRGYSLGNWVCAAKFESNFNTQATNRNTDGSTDYGILQINSRWWCNDGRTPGSRNLCNIPCSALLSSDITASVNCAKKIVS"
         "DGNGMNAWVAWRNRCKGTDVQAWIRGCRL")                                                 # hen egg-white lysozyme, decoy antigen
 assert len(HER2) == 119
@@ -107,7 +107,7 @@ def af2ig_items(items):
     for it in items:
         if it["kind"] != "vhh":
             continue
-        src = ROOT / it["design_cif"] if it["design_cif"] and (ROOT / it["design_cif"]).exists() else None
+        src = ROOT / it["design_cif"] if (it["design_cif"] or "").strip() and (ROOT / it["design_cif"]).is_file() else None
         tag = "design"
         if src is None:
             r = st.get((it["id"], "of3"))
@@ -257,9 +257,9 @@ def parse_target(it, row, dest: Path):
             cd3.append(pv.get("cdr3_centroid_dist", float("nan")))
             ep.append(g.complex_metrics(s, it["cdrs"])["epi_overlap"])
         m.update(pose_rmsd_max=float(np.max(rm)), cdr3_cent_max=float(np.nanmax(cd3)), epi_overlap_min=float(np.min(ep)))
-    if it["design_cif"] and is_her2 and not fv:
+    if (it["design_cif"] or "").strip() and is_her2 and not fv:     # an empty design_cif (loop-aware designs) simply skips the comparison
         p = ROOT / it["design_cif"]
-        if p.exists():
+        if p.is_file():
             try:
                 m.update(g.own_design_rmsd(p, a0, HER2))
             except Exception as e:  # keep the row, note the failure
@@ -376,8 +376,10 @@ def score(models, items, workers=6, max_fail=2):
 
 # ------------------------------------------------------------------ scoring tables
 STOP_FILE = ROOT / "denovo" / "STOP"
-STOP_HHMM = tuple(int(x) for x in __import__("os").environ.get("PIPELINE_S3_UNTIL", "15:40").split(":"))                      # stop launching new jobs at 15:40 local (CET)
-BUDGET = float(__import__("os").environ.get("PIPELINE_BUDGET_S3", "25"))                            # USD of JapanFold credit this stage may spend
+STOP_HHMM = (15, 40)                      # after this (local CET) only loop-aware designs are launched
+HARD_STOP_HHMM = (15, 52)                 # nothing new is launched after this; in-flight jobs are drained
+LOOP_GEN = "rfd4jf-loop"                  # S1a's loop-aware designs: scored first, and allowed until HARD_STOP_HHMM
+BUDGET = 25.0                             # USD of JapanFold credit this stage may spend
 DEFAULT_METRIC = {"of3": ("ipae_tm", "high")}   # used for percentiles until calibrate.py writes gates.json
 OF3_CONSENSUS = (("ipsae_chn15", "high"), ("ipae_tm", "high"), ("min_ipae", "low"), ("iptm", "high"))   # a-priori triple; see decisions.md
 PREF = {mk: MODELS[mk][1] for mk in MODELS}
@@ -676,12 +678,22 @@ def tier_plan(st, per, designs, tier2_models):
         for k in sorted(groups):
             if groups[k]:
                 newest.append(groups[k].pop(0))
+    newest = [d for d in newest if designs[d]["generator"] == LOOP_GEN] + [d for d in newest if designs[d]["generator"] != LOOP_GEN]
     ctl = sorted(d for d in designs if designs[d]["generator"] == "control")
     seq = ctl + newest
-    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_ids and "of3_consensus_rank_score" in per[d]]
-    k = max(3, math.ceil(0.35 * len(cand))) if cand else 0
-    top = set(sorted(cand, key=lambda d: -per[d]["of3_consensus_rank_score"])[:k])
+    # tier-2 candidates = rule-passing unique designs ranked by what the final ranking uses: OF3 iptm + ipsae_chn15 (mean percentile),
+    # top 60%, best first. Loop-aware designs that made the cut go first.
+    cand = [d for d in per if designs[d]["generator"] != "control" and rp.get(d) and d not in dup_ids and "of3_iptm" in per[d]
+            and "of3_ipsae_chn15" in per[d]]
+    pi = [per[d]["of3_iptm"] for d in cand]
+    ps = [per[d]["of3_ipsae_chn15"] for d in cand]
+    t2score = {d: 0.5 * (pct_of(per[d]["of3_iptm"], pi) + pct_of(per[d]["of3_ipsae_chn15"], ps)) for d in cand}
+    k = math.ceil(0.60 * len(cand)) if cand else 0
+    top_list = sorted(cand, key=lambda d: -t2score[d])[:k]
+    top_list = [d for d in top_list if designs[d]["generator"] == LOOP_GEN] + [d for d in top_list if designs[d]["generator"] != LOOP_GEN]
+    top = set(top_list)
     t2 = set(ctl) | top
+    t2_seq = ctl + top_list
 
     def need(key, mk):
         r = st.get((key, mk))
@@ -694,16 +706,16 @@ def tier_plan(st, per, designs, tier2_models):
             plan["of3"].append(its[f"{d}__her2"])
     for mk in tier2_models:
         plan[mk] = []
-    for d in seq:
-        if d not in t2:
-            continue
+    for d in t2_seq:
         if f"{d}__hewl" in its and need(f"{d}__hewl", "of3") and (f"{d}__her2", "of3") in st:
             plan["of3"].append(its[f"{d}__hewl"])
         for mk in tier2_models:
             if mk != "af2ig" and f"{d}__her2" in its and need(f"{d}__her2", mk):
                 plan[mk].append(its[f"{d}__her2"])
     if "af2ig" in plan:      # tier-1 companion: every gate-passer with a design pose (cheap, deterministic) + controls with an OF3 pose
-        base = [its[f"{d}__her2"] for d in seq if f"{d}__her2" in its and need(f"{d}__her2", "af2ig")]
+        af_order = ctl + [d for d in top_list] + [d for d in newest if d not in top]      # scored-and-good first, unscored after
+        base = [its[f"{d}__her2"] for d in af_order if f"{d}__her2" in its and need(f"{d}__her2", "af2ig")
+                and (designs[d]["generator"] == "control" or (designs[d].get("design_cif") or "").strip())]   # no design pose -> nothing to re-score
         plan["af2ig"] = af2ig_items(base)
     return plan, len(top), len(t2)
 
@@ -804,6 +816,7 @@ def watch(a):
         f"({_stats['unique_seqs']} unique sequences); {_stats['ids_left_table']} scored ids are no longer in the designs table (their scores are "
         f"kept per sequence, not per id); the table now has {len(_designs)} ids / {len({d['vhh_seq'] for d in _designs.values()})} unique sequences")
     last_spent = 0.0
+    prio_keys = set()
     while True:
         cyc += 1
         try:
@@ -815,7 +828,8 @@ def watch(a):
                         log(f"job error {k[0]}: {repr(e)[:200]}")
                     inflight -= {(i, k[0]) for i in k[1]}
                     del futs[k]
-            stop = STOP_FILE.exists() or now_hhmm() >= STOP_HHMM
+            stop = STOP_FILE.exists() or now_hhmm() >= HARD_STOP_HHMM       # no new launches at all
+            late = now_hhmm() >= STOP_HHMM                                   # 15:40-15:52: loop-aware designs only
             if cyc % 6 == 0:      # pick up jobs whose thread died (e.g. repeated network errors)
                 adopt(ex, futs, inflight)
             try:
@@ -826,29 +840,41 @@ def watch(a):
             st = load_state()
             per, designs = build(st)
             plan, n_top, n_t2 = tier_plan(st, per, designs, tier2)
+            loop_ids = {d for d, v in designs.items() if v["generator"] == LOOP_GEN}
+            for k in [k for k in prio_keys if k not in futs]:
+                prio_keys.discard(k)
             if not stop and spent < BUDGET - 0.5:
-                # priority: tier 1 OF3, then tier-2 models, AF2-IG last; never more than --max-jobs jobs in flight so the
-                # shared JapanFold account queue (HTTP 429 when full) stays free for the other stages
-                caps = {"of3": 4, "af2ig": 2, "dde": 1, "esm2": 1, "of3s1": 1}    # per-model job slots, so AF2-IG on the design poses is not starved by OF3
+                # priority: tier 1 OF3, then AF2-IG on design poses, then the other tier-2 models. Per-model job caps keep any one model from
+                # starving the others and the whole stage under --max-jobs, so the shared account queue stays free (HTTP 429 when full).
+                # Loop-aware designs get a priority lane (up to 3 extra jobs) and may be launched until HARD_STOP_HHMM.
+                caps = {"of3": 4, "af2ig": 2, "dde": 2, "esm2": 2, "of3s1": 1}
                 for mk in ["of3", "af2ig"] + [m for m in tier2 if m != "af2ig"]:
                     its = [i for i in plan.get(mk, []) if (i["id"], mk) not in inflight]
+                    lp = [i for i in its if i["id"].split("__")[0] in loop_ids]
+                    rest = [] if late else [i for i in its if i["id"].split("__")[0] not in loop_ids]
                     bs = BATCH_FOR.get(mk, BATCH)
-                    for j in range(0, len(its), bs):
-                        running = sum(1 for k in futs if k[0] == mk)
-                        if len(futs) >= a.max_jobs or running >= caps.get(mk, 1):
-                            break
-                        b = its[j:j + bs]
-                        key = (mk, tuple(i["id"] for i in b))
-                        futs[key] = ex.submit(run_job_safe, mk, b)
-                        inflight |= {(i["id"], mk) for i in b}
+                    for group, is_prio in ((lp, True), (rest, False)):
+                        for j in range(0, len(group), bs):
+                            if is_prio:
+                                if len(prio_keys) >= 3:
+                                    break
+                            elif len(futs) >= a.max_jobs or sum(1 for k in futs if k[0] == mk) >= caps.get(mk, 1):
+                                break
+                            b = group[j:j + bs]
+                            key = (mk, tuple(i["id"] for i in b))
+                            futs[key] = ex.submit(run_job_safe, mk, b)
+                            inflight |= {(i["id"], mk) for i in b}
+                            if is_prio:
+                                prio_keys.add(key)
             assemble()
             per, designs = build(load_state())
             plan_sz = sum(len(v) for v in plan.values())
             for line in funnel_lines(per, designs, load_state(), spent, cyc, plan_sz, n_top):
                 log(line)
-            log(f"jobs in flight {len(futs)} (max {a.max_jobs})")
+            log(f"jobs in flight {len(futs)} (max {a.max_jobs}; loop-aware priority jobs {len(prio_keys)}; "
+                f"loop designs in table {len(loop_ids)}, scored by OF3 {sum(1 for d in loop_ids if f'of3_iptm' in per.get(d, {}))})")
             if stop and not futs:
-                log(f"stopping ({'STOP file' if STOP_FILE.exists() else 'time limit'}); final spend ${spent:.2f}")
+                log(f"stopping ({'STOP file' if STOP_FILE.exists() else 'hard stop 15:52'}); final spend ${spent:.2f}")
                 break
             if stop and futs:
                 log(f"stop requested, waiting for {len(futs)} jobs in flight")
@@ -864,7 +890,7 @@ def main():
     ap.add_argument("--models", default="of3,dde,esm2")
     ap.add_argument("--tier2", default="dde,esm2,of3s1,af2ig", help="watch: models for tier 2 (comma list; add af2ig to enable it)")
     ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--max-jobs", type=int, default=9, help="watch: max JapanFold jobs in flight from this stage")
+    ap.add_argument("--max-jobs", type=int, default=10, help="watch: max JapanFold jobs in flight from this stage")
     ap.add_argument("--no-decoy", action="store_true")
     ap.add_argument("--interval", type=int, default=90, help="watch: seconds between cycles (<= 300)")
     ap.add_argument("--only", default="", help="comma separated design_id prefixes to restrict to")

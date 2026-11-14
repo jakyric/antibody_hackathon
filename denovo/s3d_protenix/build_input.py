@@ -1,6 +1,6 @@
 """Build the Nebius protenix-v2 input (native Protenix JSON list of jobs) for the top Pareto designs + controls.
 
-    denovo/.venv/bin/python denovo/s3d_protenix/build_input.py [--cap 40]
+    baseline/.venv/bin/python denovo/s3d_protenix/build_input.py [--cap 40]
 Writes nebius-runs/ptxtop-input.json and denovo/s3d_protenix/manifest.csv (design_id, chains, kind).
 Selection: union of results/denovo/submission_top20_pareto.csv and Pareto front-1 of leaderboard_pareto.csv (gate-passing
 population by construction), ranked by pareto_rank, maximin, composite, capped. Controls: trastuzumab Fv (VH+VL+HER2) and

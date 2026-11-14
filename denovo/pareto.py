@@ -1,7 +1,7 @@
 """S6, the last step: Pareto scoring on top of the leaderboard.
 
-    denovo/.venv/bin/python denovo/pareto.py                 # writes leaderboard_pareto.csv, submission_top20_pareto.csv
-    denovo/.venv/bin/python denovo/pareto.py --objectives bind,comp,therm --top 20
+    baseline/.venv/bin/python denovo/pareto.py                 # writes leaderboard_pareto.csv, submission_top20_pareto.csv
+    baseline/.venv/bin/python denovo/pareto.py --objectives bind,comp,therm --top 20
 
 Why Pareto, not just the weighted composite: the organisers tier a design by HOW MANY of the three judged properties
 (affinity, epitope preservation, thermostability) beat trastuzumab, and S-tier needs all of them. A weighted sum lets a
@@ -83,11 +83,12 @@ def crowding(P: np.ndarray, rank: np.ndarray) -> np.ndarray:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--objectives", default="bind,comp,therm,yield,dev")
+    ap.add_argument("--objectives", default="bind,dev,yield,therm")  # iPTM/ipSAE per scorer, TNP, yield + nine rules, NanoMelt Tm (user 15:44)
+    ap.add_argument("--require", default="bind,dev", help="objectives that must be MEASURED for a design to enter the front")
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--min-coverage", type=float, default=0.30)
     a = ap.parse_args()
-    ns = types.SimpleNamespace(w_bind=0.40, w_comp=0.15, w_therm=0.20, w_yield=0.15, w_dev=0.10, w_rules=0.05)
+    ns = types.SimpleNamespace(w_bind=0.50, w_comp=0.0, w_therm=0.20, w_yield=0.15, w_dev=0.15, w_rules=0.0)
     D = R.build(ns)
     D = D[D.is_control == 0].copy()
     pop = D[D.gate_strict == 1]
@@ -97,6 +98,14 @@ def main():
     pop = pop.copy()
     if pop.empty:
         sys.exit("no designs pass the gate yet")
+    # TNP is run only on the most promising designs, so instead of dropping the TNP objective for low coverage, restrict the
+    # population to designs where the required objectives are really measured (binding scores AND TNP).
+    for o in [x for x in a.require.split(",") if x]:
+        c = OBJ[o]
+        if pop[c].notna().sum() >= 10:
+            n0 = len(pop)
+            pop = pop[pop[c].notna()].copy()
+            print(f"required objective '{o}': population {n0} -> {len(pop)} (measured only)")
     # monoyield may not exist yet: nine-rule score is the stand-in yield prior
     if pop["t_yield"].notna().mean() < a.min_coverage and pop["t_rules"].notna().mean() >= a.min_coverage:
         pop["t_yield"] = pop["t_rules"]
@@ -123,13 +132,15 @@ def main():
         f"Pareto front {int(r.pareto_rank)} over {','.join(used)}; weakest objective {r.weakest} (pctl {r.maximin:.2f})"
         + ("" if r.pareto_complete else "; some objectives not measured yet") for r in pop.itertuples()]
     keep = ["pareto_rank", "design_id", "generator", "framework", "hotspot_set", "maximin", "weakest", "crowding",
-            "n_dominating", "pareto_complete", "composite", "pareto_reason"] + cols + ["rank_reason", "cdr3", "vhh_seq"]
+            "n_dominating", "pareto_complete", "n_flags", "flags", "missing_evidence", "composite", "pareto_reason"] + cols + ["rank_reason", "cdr3", "vhh_seq"]
     out = pop.sort_values(["pareto_rank", "maximin", "composite"], ascending=[True, False, False])
     out[[c for c in keep if c in out] + [c for c in out.columns if c not in keep]].to_csv(
         dn.OUT / "leaderboard_pareto.csv", index=False)
 
     # diversity-aware selection
-    cand = out.sort_values(["pareto_complete", "pareto_rank", "maximin", "composite"], ascending=[False, True, False, False])
+    # binding first: within a front the best iPTM/ipSAE designs come first (user: 'definitely has the best iPTM')
+    # order: eligible (gate) -> complete evidence -> Pareto tier -> fewest review flags -> best binding
+    cand = out.sort_values(["pareto_complete", "pareto_rank", "n_flags", "t_bind", "maximin"], ascending=[False, True, True, False, False])
     chosen, cdrs, count = [], [], {}
     cap = max(1, int(np.ceil(0.5 * a.top)))
     for _, r in cand.iterrows():

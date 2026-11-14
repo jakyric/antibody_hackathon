@@ -49,7 +49,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
 ## Rules for all workers
 
 1. **Secrets**: never print, log, commit or copy `JAPANFOLD_API_KEY` or the file at `$NEBIUS_CREDS`. Test
-   presence with `[ -n "$VAR" ]`. Never open the hackathon credentials file.
+   presence with `[ -n "$VAR" ]`. Never open the access kit's credentials file.
 2. **No duplicate paid jobs**: every submit goes through a job-id cache file in `results/denovo/jobs/`
    (`common.cached_job`). Re-running a script follows the existing job. After a timeout, recover the job id,
    do not resubmit. Send long jobs early, then do other work while they run.
@@ -57,7 +57,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
    this pipeline <= $65, keep >= $20 in reserve. Per worker: S1a $15, S1c $15, S3 $25, S2 $3, S4 $0 (use local + VM).
    `GET /v1/credits` before and after big batches; stop and report if a batch would exceed the worker's cap.
    rfd4 costs about $0.014 per job (up to 8 designs per job).
-4. **VM etiquette** (`ssh -i $PIPELINE_VM_KEY $PIPELINE_VM_HOST`, H100 shared with teammates, already busy):
+4. **VM etiquette** (ssh to the shared VM, host and key from `PIPELINE_VM_HOST` / `PIPELINE_VM_KEY`, H100 shared with teammates, already busy):
    work only under `~/moritz/` (S1b: `~/moritz/denovo_s1b`, S4: `~/moritz/monoyield-predictor`, S2: `~/moritz/denovo_s2`);
    one GPU container/process at a time per worker; check `nvidia-smi` first; use bf16 where available; do not kill
    or touch other users' processes or directories; no `docker system prune`; no sudo.
@@ -67,7 +67,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
    `decisions.md` log (what you chose, the evidence, what you rejected). Be honest about weak evidence.
 7. **Smoke first, then scale**: prove the path on 1-2 inputs, say so in README, then run the real batch.
    Do not claim a score means binding; scores are filters, and calibration against controls/decoys is the point.
-8. Use `denovo/.venv/bin/python` (pandas/numpy/scipy/sklearn) unless you need a micromamba env
+8. Use `baseline/.venv/bin/python` (pandas/numpy/scipy/sklearn) unless you need a micromamba env
    (`tnp`, `nanomelt`, `flashabb` exist; see `tools/README.md`). Install nothing system-wide.
 9. Final report (your last message, <= 300 words): what exists and works, exact run commands, output paths and
    row counts, key numbers, what failed or is weak, what you recommend the orchestrator does next. Nothing else.
@@ -83,6 +83,25 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
 | 15:40 | S3 stops launching; 15:45 S4/S2 rules stop; drain in-flight work |
 | 15:50 | final `rank.py`, `submission_top20.csv`, rationale; 16:02 hard deadline |
 `touch denovo/STOP` stops every watch loop.
+
+## DECISION 15:20: ranking on three axes with typed gates and flags
+
+User: focus on iPTM/ipSAE of each scorer, TNP, yield/rules; not messy; the best iPTM must be on the list. Implemented in `rank.py`/
+`pareto.py`: (1) typed rules: GATES = eligibility (abguard de novo, canonical Cys, CDR3 length 12-18, validity severe flags, HER2-loop conflict,
+no homopolymer run; a missing value fails) versus FLAGS = review items that never exclude (below the decoy 95th percentile on >= half of the
+measured iPTM/ipSAE values, N-glyc in CDR, clash, low complexity, Cys in CDR, TNP red / >= 2 amber, nine-rule fraction < 0.5; a missing value
+does not trigger); flag thresholds are the adverse tail of our own decoys; (2) order = eligible -> complete evidence -> Pareto tier
+(bind / TNP / yield+rules scorecards, percentiles) -> fewest flags -> best binding; (3) rules never alter the Pareto tiers; (4) `missing_evidence`
+column says what is not measured yet. Fixed absolute thresholds (e.g. ipSAE or iPTM >= 0.6) are NOT used: they assume a templated oracle and
+no design or control of ours reaches them.
+
+## DECISION 15:12: reasonable CDR3 lengths (supersedes the earlier 'steer to longer CDR3' advice)
+
+User: keep CDR3 lengths reasonable, BoltzGen as reference. The leaderboard/Pareto only accept an IMGT-block CDR3 (incl. the 'AA'
+after Cys104) of 12-18 aa (Kabat-like loop 10-16; tightened from 20 to 18 at 15:20); `LEN_MIN, LEN_MAX` in `denovo/rank.py`. References: BoltzGen designs median 15
+(range 7-23); the monoyield paper's BoltzGen/RFantibody libraries on the same scaffold used 5-13 (Kabat-like). The caplacizumab-like
+framework passes the abguard de novo class at any length, bcii10 needs >= 16-18; new waves use per-framework ranges designed after the fixed C-A-A
+(capla 10-16, bcii10 13-16, i.e. IMGT block 12-18 and 15-18).
 
 ## DECISION 14:25: BoltzGen stopped, RFD4 only
 

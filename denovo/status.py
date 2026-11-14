@@ -1,7 +1,7 @@
 """Funnel view of the continuously running pipeline: how many designs reached each stage, per generator,
 how the controls (known positives / decoys) sit relative to the designs, and the JapanFold balance.
 
-    denovo/.venv/bin/python denovo/status.py        # prints and writes results/denovo/status.md
+    baseline/.venv/bin/python denovo/status.py        # prints and writes results/denovo/status.md
 """
 from __future__ import annotations
 
@@ -48,6 +48,19 @@ def md_top(top):
     return "\n".join(rows)
 
 
+def md_focus(top):
+    """Top designs, one row each, only the three axes the user asked for: iPTM/ipSAE of each scorer, TNP, yield/rules."""
+    cols = ["design_id", "framework", "cdr3_block_len", "composite", "t_bind", "iptm_mean", "ipsae_mean", "of3_iptm", "orth_dde_iptm",
+            "orth_esm2_iptm", "orth_af2ig_iptm", "ptx_iptm", "of3_ipsae_chn15", "orth_dde_ipsae_chn15", "orth_esm2_ipsae_chn15",
+            "orth_af2ig_ipsae_chn15", "vmof3_pair_iptm", "vmof3_ipsae_chn15", "vmesm2_pair_iptm", "vmesm2_ipsae_chn15", "ddex_pdockq2", "orth_dde_own_vhh_rmsd_fold", "orth_dde_own_vhh_rmsd_her2frame", "tnp_n_red", "tnp_n_amber", "my_yield", "nm_tm", "nb9_score", "nb9_applicable", "gate_dde", "gate_strict", "n_flags", "flags"]
+    t = top[[c for c in cols if c in top.columns]].copy()
+    t["design_id"] = t.design_id.str.replace("-rfd4jf", "", regex=False)
+    t = t.rename(columns={"cdr3_block_len": "cdr3", "orth_dde_iptm": "dde_iptm", "orth_esm2_iptm": "esm2_iptm", "orth_af2ig_iptm": "af2ig_iptm",
+                          "of3_ipsae_chn15": "of3_ipsae", "orth_dde_ipsae_chn15": "dde_ipsae", "orth_esm2_ipsae_chn15": "esm2_ipsae",
+                          "orth_af2ig_ipsae_chn15": "af2ig_ipsae", "nb9_applicable": "nb9_of"})
+    return md(t.round(2))
+
+
 def rd(name):
     p = OUT / name
     try:
@@ -92,7 +105,7 @@ def main():
             top = L[(L.is_control == 0) & L.composite.notna()].head(10)
             if len(top):
                 lines += ["## Current top 10 by composite", "",
-                          md_top(top), ""]
+                          md_focus(top), ""]
             P = rd("leaderboard_pareto.csv")
             if P is not None and len(P):
                 fr = P.pareto_rank.value_counts().sort_index().head(4)

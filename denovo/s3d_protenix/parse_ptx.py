@@ -1,7 +1,7 @@
 """Parse the Nebius protenix-v2 result of `ptx-top` into results/denovo/score_ptx.csv (+ report.md).
 
-    python3 ~/.claude/skills/nebius-scientific-ai/forge.py fetch op-70cf0433a9fbb3f9 --dest results/ptx-top
-    denovo/.venv/bin/python denovo/s3d_protenix/parse_ptx.py [--src results/ptx-top]
+    python3 ~/.claude/skills/nebius-scientific-ai/python3 denovo/s3d_protenix/finish.py            # fetches every finished run into results/ptx-runs/<label>
+    baseline/.venv/bin/python denovo/s3d_protenix/parse_ptx.py [--src results/ptx-runs]
 
 Per design: median over the samples of every metric, plus the best sample (highest ranking_score) and the spread.
 Geometry (epitope overlap, trastuzumab competition proxy) comes from S3's `denovo/s3_score/geom.py`, imported read-only by
@@ -29,7 +29,7 @@ g = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(g)
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--src", default=str(dn.ROOT / "results" / "ptx-top"))
+ap.add_argument("--src", default=str(dn.ROOT / "results" / "ptx-runs"))
 a = ap.parse_args()
 SRC = Path(a.src)
 
@@ -38,8 +38,14 @@ designs = {r["design_id"]: r for r in dn.load_designs()}
 ids = sorted(man.index, key=len, reverse=True)  # longest first so ctl-fwrand-01 is not matched as a prefix of something else
 
 
+labmap = dict(zip(man["label"], man.index)) if "label" in man else {}
+
+
 def owner(path: Path) -> str | None:
-    s = str(path.relative_to(SRC))
+    rel = path.relative_to(SRC)
+    if rel.parts and rel.parts[0] in labmap:  # results/ptx-runs/<label>/...: one Nebius run per complex
+        return labmap[rel.parts[0]]
+    s = str(rel)
     for i in ids:
         if i in s:
             return i
@@ -62,25 +68,30 @@ def scalars(d: dict, prefix="") -> dict:
 
 
 cifs, confs, paes = {}, {}, {}
-for p in SRC.rglob("*"):
-    if not p.is_file():
+import hashlib  # noqa: E402
+
+# Nebius stores every artifact under a UUID name; result.json lists the original path + sha256 of each file, so match by hash.
+for rj in sorted(SRC.glob("*/result.json")):
+    run = json.loads(rj.read_text())
+    if run.get("status") != "succeeded":
         continue
-    o = owner(p)
-    if o is None:
-        continue
-    k = (o, sample_of(p))
-    n = p.name.lower()
-    if n.endswith(".cif"):
-        cifs[k] = p
-    elif n.endswith(".json"):
-        try:
-            j = json.loads(p.read_text())
-        except Exception:
+    by_sha = {hashlib.sha256(f.read_bytes()).hexdigest(): f for f in rj.parent.iterdir() if f.is_file()}
+    for ent in run.get("native_result", {}).get("files", []):
+        meta = ent.get("file", {})
+        loc = by_sha.get(meta.get("sha256"))
+        if loc is None:
             continue
-        if isinstance(j, dict) and ("iptm" in j or "ptm" in j or "ranking_score" in j):
-            confs[k] = j
-        elif isinstance(j, dict) and any(x in j for x in ("pae", "token_pair_pae", "predicted_aligned_error")):
-            paes[k] = j
+        orig = Path(meta["path"])
+        parts = orig.parts
+        did = parts[1] if len(parts) > 2 and parts[0] == "outputs" and parts[1] in man.index else None
+        if did is None:
+            continue
+        k = (did, sample_of(orig))
+        sem = ent.get("semantic_type", "")
+        if sem == "protein-structure-mmcif/v1":
+            cifs[k] = loc
+        elif sem == "structure-upstream-summary-json/v1":
+            confs[k] = json.loads(loc.read_text())
 print(f"found {len(cifs)} structures, {len(confs)} confidence files, {len(paes)} pae files for {len({k[0] for k in cifs})} jobs")
 
 rows = []

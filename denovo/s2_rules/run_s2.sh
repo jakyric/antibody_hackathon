@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start / inspect / stop the two S2 watchers.   bash denovo/s2_rules/run_s2.sh start|status|stop
 cd "$(dirname "$0")/../.." || exit 1
-PY=denovo/.venv/bin/python
+PY=denovo/s2_rules/.venv/bin/python
 LOG=denovo/s2_rules/watch.log
 case "$1" in
   start)

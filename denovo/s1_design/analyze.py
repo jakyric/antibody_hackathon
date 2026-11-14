@@ -83,16 +83,18 @@ def interface(her2, vhh, vparts, hot_hnums):
             "_cdr_lens": (n1, n2, n3)}
 
 
-def geometry(cif, fr, hot_hnums):
+def geometry(cif, fr, hot_hnums, loop=False):
+    """loop=True: HER2 is ONE chain A of 119 residues (resi k = HER2 488+k, modelled 581-590 loop included); else chains A (1-92) + C (1-17)."""
     ch = read_cif(cif)
-    if not {"A", "B", "C"} <= set(ch):
+    if not ({"A", "B"} if loop else {"A", "B", "C"}) <= set(ch):
         return {"ok": 0, "why": f"chains {sorted(ch)}"}
     vhh = ch["B"]
     vseq = seq_of(vhh)
     parts = split_vhh(vseq, fr)
     if parts is None:
         return {"ok": 0, "why": "framework not held", "vhh_seq": vseq}
-    g = interface(her2_auth(ch), vhh, parts, hot_hnums)
+    her2 = [{**r, "hnum": 488 + r["i"]} for r in ch["A"]] if loop else her2_auth(ch)
+    g = interface(her2, vhh, parts, hot_hnums)
     n1, n2, n3 = g.pop("_cdr_lens")
     c = g.pop("_vhh_c")
     s1 = len(fr[0]); s2 = s1 + n1 + len(fr[1]); s3 = s2 + n2 + len(fr[2])
