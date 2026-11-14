@@ -1,0 +1,50 @@
+# De novo track, real version: a VHH against HER2 domain IV, on caplacizumab's
+# framework — not trastuzumab's.
+#
+# WHY THIS EXISTS
+#   configs/her2_all6cdr.yaml designs all six CDRs, but sits on
+#   trastuzumab's Fv framework. The official checker computes identity to trastuzumab over
+#   the WHOLE sequence, and those designs land at 89 %. It then classifies them
+#   as trastuzumab variants ("novel"), i.e. the optimization track. A de novo
+#   proposal must be below 70 % against known antibodies, and that requires a different
+#   framework. A VHH on caplacizumab's framework is far below.
+#
+# STRUCTURE
+#   Two input files: HER2 (chain C 489-580 and D 591-607, split at the unresolved
+#   loop) from 1N8Z, and the VHH framework (chain H) from the organizers'
+#   VHH file, where the three CDRs have already been removed.
+#   The framework sits at 1-22, 24-37, 39-75 and 77-86; the gaps are the CDRs, and
+#   the length ranges are the same ones the organizers' own Fv specification
+#   uses for the heavy chain.
+#   C_CRD holds HER2 fixed, C_CRDGRP holds the framework rigid, and the
+#   relative placement between them is free — that is what the model should find.
+#   C_HOT is the same four HER2 atoms as in the organizers' HER2 specification,
+#   i.e. trastuzumab's epitope.
+her2_vhh_denovo:
+  input:
+    - her2_fv_1n8z.cif
+    - vhh_caplacizumab.cif
+  contig: "C489-580, /0, D591-607, /0, H1-22, 13-15, H24-37, 9-10, H39-75, 11-22, H77-86"
+  conditions:
+    C_CRD:
+      true:
+        - select: "sel('C/*/*/[N,CA,C,O]') and not has_nan_coord()"
+        - select: "sel('D/*/*/[N,CA,C,O]') and not has_nan_coord()"
+    C_CRDGRP:
+      1:
+        - select: "sel('H/*/[1-22, 24-37, 39-75, 77-86]/[N,CA,C,O]') and not has_nan_coord()"
+    C_SEQ:
+      true:
+        - select: "sel('C')"
+        - select: "sel('D')"
+        - select: "sel('H/*/[1-22, 24-37, 39-75, 77-86]')"
+    C_HOT:
+      true:
+        - select: "sel('D/*/593/NZ')"
+        - select: "sel('C/*/573/CD1')"
+        - select: "sel('D/*/591/CG2')"
+        - select: "sel('C/*/572/CD')"
+    C_CATH:
+      2.60.40:
+        - select: "sel('H')"
+

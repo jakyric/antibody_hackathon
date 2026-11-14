@@ -7,6 +7,11 @@ framework, so anyone can run it.
 This is one person's branch of the shared repository. It holds methods and tests only: no data, no model
 outputs and no candidate lists.
 
+**Start with [FINDINGS.md](FINDINGS.md).** It is the single record of what we measured and what it means,
+including the things that did not work. The code here is what produced those numbers; the write-up is where
+they are interpreted, with their intervals and their caveats. Where the two disagree, the write-up is the
+one that has been checked.
+
 ## Layout
 
 | Path | What it does |
@@ -18,6 +23,11 @@ outputs and no candidate lists.
 | `src/abx/model.py` | A small binder model trained on FACS and tested on SPR, in numpy |
 | `src/abx/generate.py`, `rank.py`, `pipeline.py` | Proposals, then gate, then filtering, then a two-stage ranking |
 | `src/abx/metrics.py` | Spearman, AUROC, top-k precision and bootstrap intervals, without scipy |
+| `src/abx/thermo.py` | Looks for places where a new VH-VL disulfide is geometrically possible, measured in the real structure. Builds the C-beta for glycine, which has none, so glycine positions are not silently skipped |
+| `scripts/fold_panel.py`, `fold_queries.py` | Builds the evaluation panel: variants whose affinity was measured, spread across the range, plus the clinical baseline, and the identical folding input for every model |
+| `scripts/fold_analyse.py` | Asks whether a folding model's confidence orders variants whose affinity is known, against the same baselines on the same variants |
+| `scripts/epitope.py` | Contact epitope from a predicted complex, compared with the crystal structure and between designs. Geometry only, no confidence score |
+| `scripts/disulfide_scan.py` | The disulfide scan, with the literature-backed pair marked |
 | `tools/record_run.py` | Runs a command and records the command, commit, seed and input checksums in a run folder and a ledger |
 | `tools/scan_repo.py` | Scans a repository for keys, credentials files and files over 50 MB before it is published |
 | `tests/` | Tests for all of the above |
@@ -44,3 +54,10 @@ classes (524,346 variants) and the SPR affinities (768 rows). They come from Chi
 - **A class label is not an affinity.** Ranking therefore has two stages, each justified by a measured number
   (see `rank.py`).
 - **State what you cannot check.** The gate returns `unknown` for anything it cannot verify locally.
+- **Folding confidence is not a ranking function here.** Five models, the same panel, the same template and
+  the same seed give five different answers to "how many of these beat the baseline", from none of them to
+  most of them. Ask a model something with a known answer before ranking on it; `fold_analyse.py` and
+  `epitope.py` are how we do that, and section 7 of the write-up has the numbers.
+- **Check a filter against the thing it is supposed to catch.** Two of our own filters were wrong in the
+  same way: one required an atom that glycine does not have, the other counted cysteines over the whole
+  molecule when the rule applies per domain. Both returned clean answers to the wrong question.
