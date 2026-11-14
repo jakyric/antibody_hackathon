@@ -17,7 +17,7 @@ Our goal is not to claim that AI has already designed a superior antibody. It is
 better decisions about which antibodies to test.
 
 ```bash
-make setup && make test     # 97 tests, no data needed
+make setup && make test     # 135 tests, no data needed
 make demo                   # a complete run: target in -> ranked candidates out
 ```
 
@@ -217,12 +217,13 @@ The other nine rows are in the same form in `results/CANDIDATES.md`.
 
 ```bash
 make setup     # venv + numpy/pytest (bootstraps pip where ensurepip is missing)
-make test      # 97 tests
+make test      # 135 pass with no data; 155 with the two public tables
 make verify    # the benchmark: does our scorer recover answers we already know?
 ```
 
 `make test` and `make verify` were run **from a clean clone of this branch, on a machine that had never seen
-the project** — 97 passed, 6 skipped, benchmark exit 0, reproducing the headline
+the project** — **135 passed, 20 skipped** with no data at all, **155 passed** once the two
+public tables are in place, benchmark exit 0, reproducing the headline
 `edit_distance Spearman +0.226` in the legal zone. That run found a real bug: on a stock Debian/Ubuntu
 python, `python3 -m venv` creates an environment *without* pip, and every later step died with "No module
 named pip". `make setup` now bootstraps pip itself, so the repository builds on a machine with no
@@ -245,7 +246,12 @@ make demo        # ~1 minute
 | 5 | Select a diverse set, no near-duplicates of each other | 10 chosen |
 | out | `results/demo/designs_demo.csv` — ranked, with a written rationale per design | |
 
-It writes to `results/demo/`, so it never touches the submitted designs. To point it at a different
+It writes to `results/demo/`, so it never touches the submitted designs. Note that the demo numbers its
+output in the same `tz-opt-NN` namespace, so a demo `tz-opt-01` at seed 7 is **not** the submitted
+`tz-opt-01` — different seed, different loop. The submitted sequences are only ever in
+`results/SUBMISSION.csv`.
+
+To point it at a different
 target, replace the reference sequences in `src/abx/sequences.py` and the assay tables in `data/`; the
 gate, the ranking and the reporting are target-agnostic.
 
