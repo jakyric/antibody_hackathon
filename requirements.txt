@@ -1,10 +1,8 @@
-cloudpickle==3.1.2
-joblib==1.6.0
-narwhals==2.28.0
-numpy==2.5.4
-pandas==3.1.1
-python_dateutil==4.0.0
-scikit_learn==1.9.1
-scipy==1.18.1
-threadpoolctl==3.8.0
-tzdata==2026.6
+numpy>=1.26
+pandas>=2.0
+pyyaml>=6.0
+biopython>=1.83
+requests>=2.31
+pillow>=10.0
+# optional (deck stage)
+python-pptx>=1.0

@@ -1,0 +1,5 @@
+# GetContacts needs vmd-python, which is only on conda-forge:
+#   conda env create -p gc/env -f environment-contacts.yml
+name: getcontacts
+channels: [conda-forge]
+dependencies: [python=3.10, vmd-python, numpy, pandas, scipy]

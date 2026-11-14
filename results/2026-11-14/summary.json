@@ -1,0 +1,21 @@
+{
+ "n_raw": 23760,
+ "n_no_cys": 23760,
+ "n_liab": 23594,
+ "n_enum": 5247,
+ "n_shortlist": 36,
+ "n_panel": 528,
+ "n_valid": 517,
+ "n_valid_h3": 35,
+ "n_folded": 521,
+ "fold_job": "e34ad58504dcf16e3e5bcec23ad7a984",
+ "n_docked": 201,
+ "crystal_if_pairs": 27,
+ "crystal_h3_pairs": 6,
+ "crystal_intra_pairs": 22,
+ "n_pass_contacts": 38,
+ "n_pass_contacts_h3": 16,
+ "n_top": 20,
+ "n_top_h3": 11,
+ "n_top_salt_bridge": 11
+}

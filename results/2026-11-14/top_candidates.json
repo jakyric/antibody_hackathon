@@ -1,0 +1,916 @@
+{
+ "base_h3": "WGSQGFYAYD",
+ "wild_type_h3": "WGGDGFYAMD",
+ "candidates": [
+  {
+   "rank": 1,
+   "id": "WDYQGFYYYD_L46LM",
+   "cdrh3": "WDYQGFYYYD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2D",
+    "S3Y",
+    "A8Y"
+   ],
+   "vernier_mutations": [
+    "L46L>M"
+   ],
+   "opendde_iptm": 0.949,
+   "ipsae": 0.94,
+   "ilis": 0.743,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.35,
+   "ridge_sum": 0.292,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWDYQGFYYYDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 2,
+   "id": "WGSSGFYAWY_H93ST",
+   "cdrh3": "WGSSGFYAWY",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4S",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10Y",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "Q4S",
+    "Y9W",
+    "D10Y"
+   ],
+   "vernier_mutations": [
+    "H93S>T"
+   ],
+   "opendde_iptm": 0.952,
+   "ipsae": 0.944,
+   "ilis": 0.737,
+   "interface_recall": 0.96,
+   "h3_her2_pairs_missing": 0,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -7.02,
+   "ridge_sum": -0.056,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCTRWGSSGFYAWYYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 3,
+   "id": "WDYQGFYYYD_L49YF",
+   "cdrh3": "WDYQGFYYYD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2D",
+    "S3Y",
+    "A8Y"
+   ],
+   "vernier_mutations": [
+    "L49Y>F"
+   ],
+   "opendde_iptm": 0.955,
+   "ipsae": 0.948,
+   "ilis": 0.734,
+   "interface_recall": 0.89,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.35,
+   "ridge_sum": 0.292,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWDYQGFYYYDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIFSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 4,
+   "id": "WGSSGFYAWY_WT",
+   "cdrh3": "WGSSGFYAWY",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4S",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10Y",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "Q4S",
+    "Y9W",
+    "D10Y"
+   ],
+   "vernier_mutations": [],
+   "opendde_iptm": 0.949,
+   "ipsae": 0.941,
+   "ilis": 0.731,
+   "interface_recall": 0.93,
+   "h3_her2_pairs_missing": 0,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -7.02,
+   "ridge_sum": -0.056,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGSSGFYAWYYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 5,
+   "id": "WGSSGFYAWY_H93SA",
+   "cdrh3": "WGSSGFYAWY",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4S",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10Y",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "Q4S",
+    "Y9W",
+    "D10Y"
+   ],
+   "vernier_mutations": [
+    "H93S>A"
+   ],
+   "opendde_iptm": 0.947,
+   "ipsae": 0.938,
+   "ilis": 0.729,
+   "interface_recall": 0.96,
+   "h3_her2_pairs_missing": 0,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -7.02,
+   "ridge_sum": -0.056,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCARWGSSGFYAWYYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 6,
+   "id": "WSSQGFYGRD_H47WF",
+   "cdrh3": "WSSQGFYGRD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2S",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9R",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2S",
+    "A8G",
+    "Y9R"
+   ],
+   "vernier_mutations": [
+    "H47W>F"
+   ],
+   "opendde_iptm": 0.938,
+   "ipsae": 0.926,
+   "ilis": 0.724,
+   "interface_recall": 0.89,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.46,
+   "ridge_sum": 0.207,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEFVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWSSQGFYGRDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 7,
+   "id": "WDSQGFYAWR_H93SN",
+   "cdrh3": "WDSQGFYAWR",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10R",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2D",
+    "Y9W",
+    "D10R"
+   ],
+   "vernier_mutations": [
+    "H93S>N"
+   ],
+   "opendde_iptm": 0.944,
+   "ipsae": 0.934,
+   "ilis": 0.719,
+   "interface_recall": 0.93,
+   "h3_her2_pairs_missing": 0,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -6.85,
+   "ridge_sum": 0.19,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCNRWDSQGFYAWRYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 8,
+   "id": "WDYQGFYYYD_L49YH",
+   "cdrh3": "WDYQGFYYYD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2D",
+    "S3Y",
+    "A8Y"
+   ],
+   "vernier_mutations": [
+    "L49Y>H"
+   ],
+   "opendde_iptm": 0.955,
+   "ipsae": 0.949,
+   "ilis": 0.718,
+   "interface_recall": 0.89,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.35,
+   "ridge_sum": 0.292,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWDYQGFYYYDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIHSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 9,
+   "id": "WYYQGFYAYN_L46LI",
+   "cdrh3": "WYYQGFYAYN",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D10N",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2Y",
+    "S3Y",
+    "D10N"
+   ],
+   "vernier_mutations": [
+    "L46L>I"
+   ],
+   "opendde_iptm": 0.939,
+   "ipsae": 0.927,
+   "ilis": 0.712,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -7.13,
+   "ridge_sum": -0.044,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWYYQGFYAYNYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKILIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 10,
+   "id": "WGRQGFYADS_H47WF",
+   "cdrh3": "WGRQGFYADS",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3R",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "M9D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10S",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "S3R",
+    "Y9D",
+    "D10S"
+   ],
+   "vernier_mutations": [
+    "H47W>F"
+   ],
+   "opendde_iptm": 0.945,
+   "ipsae": 0.936,
+   "ilis": 0.71,
+   "interface_recall": 0.89,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -7.22,
+   "ridge_sum": 0.222,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEFVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGRQGFYADSYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 11,
+   "id": "WASQGFYGYY_L49YW",
+   "cdrh3": "WASQGFYGYY",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D10Y",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2A",
+    "A8G",
+    "D10Y"
+   ],
+   "vernier_mutations": [
+    "L49Y>W"
+   ],
+   "opendde_iptm": 0.939,
+   "ipsae": 0.927,
+   "ilis": 0.691,
+   "interface_recall": 0.93,
+   "h3_her2_pairs_missing": 0,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -5.64,
+   "ridge_sum": -0.023,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWASQGFYGYYYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIWSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 12,
+   "id": "WGYQGFYGDD_H93ST",
+   "cdrh3": "WGYQGFYGDD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9D",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "S3Y",
+    "A8G",
+    "Y9D"
+   ],
+   "vernier_mutations": [
+    "H93S>T"
+   ],
+   "opendde_iptm": 0.951,
+   "ipsae": 0.943,
+   "ilis": 0.68,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.9,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.58,
+   "ridge_sum": 0.492,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCTRWGYQGFYGDDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 13,
+   "id": "WGDQGFYYYY_H94RQ",
+   "cdrh3": "WGDQGFYYYY",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9Y",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D10Y",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "S3D",
+    "A8Y",
+    "D10Y"
+   ],
+   "vernier_mutations": [
+    "H94R>Q"
+   ],
+   "opendde_iptm": 0.943,
+   "ipsae": 0.932,
+   "ilis": 0.678,
+   "interface_recall": 0.93,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -6.18,
+   "ridge_sum": -0.026,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSQWGDQGFYYYYYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 14,
+   "id": "WGYQGFYGDD_L46LF",
+   "cdrh3": "WGYQGFYGDD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3Y",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9D",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "S3Y",
+    "A8G",
+    "Y9D"
+   ],
+   "vernier_mutations": [
+    "L46L>F"
+   ],
+   "opendde_iptm": 0.943,
+   "ipsae": 0.933,
+   "ilis": 0.676,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.9,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.58,
+   "ridge_sum": 0.492,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGYQGFYGDDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKFLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 15,
+   "id": "WDSQGFYAWR_H94RQ",
+   "cdrh3": "WDSQGFYAWR",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2D",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "D10R",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2D",
+    "Y9W",
+    "D10R"
+   ],
+   "vernier_mutations": [
+    "H94R>Q"
+   ],
+   "opendde_iptm": 0.936,
+   "ipsae": 0.924,
+   "ilis": 0.675,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.82,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": false,
+   "blosum45_logp": -6.85,
+   "ridge_sum": 0.19,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSQWDSQGFYAWRYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 16,
+   "id": "WGSAGFYGWD_L49YH",
+   "cdrh3": "WGSAGFYGWD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "Q4A",
+    "A8G",
+    "Y9W"
+   ],
+   "vernier_mutations": [
+    "L49Y>H"
+   ],
+   "opendde_iptm": 0.95,
+   "ipsae": 0.942,
+   "ilis": 0.67,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.91,
+   "h3_vs_rest_polar_recall": 0.9,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.73,
+   "ridge_sum": 0.43,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGSAGFYGWDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIHSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 17,
+   "id": "WASQGFYRWD_L46LI",
+   "cdrh3": "WASQGFYRWD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8R",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2A",
+    "A8R",
+    "Y9W"
+   ],
+   "vernier_mutations": [
+    "L46L>I"
+   ],
+   "opendde_iptm": 0.955,
+   "ipsae": 0.948,
+   "ilis": 0.669,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.89,
+   "ridge_sum": 0.014,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWASQGFYRWDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKILIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 18,
+   "id": "WGSAGFYGWD_H47WY",
+   "cdrh3": "WGSAGFYGWD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "A8G",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "Q4A",
+    "A8G",
+    "Y9W"
+   ],
+   "vernier_mutations": [
+    "H47W>Y"
+   ],
+   "opendde_iptm": 0.946,
+   "ipsae": 0.937,
+   "ilis": 0.666,
+   "interface_recall": 0.89,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.91,
+   "h3_vs_rest_polar_recall": 0.9,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.73,
+   "ridge_sum": 0.43,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEYVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGSAGFYGWDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 19,
+   "id": "WASQGFYRWD_H93SA",
+   "cdrh3": "WASQGFYRWD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8R",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2A",
+    "A8R",
+    "Y9W"
+   ],
+   "vernier_mutations": [
+    "H93S>A"
+   ],
+   "opendde_iptm": 0.953,
+   "ipsae": 0.946,
+   "ilis": 0.665,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.7,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.89,
+   "ridge_sum": 0.014,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCARWASQGFYRWDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKLLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  },
+  {
+   "rank": 20,
+   "id": "WASQGFYRWD_L46LV",
+   "cdrh3": "WASQGFYRWD",
+   "mutations_vs_wt": [
+    {
+     "mutation": "G2A",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "G3S",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "D4Q",
+     "origin": "best tested loop"
+    },
+    {
+     "mutation": "A8R",
+     "origin": "new in this work"
+    },
+    {
+     "mutation": "M9W",
+     "origin": "new in this work"
+    }
+   ],
+   "mutations_vs_base": [
+    "G2A",
+    "A8R",
+    "Y9W"
+   ],
+   "vernier_mutations": [
+    "L46L>V"
+   ],
+   "opendde_iptm": 0.953,
+   "ipsae": 0.947,
+   "ilis": 0.664,
+   "interface_recall": 0.85,
+   "h3_her2_pairs_missing": 1,
+   "h3_vs_rest_recall": 0.86,
+   "h3_vs_rest_polar_recall": 0.8,
+   "salt_bridge_r98_pos10": true,
+   "blosum45_logp": -6.89,
+   "ridge_sum": 0.014,
+   "vh_sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWASQGFYRWDYWGQGTLVTVSS",
+   "vl_sequence": "DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKVLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK"
+  }
+ ]
+}
