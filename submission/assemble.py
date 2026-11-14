@@ -1,10 +1,10 @@
 """Assemble the team submission CSV (one file, both tracks) and validate it against the organisers' format rules.
 
-    python submission/assemble.py        # writes ../fabsolutely_binding.csv from submission/parts/*.csv
+    python submission/assemble.py        # writes ../fabsolutely_binding.csv (and docs/) from submission/parts/*.csv
 
 Inputs: parts/optimization.csv (the 15 optimization rows as first submitted, ids d01..d15) and the de novo part files
-parts/{moritz_final,krisha_final}.csv (7 + 8 de novo VHH, with the per-design evidence and caveat columns). Output columns: sequence_id,kind,heavy_sequence,light_sequence,design_description,track.
-IDs: opt-J01.., dn-M01..M07, dn-K01..K08 (a one-letter source code that only the team can decode).
+parts/{moritz_final,krisha_final,guled_final}.csv (5 + 5 + 5, with the per-design evidence and caveat columns). Output columns: sequence_id,kind,heavy_sequence,light_sequence,design_description,track.
+IDs: opt-J01.., dn-M01..M05, dn-K01..K05, dn-G01..G05 (a one-letter source code that only the team can decode).
 """
 import argparse
 import csv
@@ -22,7 +22,7 @@ rows = []
 for i, r in enumerate(csv.DictReader(open(a.opt)), 1):
     rows.append({"sequence_id": f"opt-J{i:02d}", "kind": r["kind"], "heavy_sequence": r["heavy_sequence"], "light_sequence": r["light_sequence"],
                  "design_description": r["design_description"], "track": "optimization"})
-for code, name in (("M", "moritz_final"), ("K", "krisha_final")):
+for code, name in (("M", "moritz_final"), ("K", "krisha_final"), ("G", "guled_final")):
     p = ROOT / "parts" / f"{name}.csv"
     if not p.exists():
         print(f"MISSING part file {p}", file=sys.stderr)

@@ -18,11 +18,11 @@ molecule; the measurements come after the event.
 
 One file, both tracks, in the organisers' format (`sequence_id,kind,heavy_sequence,light_sequence,design_description,track`):
 [`fabsolutely_binding.csv`](fabsolutely_binding.csv) with **15 optimization** and **15 de novo** rows. The letter after the prefix of
-each id marks which team member's approach a row comes from (`opt-J..`, `dn-M..`, `dn-K..`).
+each id marks which team member's approach a row comes from (`opt-J..`, `dn-M..`, `dn-K..`, `dn-G..`).
 
-Checked with the organisers' `abguard team-validate`: **30/30 rows valid, 0 hard errors**. All 15 de novo rows are
-classed `de_novo` (identity to the trastuzumab VH 0.63–0.68); the 15 optimization rows are classed `novel`
-(identity 0.97–0.98, at least 3 CDR-H3 mutations from every known sequence).
+Checked with the organisers' `abguard team-validate`: **30/30 rows valid, 0 hard errors**. 10 of the 15 de novo rows (the VHHs of approaches A and B) are
+classed `de_novo` (identity to the trastuzumab VH 0.63–0.68). The 5 rows of approach C (CDR-H3-only variants on the trastuzumab Fv, identity
+0.96–0.97) are classed `novel`, like the 15 optimization rows (identity 0.97–0.98, at least 3 CDR-H3 mutations from every known sequence).
 
 | id | track | kind | heavy | light | description |
 |---|---|---|---:|---:|---|
@@ -46,16 +46,16 @@ classed `de_novo` (identity to the trastuzumab VH 0.63–0.68); the 15 optimizat
 | `dn-M03` | denovo | vhh | 121 |  | De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzuma… |
 | `dn-M04` | denovo | vhh | 125 |  | De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzuma… |
 | `dn-M05` | denovo | vhh | 127 |  | De novo VHH, RFD4-Proteina generated CDR1-3 on an intact hNbBCII10-FGLA framework against HER2 domain IV (trastuzumab e… |
-| `dn-M06` | denovo | vhh | 126 |  | De novo VHH, RFD4-Proteina generated CDR1-3 on an intact hNbBCII10-FGLA framework against HER2 domain IV (trastuzumab e… |
-| `dn-M07` | denovo | vhh | 125 |  | De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzuma… |
 | `dn-K01` | denovo | vhh | 120 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AMGY… |
 | `dn-K02` | denovo | vhh | 127 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 ARYD… |
 | `dn-K03` | denovo | vhh | 128 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AAAL… |
 | `dn-K04` | denovo | vhh | 120 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AARK… |
 | `dn-K05` | denovo | vhh | 118 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 NASR… |
-| `dn-K06` | denovo | vhh | 123 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AARK… |
-| `dn-K07` | denovo | vhh | 119 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 NAKR… |
-| `dn-K08` | denovo | vhh | 123 |  | de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AAWG… |
+| `dn-G01` | denovo | paired | 120 | 107 | Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WASSSEYYFD (10 aa, 7 of 10 positions changed vs WG… |
+| `dn-G02` | denovo | paired | 120 | 107 | Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WGASNFYGYS (10 aa, 6 of 10 positions changed vs WG… |
+| `dn-G03` | denovo | paired | 120 | 107 | Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 STASVDYAMD (10 aa, 6 of 10 positions changed vs WG… |
+| `dn-G04` | denovo | paired | 120 | 107 | Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WDPSSLNVFD (10 aa, 8 of 10 positions changed vs WG… |
+| `dn-G05` | denovo | paired | 120 | 107 | Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WNMDYNYSFN (10 aa, 7 of 10 positions changed vs WG… |
 
 <details>
 <summary>The full CSV (copy-paste ready)</summary>
@@ -82,16 +82,16 @@ dn-M02,vhh,EVQLVESGGGLVQPGGSLRLSCAASTSYAFSDFNMGWFRQAPGKGRELVASIKTSGSTSYPDSVEGRFT
 dn-M03,vhh,EVQLVESGGGLVQPGGSLRLSCAASTSYTLSHMGWFRQAPGKGRELVASISSGGSTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAAATLYTNSSSTIVFDYWGQGTQVTVS,,"De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzumab epitope, hotspot set hs2_broad); CDR3 AAATLYTNSSSTIVFDY; passes hard gates, Pareto front 1 of binding, developability, yield and Tm. Computational evidence only",denovo
 dn-M04,vhh,EVQLVESGGGLVQPGGSLRLSCAASGPTFTDYDMGWFRQAPGKGRELVALIYSTGAGSTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAAIYWPARTTGSLSEFDYWGQGTQVTVS,,"De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzumab epitope, hotspot set hs2_broad); CDR3 AAIYWPARTTGSLSEFDY; passes hard gates, Pareto front 1 of binding, developability, yield and Tm. Computational evidence only",denovo
 dn-M05,vhh,QVQLVESGGGLVQPGGSLRLSCAASGGSLTSMATLGWFRQAPGQGLEAVAAIRVYQGHETTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAAALTHPSDWRDPSGYDYWGQGTLVTVS,,"De novo VHH, RFD4-Proteina generated CDR1-3 on an intact hNbBCII10-FGLA framework against HER2 domain IV (trastuzumab epitope, hotspot set hs1_core); CDR3 AAALTHPSDWRDPSGYDY; passes hard gates, Pareto front 1 of binding, developability, yield and Tm. Computational evidence only",denovo
-dn-M06,vhh,QVQLVESGGGLVQPGGSLRLSCAASGVSSSTFSSMMMGWFRQAPGQGLEAVAAMRGSTGTTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAAALRDVDWTDSSAYDYWGQGTLVTVS,,"De novo VHH, RFD4-Proteina generated CDR1-3 on an intact hNbBCII10-FGLA framework against HER2 domain IV (trastuzumab epitope, hotspot set hs1_core); CDR3 AAALRDVDWTDSSAYDY; passes hard gates, Pareto front 1 of binding, developability, yield and Tm. Computational evidence only",denovo
-dn-M07,vhh,EVQLVESGGGLVQPGGSLRLSCAASGPNFTDYWMGWFRQAPGKGRELVAMIRDSSSGRTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAAGELSPSGSSHYVVFNYWGQGTQVTVS,,"De novo VHH, RFD4-Proteina generated CDR1-3 on an intact caplacizumab-like framework against HER2 domain IV (trastuzumab epitope, hotspot set hs3_alt_patch); CDR3 AAGELSPSGSSHYVVFNY; passes hard gates, Pareto front 1 of binding, developability, yield and Tm. Computational evidence only",denovo
 dn-K01,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRSFSSYVMGWFRQAPGKGRELVASIGGYGSSTNYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAMGYGGSREDGTVYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AMGYGGSREDGTVY",denovo
 dn-K02,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRETFAAYGMGWFRQAPGKGRELVAAISGSGLNTNYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCARYDRSYSGGSAHSISAYDYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 ARYDRSYSGGSAHSISAYDY",denovo
 dn-K03,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRLNFNSFVMGWFRQAPGKGRELVAAISSSGSYTWYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAAALSSNFYNARLHTASKYDYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AAALSSNFYNARLHTASKYDY",denovo
 dn-K04,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRTFTDYAMGWFRQAPGKGRELVAWISHDGSSTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAARKTGTSSTDFDYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AARKTGTSSTDFDY",denovo
 dn-K05,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRTFTDYWMGWFRQAPGKGRELVASINSSGSYTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCNASRPHVYAANYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 NASRPHVYAANY",denovo
-dn-K06,vhh,EVQLVESGGGLVQPGGSLRLSCAASGRTFTDYGMGWFRQAPGKGRELVAYISSSGSSTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAARKSYDYSSETSGFDYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AARKSYDYSSETSGFDY",denovo
-dn-K07,vhh,EVQLVESGGGLVQPGGSLRLSCAASVSGYSFSDYYMGWFRQAPGKGRELVAAINNTGSDTYYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCNAKRVGSTTSYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 NAKRVGSTTSY",denovo
-dn-K08,vhh,EVQLVESGGGLVQPGGSLRLSCAASGNSTIFNNYAMGWFRQAPGKGRELVAVISSTGSTSYPDSVEGRFTISRDNAKRMVYLQMNSLRAEDTAVYYCAAWGSSTSSSSSAFDYWGQGTQVTVS,,"de novo VHH, RFD4-Proteina on the caplacizumab-like framework against HER2 domain IV (trastuzumab epitope); CDR-H3 AAWGSSTSSSSSAFDY",denovo
+dn-G01,paired,EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWASSSEYYFDYWGQGTLVTVSS,DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK,"Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WASSSEYYFD (10 aa, 7 of 10 positions changed vs WGGDGFYAMD) designed against HER2 domain IV by RFD4-Proteina, framework and light chain unchanged; refolded with Boltz-2 (HER2-templated)",denovo
+dn-G02,paired,EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWGASNFYGYSYWGQGTLVTVSS,DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK,"Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WGASNFYGYS (10 aa, 6 of 10 positions changed vs WGGDGFYAMD) designed against HER2 domain IV by RFD4-Proteina, framework and light chain unchanged; refolded with Boltz-2 (HER2-templated)",denovo
+dn-G03,paired,EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRSTASVDYAMDYWGQGTLVTVSS,DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK,"Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 STASVDYAMD (10 aa, 6 of 10 positions changed vs WGGDGFYAMD) designed against HER2 domain IV by RFD4-Proteina, framework and light chain unchanged; refolded with Boltz-2 (HER2-templated)",denovo
+dn-G04,paired,EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWDPSSLNVFDYWGQGTLVTVSS,DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK,"Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WDPSSLNVFD (10 aa, 8 of 10 positions changed vs WGGDGFYAMD) designed against HER2 domain IV by RFD4-Proteina, framework and light chain unchanged; refolded with Boltz-2 (HER2-templated)",denovo
+dn-G05,paired,EVQLVESGGGLVQPGGSLRLSCAASGFNIKDTYIHWVRQAPGKGLEWVARIYPTNGYTRYADSVKGRFTISADTSKNTAYLQMNSLRAEDTAVYYCSRWNMDYNYSFNYWGQGTLVTVSS,DIQMTQSPSSLSASVGDRVTITCRASQDVNTAVAWYQQKPGKAPKMLIYSASFLYSGVPSRFSGSRSGTDFTLTISSLQPEDFATYYCQQHYTTPPTFGQGTKVEIK,"Trastuzumab Fv (VH + wild-type trastuzumab VL) with a de novo CDR-H3 WNMDYNYSFN (10 aa, 7 of 10 positions changed vs WGGDGFYAMD) designed against HER2 domain IV by RFD4-Proteina, framework and light chain unchanged; refolded with Boltz-2 (HER2-templated)",denovo
 ```
 
 </details>
@@ -120,25 +120,26 @@ this model). One seed per complex, so the top of the list is within noise.
 
 ## De novo track
 
-Two independent VHH approaches, converged into one list of 15 sequences (7 + 8):
+Three independent approaches, five designs each, converged into one list of 15 sequences:
 
 | approach | branch | idea |
 |---|---|---|
-| **A**, `dn-M..` (7) | [`moritz`](../../tree/moritz) | RFD4-Proteina on two intact VHH frameworks (1,544 designs), hard gates, OpenFold3 and ESMFold-2 on the VM, OpenDDE on a cropped HER2, TNP / NanoMelt / monoyield profiling, Pareto ranking |
-| **B**, `dn-K..` (8) | [`krishagen`](../../tree/krishagen) | RFD4-Proteina VHHs on the caplacizumab framework, selected by its own rule: predicted epitope overlap ≥ 0.2 and a refold within 10 Å of the designed pose |
+| **A**, `dn-M..` (5 VHH) | [`moritz`](../../tree/moritz) | RFD4-Proteina on two intact VHH frameworks (1,544 designs), hard gates, OpenFold3 and ESMFold-2 on the VM, OpenDDE on a cropped HER2, TNP / NanoMelt / monoyield profiling, Pareto ranking |
+| **B**, `dn-K..` (5 VHH) | [`krishagen`](../../tree/krishagen) | RFD4-Proteina VHHs on the caplacizumab framework, selected by its own rule: predicted epitope overlap ≥ 0.2 and a refold within 10 Å of the designed pose |
+| **C**, `dn-G..` (5 paired Fv) | [`Guled`](../../tree/Guled) | de novo CDR-H3 designed against HER2 domain IV on the trastuzumab Fv (wild-type VH framework and VL), refolded with Boltz-2 and ranked with a binder-probability model |
 
-Also explored, **not submitted**: CDR-H3-only variants on the trastuzumab Fv (branch [`Guled`](../../tree/Guled)). The organisers' checker classes them
-`novel` (97 % identical to trastuzumab), and 10 of the 15 shortlisted candidates are rejected for CDR-H3 novelty (only 2 mutations from a known
-sequence; at least 3 are required). They belong to the optimization style of work, so they are not in the de novo list.
+The five rows of approach C are the five of its 15 shortlisted candidates that the organisers' checker accepts: it rejects the other ten for CDR-H3 novelty
+(only 2 mutations from a known screen sequence; at least 3 are required). Its designs are 96–97 % identical to the trastuzumab VH, so the checker classes them
+`novel`, not `de_novo`: they may be judged as optimization-style rather than de novo designs.
 
 What we know and what we do not:
 
-* The de novo VHHs are 63–68 % identical to the trastuzumab VH and pass every format and novelty rule.
+* The ten VHHs (A and B) are 63–68 % identical to the trastuzumab VH and pass every format and novelty rule.
 * **No scorer we ran on approach A reproduces a designed VHH pose** (OpenFold3 without an MSA misfolds the VHH; OpenDDE docks the VHHs elsewhere on HER2).
   Scores are weak filters, not evidence of binding. A check on the optimization branch's designs shows the same OpenDDE settings recover the crystal pose for paired
   Fvs (14 of 20 within 3 Å) but not for a lone VH (0 of 20 within 10 Å).
-* Two of the eight rows from approach B (`dn-K07`, `dn-K08`) do not meet that approach's own epitope/refold selection rule, and `dn-K06` is 91 %
-  identical to `dn-K04`; they were taken to fill the slots with checker-valid de novo designs.
+* Approach C: `dn-G02` was excluded by its own authors from their final four (binder probability 0.032, the lowest of their 15).
+* Approach B: its five rows are the first five of its six delivered de novo VHHs; predicted epitope overlap 0.27–0.67 in its own folding runs (computational only).
 
 ## Branches
 

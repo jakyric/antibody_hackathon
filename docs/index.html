@@ -378,8 +378,8 @@ footer p{max-width:70ch}
 <section class="block" id="denovo">
   <div class="wrap">
     <div class="kicker reveal">De novo track</div>
-    <h2 class="reveal d1">Two approaches submitted, one explored</h2>
-    <p class="lead reveal d2">Three independent pipelines designed new HER2 binders against the trastuzumab epitope, all generating with RFD4-Proteina but differing in scaffold, gates and ranking. Two of them are submitted as de novo VHHs: 7 designs from Approach A and 8 from Approach B. The third is shown as explored work.</p>
+    <h2 class="reveal d1">Three approaches, one portfolio</h2>
+    <p class="lead reveal d2">Three independent pipelines designed new HER2 binders against the trastuzumab epitope, all generating with RFD4-Proteina but differing in scaffold, gates and ranking. Each contributes its 5 best checker-valid designs, 15 in total: Approach A and B as VHHs, Approach C as paired Fv.</p>
 
     <div class="grid g3">
       <!-- A -->
@@ -395,7 +395,7 @@ footer p{max-width:70ch}
           <li><b>43</b> designs pass every gate; Pareto over binding, TNP, yield and Tm gives a top 20.</li>
         </ul>
         <div class="note"><strong>Honest read.</strong> No predictor reproduced the designed binding poses (OpenDDE median 44&nbsp;&Aring; away, 26 of 768 within 20&nbsp;&Aring;; OpenFold3 none of 571 within 20&nbsp;&Aring;), and all 20 listed designs carry the below-decoy flag. A filter, not evidence of binding.</div>
-        <div class="takes"><span class="pill comp">computational</span> <span><strong>7</strong> designs in the submission</span></div>
+        <div class="takes"><span class="pill comp">computational</span> <span><strong>5</strong> designs in the submission</span></div>
       </article>
 
       <!-- B -->
@@ -411,21 +411,21 @@ footer p{max-width:70ch}
           <li>The approach delivered <b>6</b> designs in total.</li>
         </ul>
         <div class="note"><strong>Honest read.</strong> Only 2 of 120 designs pass the organisers&rsquo; refold oracle in at least one model, and there is no lab data. Ranking separates clearly good from clearly bad, not a precise order.</div>
-        <div class="takes"><span class="pill comp">computational</span> <span><strong>8</strong> designs in the submission</span></div>
+        <div class="takes"><span class="pill comp">computational</span> <span><strong>5</strong> designs in the submission</span></div>
       </article>
 
-      <!-- C: explored, not submitted -->
-      <article class="card apc explored reveal d2">
-        <span class="badge"><b>C</b> Approach C &middot; also explored</span>
+      <!-- C -->
+      <article class="card apc reveal d2">
+        <span class="badge"><b>C</b> Approach C</span>
         <h3>Data-trained CDR-H3 on the Fv</h3>
         <p class="method">RFD4-Proteina co-generates a new CDR-H3 on the trastuzumab Fv; classifiers trained on the measured screens and template-aware refolding pick the winners.</p>
         <ul class="facts">
           <li><b>Binder classifier</b> (LightGBM) trained on the 524k-variant FACS screen: test AUC 0.994 on held-out sequence families; extrapolation to loops far from the screen is less certain.</li>
           <li><b>Refolded</b> with Boltz-2 and Protenix-v2, ranked on min-iPAE plus binder pLDDT because ipTM saturates; trastuzumab&rsquo;s own CDR-H3 lands on the 1N8Z epitope at 2.17&nbsp;&Aring; as a positive control.</li>
-          <li>A shortlist of <b>15</b> designs.</li>
+          <li>A shortlist of <b>15</b> designs; the <b>5</b> the organisers&rsquo; checker accepts are submitted, as the new CDR-H3 on the trastuzumab VH paired with the wild-type trastuzumab VL.</li>
         </ul>
-        <div class="note"><strong>Why it is not in the de novo list.</strong> Only CDR-H3 is new and the trastuzumab framework stays (about 97&nbsp;% identical to the trastuzumab VH). The organisers&rsquo; checker classes these designs as &lsquo;novel&rsquo;, the optimisation type rather than de novo, and rejected 10 of the 15 shortlisted candidates for CDR-H3 novelty.</div>
-        <div class="takes"><span class="pill">explored</span> <span><strong>0</strong> designs in the submission</span></div>
+        <div class="note"><strong>Honest read.</strong> Only CDR-H3 is new and the trastuzumab framework stays (0.96&ndash;0.97 identity to the trastuzumab VH), so the organisers&rsquo; checker classes these 5 as &lsquo;novel&rsquo;, the optimisation type rather than de novo. Of the 15 shortlisted candidates it rejected 10 for CDR-H3 novelty (only 2 mutations from a known screen CDR-H3). One of the 5 has the lowest binder probability of the approach&rsquo;s own shortlist.</div>
+        <div class="takes"><span class="pill comp">computational</span> <span><strong>5</strong> designs in the submission</span></div>
       </article>
     </div>
   </div>
@@ -436,7 +436,7 @@ footer p{max-width:70ch}
   <div class="wrap">
     <div class="kicker reveal">The submission</div>
     <h2 class="reveal d1">One CSV, both tracks</h2>
-    <p class="lead reveal d2">The format abguard expects: <span class="mono">sequence_id, kind, heavy_sequence, light_sequence, design_description, track</span>. 15 optimization designs and 15 de novo designs (7 from Approach A, 8 from Approach B). Each ID carries a short tag for its source, which only the team can read.</p>
+    <p class="lead reveal d2">The format abguard expects: <span class="mono">sequence_id, kind, heavy_sequence, light_sequence, design_description, track</span>. 15 optimization designs and 15 de novo designs (5 from each approach). Each ID carries a short tag for its source, which only the team can read. The organisers&rsquo; checker accepts all 30 rows; 10 of the 15 de novo rows are classed <span class="mono">de_novo</span> (identity to the trastuzumab VH 0.63&ndash;0.68), the 5 of Approach C are classed <span class="mono">novel</span> (0.96&ndash;0.97).</p>
 
     <div class="tools reveal">
       <div class="seg" role="group" aria-label="Filter by track" id="seg">
