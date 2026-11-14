@@ -130,7 +130,7 @@ the 42 crystal contact pairs reproduced). Controls: trastuzumab, D102E, two meas
 | OpenFold3, MSA on (JapanFold), 3 seeds | 2/2 (D102E in 2 of 3 seeds) | 2/2 | trusted |
 | Boltz-2 (Nebius), HER2 alignment | 2/2 | 0/2 | not trusted: reproduces the pose for everything |
 | OpenDDE antibody-antigen (JapanFold) | 0/2 | 2/2 | not trusted: fails trastuzumab itself (see the variant C note below) |
-| OpenDDE general checkpoint (JapanFold, MSA on), run on the variant C set only, 2 seeds | 4/4 | 3/4 | partly trusted: one non-binder was recovered in seed 1 |
+| OpenDDE general checkpoint (JapanFold, MSA on), run on all three sets, 2 seeds | 4/4 | 3/4 (non-binder `AYWDGNYAMD`: ipTM 0.45 at seed 0, 0.89 and pose recovered at seed 1) | partly trusted: lenient and seed-dependent |
 
 Single-sequence runs fail everywhere, so the MSA is needed.
 
@@ -151,20 +151,28 @@ as "OpenFold3 plus OpenDDE", not as three independent confirmations.
 
 ### Final picks
 
-Variants A and B (OpenFold3 recovers the pose in every seed; structure numbering, W99 = CDRH3 position 1):
+Variants A and B (OpenFold3 recovers the pose in every seed; structure numbering, W99 = CDRH3 position 1). The last
+column is the OpenDDE general checkpoint at seeds 0 and 1, shown for information; the rank counts seed 0 only:
 
-| Variant | Rank | CDRH3 | Changes |
-|---|---|---|---|
-| A | 1 | `WAYYGFYVMD` | G100A G101Y D102Y A106V |
-| A | 2 | `WDYSGFYYMD` | G100D G101Y D102S A106Y |
-| A | 3 | `WAYDGFYYVD` | G100A G101Y A106Y M107V |
-| A | 4 | `WYAYGFYYMD` | G100Y G101A D102Y A106Y |
-| A | 5 | `WYSYGFYARD` | G100Y G101S D102Y M107R |
-| A | 6 | `WYGAGFYYRD` | G100Y D102A A106Y M107R |
-| A | 7 | `WDADGFYYGD` | G100D G101A A106Y M107G |
-| B | 1 | `WDGAAFYYMD` | G100D D102A G103A A106Y |
-| B | 2 | `WYGYSFYYMD` | G100Y D102Y G103S A106Y |
-| B | 3 | `WYGAGFYYRD` | (same as A 6) |
+| Variant | Rank | CDRH3 | Changes | OpenDDE general (seed 0 / seed 1) |
+|---|---|---|---|---|
+| A | 1 | `WAYYGFYVMD` | G100A G101Y D102Y A106V | yes / yes |
+| A | 2 | `WDYSGFYYMD` | G100D G101Y D102S A106Y | yes / yes |
+| A | 3 | `WAYDGFYYVD` | G100A G101Y A106Y M107V | yes / yes |
+| A | 4 | `WYAYGFYYMD` | G100Y G101A D102Y A106Y | yes / yes |
+| A | 5 | `WYGAGFYYRD` | G100Y D102A A106Y M107R | yes / **no** (ipTM 0.27) |
+| A | 6 | `WDADGFYYGD` | G100D G101A A106Y M107G | yes / yes |
+| A | 7 | `WYSYGFYARD` | G100Y G101S D102Y M107R | **no / no** (ipTM 0.28 / 0.32) |
+| B | 1 | `WDGAAFYYMD` | G100D D102A G103A A106Y | yes / yes |
+| B | 2 | `WYGYSFYYMD` | G100Y D102Y G103S A106Y | yes / yes |
+| B | 3 | `WYGAGFYYRD` | (same as A 5) | yes / **no** (ipTM 0.27) |
+
+OpenDDE general was run on all three sets. It is the most lenient of the trusted refolders: it recovers the pose for
+11 and 10 of the 12 A designs (seed 0 and 1) and 10 and 10 of the 12 B designs, against 7 and 3 that OpenFold3 recovers
+in every seed, and it accepts one measured non-binder at seed 1. It is decisive in one place: the two M107R designs are
+the only picks it rejects (`WYSYGFYARD` in both seeds, `WYGAGFYYRD` in seed 1). That matches the SPR data, where all
+three measured M107 singles lost 40-70 fold affinity, so rank those two last. Without them the A and B shortlists
+shrink to five and two designs that pass both refolders.
 
 Variant C (paper recipe; the 13 designs that passed the sequence filters, abguard and the ABodyBuilder3 filter; ABB3 =
 CDRH3 RMSD to the wild-type model; OF3 = seeds recovering the pose; OpenDDE = general checkpoint, seeds 0 and 1):

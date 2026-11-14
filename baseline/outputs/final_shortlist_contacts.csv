@@ -1,4 +1,4 @@
 final_rank,id,cdrh3,tier,of3_seeds,of3_ipae,of3_iptm,paratope_kept,aromatics,net_charge,keeps_M107,keeps_DG,liabilities,p_mean,blosum_rank,changed_positions,which
-1,cand01,WDGAAFYYMD,A: all three services,3,3.33,0.73,0.88,4,-2,True,False,3,0.91,1,"2,4,5,8","OpenDDE,OpenFold3,Boltz-2"
-2,cand04,WYGYSFYYMD,A: all three services,3,5.13,0.64,0.71,6,-1,True,False,2,0.93,4,"2,4,5,8","OpenDDE,OpenFold3,Boltz-2"
-3,cand12,WYGAGFYYRD,B: OpenFold3 + Boltz-2,3,6.36,0.59,0.38,5,0,False,False,1,0.93,12,"2,4,8,9","OpenFold3,Boltz-2"
+1,cand01,WDGAAFYYMD,4 of 4 services,3,3.33,0.73,0.91,4,-2,True,False,3,0.91,1,"2,4,5,8","OpenDDE-abag,OpenFold3,OpenDDE,Boltz-2"
+2,cand04,WYGYSFYYMD,4 of 4 services,3,5.13,0.64,0.72,6,-1,True,False,2,0.93,4,"2,4,5,8","OpenDDE-abag,OpenFold3,OpenDDE,Boltz-2"
+3,cand12,WYGAGFYYRD,3 of 4 services,3,6.36,0.59,0.34,5,0,False,False,1,0.93,12,"2,4,8,9","OpenFold3,OpenDDE,Boltz-2"
