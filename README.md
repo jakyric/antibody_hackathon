@@ -189,8 +189,24 @@ epitope unaided. Three models were handed the same help and lost the epitope any
 discriminate, but it is not evidence that Boltz-2 would find a novel one.
 
 **What this bought us.** Epitope preservation is one of the three judged axes, and we had only an
-assumption about it. With Boltz-2 it is a prediction with a number: our designs keep a median **0.95** of
-trastuzumab's epitope, worst case 0.85. Across the calibration variants that measure has no relationship
+assumption about it. With Boltz-2 it is a prediction with a number. Measured on **the six loops actually
+in the submission** (`results/epitope_submission/epitope.csv`, one seed), they keep a median **0.95** of
+trastuzumab's epitope:
+
+| Design | Epitope kept vs trastuzumab |
+| --- | ---: |
+| `tz-clean-03`, `tz-clean-06` | 1.00 |
+| `tz-clean-02`, `tz-clean-04` | 0.95 |
+| `tz-clean-07` | 0.90 |
+| `tz-clean-01` | 0.85 |
+
+The control comes first: in the same run Boltz-2 reproduces trastuzumab's crystal epitope at **1.00**, so
+the comparison is anchored to a case with a known answer. **But read the spread with the noise floor in
+mind** — the epitope number moves by up to 0.105 between seeds, and this run is a single seed because a
+second one died on a shared GPU. The 0.85-to-1.00 range across designs is about the size of that noise, so
+it separates our designs from nothing. It supports "epitope retained", not an ordering.
+
+Across the calibration variants that measure has no relationship
 with affinity (Spearman −0.02) and never drops below 0.86 — variants of trastuzumab bind the same patch
 whether they bind it tightly or weakly. Epitope and affinity are separate questions and this answers only
 the first.

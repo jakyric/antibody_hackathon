@@ -1,0 +1,8 @@
+model,id,group,n_epitope_residues,overlap_vs_tz_same_model,overlap_vs_crystal
+subpanel-boltz2-s77,trastuzumab,baseline,19,1.0,1.0
+subpanel-boltz2-s77,tz-clean-01,design,18,0.85,0.85
+subpanel-boltz2-s77,tz-clean-02,design,18,0.947,0.947
+subpanel-boltz2-s77,tz-clean-03,design,19,1.0,1.0
+subpanel-boltz2-s77,tz-clean-04,design,18,0.947,0.947
+subpanel-boltz2-s77,tz-clean-06,design,19,1.0,1.0
+subpanel-boltz2-s77,tz-clean-07,design,17,0.895,0.895

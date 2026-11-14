@@ -47,7 +47,12 @@ def load_epitope(path: Path) -> dict[str, list[float]]:
     if not path.exists():
         return out
     for r in csv.DictReader(path.open()):
-        if not r["model"].startswith("boltz2"):
+        # Match any Boltz-2 run, not only a model column that begins with the
+        # name: the run that folds the submitted loops is labelled
+        # `subpanel-boltz2-s77`, and a startswith() test silently dropped it,
+        # leaving the epitope column empty for every candidate.
+        # "boltz1" does not contain "boltz2", so this does not widen the net.
+        if "boltz2" not in r["model"]:
             continue
         v = r["overlap_vs_tz_same_model"]
         if v:
@@ -115,8 +120,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.precedent.exists() else {}
     # The BLOSUM45 rank only means something relative to the other designs, not
     # on its own. Each sequence appears twice in the table (with and without
-    # R66G), and the two share the same loop, so the rank is counted over
-    # unique CDR-H3s.
+    # R66G), and the two are the same loop, so the rank is counted over unique
+    # CDR-H3s.
     uniq: dict[str, int] = {}
     for k, r in prec.items():
         if k != "trastuzumab":
