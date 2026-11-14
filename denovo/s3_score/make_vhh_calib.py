@@ -5,7 +5,7 @@ Negatives: the same nanobodies against antigens they do not bind (shuffled pairs
 that AlphaFold3 gave a high ipTM (the benchmark's point: confident but wrong). Their AF3 / Boltz-2 / Chai-1 ipTM are
 stored in the note so our refolders can be compared on identical pairs.
 
-Run: baseline/.venv/bin/python denovo/s3_score/make_vhh_calib.py [--n-pos 10] [--n-rand-neg 3] [--n-hard 12]
+Run: denovo/.venv/bin/python denovo/s3_score/make_vhh_calib.py [--n-pos 10] [--n-rand-neg 3] [--n-hard 12]
 Needs data/smorodina/x/iptm_confidence_scores/*.csv (scp'd from the VM's hackathon-data) and internet (RCSB FASTA).
 """
 import argparse
@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "denovo"))
 import dn_common as dn  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
-M = ROOT / "data" / "smorodina" / "x" / "iptm_confidence_scores"
+M = ROOT / "optimization" / "data" / "smorodina" / "x" / "iptm_confidence_scores"
 VHH_NAME = re.compile(r"nanobod|vhh|single.domain|sybody|\bnb\b|camel|llama|vicugna|heavy.chain.antibody", re.I)
 cache = {}
 

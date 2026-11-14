@@ -1,7 +1,7 @@
 """S5: merge every stage into one leaderboard + a diversity-aware top-20 submission list.
 
-    baseline/.venv/bin/python denovo/rank.py            # writes results/denovo/leaderboard.csv, submission_top20.csv
-    baseline/.venv/bin/python denovo/rank.py --top 20 --w-bind 0.4 ...
+    denovo/.venv/bin/python denovo/rank.py            # writes results/denovo/leaderboard.csv, submission_top20.csv
+    denovo/.venv/bin/python denovo/rank.py --top 20 --w-bind 0.4 ...
 
 Reads (all optional except designs): designs_*.csv, rules.csv, score_of3.csv, score_orth.csv, props.csv,
 designs_boltzgen_metrics.csv. Missing columns/files are skipped and the weights renormalised, so it is usable from the
@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -76,7 +77,7 @@ def build(args) -> pd.DataFrame:
     # framework-diversification variants and BoltzGen designs were cancelled/parked by the user: never ranked
     D = D[~D.generator.isin(["fwdiv", "boltzgen", "boltzgen-cys"])].copy()
     D["is_control"] = (D.generator == "control").astype(int)
-    for name, keep in (("rules.csv", None), ("score_of3.csv", None), ("score_orth.csv", None), ("score_ptx.csv", None), ("score_vmof3.csv", None), ("score_dde_extra.csv", None),
+    for name, keep in (("rules.csv", None), ("score_of3.csv", None), ("score_orth.csv", None), ("score_ptx.csv", None), ("score_vmof3.csv", None), ("score_dde_extra.csv", None), ("crop/dde_crop.csv", None), ("crop/of3_crop.csv", None),
                        ("props.csv", None), ("props_nm.csv", None), ("props_tnpvm.csv", None), ("props_my.csv", None), ("validity.csv", None), ("gapcheck.csv", None), ("designs_boltzgen_metrics.csv", None)):
         t = rd(name)
         if t is None or "design_id" not in t:
@@ -114,7 +115,9 @@ def build(args) -> pd.DataFrame:
     SCORERS = {
                # VM GPU runs (user, 15:30): OpenFold3 OpenBind with the HER2 template and no MSA (the upstream-style recipe) and
                # untemplated ESMFold-2; pair_iptm = VHH-HER2 chain-pair ipTM (the whole-complex iptm also counts HER2 fragment-fragment)
-               "vmof3": ("vmof3_pair_iptm", "vmof3_ipsae_chn15"), "vmesm2": ("vmesm2_pair_iptm", "vmesm2_ipsae_chn15")}
+               "vmof3": ("vmof3_pair_iptm", "vmof3_ipsae_chn15"), "vmesm2": ("vmesm2_pair_iptm", "vmesm2_ipsae_chn15"),
+               # cropped-HER2 re-run (user, 16:4x: HER2 539-607 only, to limit how freely the model can place the VHH); same recipe as vmof3
+               "vmof3c": ("vmof3c_pair_iptm", "vmof3c_ipsae_chn15")}
     parts, iptm_cols, ipsae_cols = [], [], []
     for _name, (ci, cs) in SCORERS.items():
         for c, lst in ((ci, iptm_cols), (cs, ipsae_cols)):
@@ -195,7 +198,7 @@ def build(args) -> pd.DataFrame:
              "low_complexity": one("val_low_complexity"), "cys_in_cdr": one("val_cys_unexpected"), "clash": one("val_clash_bad"),
              "tnp_red": col("tnp_n_red").fillna(0) > 0, "tnp_amber2": col("tnp_n_amber").fillna(0) >= 2, "rules_low": D["t_rules"] < 0.5,
              # OpenDDE binder self-consistency RMSD (design VHH vs predicted VHH, scRMSD) > 1.5 A: the self-consistency flag threshold
-             "dde_fold_rmsd": col("orth_dde_own_vhh_rmsd_fold") > 1.5}
+             "dde_fold_rmsd": col("dde_c_scrmsd").fillna(col("orth_dde_own_vhh_rmsd_fold")) > 1.5}
     D["n_flags"] = sum(v.astype(int) for v in FLAGS.values())
     D["flags"] = [";".join(k for k, v in FLAGS.items() if v.iloc[i]) for i in range(len(D))]
     # evidence completeness (order: eligible -> complete evidence -> Pareto tier -> fewest flags -> rank)
@@ -221,7 +224,13 @@ def build(args) -> pd.DataFrame:
         s = _dec[c].dropna() if c in _dec else pd.Series(dtype=float)
         return float(s.quantile(0.95)) if len(s) >= 3 else fallback
     D["dde_thr_iptm"], D["dde_thr_ipsae"] = _q95("orth_dde_iptm", 0.49), _q95("orth_dde_ipsae", 0.12)
-    D["gate_dde"] = ((col("orth_dde_iptm") >= D["dde_thr_iptm"]) & (col("orth_dde_ipsae") >= D["dde_thr_ipsae"])).astype(int)
+    D["gate_dde_full"] = ((col("orth_dde_iptm") >= D["dde_thr_iptm"]) & (col("orth_dde_ipsae") >= D["dde_thr_ipsae"])).astype(int)
+    # User (16:4x): the gate uses OpenDDE on the CROPPED HER2 (539-607), thresholds = 95th percentile of the framework-only decoys on the crop
+    # (the full-domain run let the VHH sit anywhere; epitope contact fraction 0.0 versus 0.39 on the crop). Designs without a crop OpenDDE
+    # score fail (missing = fail). RANK_GATE=full restores the full-HER2 gate (kept as `gate_dde_full`).
+    D["dde_c_thr_iptm"], D["dde_c_thr_ipsae"] = _q95("dde_c_iptm", 0.53), _q95("dde_c_ipsae", 0.15)
+    D["gate_dde_crop"] = ((col("dde_c_iptm") >= D["dde_c_thr_iptm"]) & (col("dde_c_ipsae") >= D["dde_c_thr_ipsae"])).astype(int)
+    D["gate_dde"] = D["gate_dde_full"] if os.environ.get("RANK_GATE") == "full" else D["gate_dde_crop"]
     D["gate_vm"] = (hard & vm).astype(int)
     D["gate_strict"] = (hard & vm & margin_ok & (D.gate_dde == 1)).astype(int)
     D["panel_ident_lt70"] = ident_ok.astype(int)

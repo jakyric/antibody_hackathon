@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the pipeline overview deck from the live result files.
 
-    baseline/.venv/bin/python denovo/slides/build_slides.py            # regenerate denovo/slides/artifact/project/*
-    baseline/.venv/bin/python denovo/slides/build_slides.py --plan     # also print the publish plan (JSON)
+    denovo/.venv/bin/python denovo/slides/build_slides.py            # regenerate denovo/slides/artifact/project/*
+    denovo/.venv/bin/python denovo/slides/build_slides.py --plan     # also print the publish plan (JSON)
 
 Every number on a slide is read here from results/denovo/*.csv|json|md and denovo/*/ files at build time; where a stage has not
 produced evidence yet the slide says "pending" instead of showing a made-up value. No credentials, hosts or key paths are read or
@@ -252,13 +252,13 @@ def col_chart(items, track=400, col_w=130, gap=24, scale=100.0):
     return bars + "</div>" + labs + "</div>"
 
 
-def hbars(rows, max_w=360, label_w=400):
+def hbars(rows, max_w=360, label_w=400, bar_h=44, gap=14):
     """rows: (label, count, colour); bar length relative to the first row."""
     top = max([r[1] for r in rows] + [1])
-    out = '<div style="display:flex;flex-direction:column;gap:14px">'
+    out = f'<div style="display:flex;flex-direction:column;gap:{gap}px">'
     for lab, n, colr in rows:
         w = int(max_w * n / top) if n else 0
-        bar = f'<div class="hbar" style="width:{max(w, 4)}px;background:{colr}"></div>' if n else '<div style="width:4px;height:44px;background:#C9C7BC"></div>'
+        bar = f'<div class="hbar" style="width:{max(w, 4)}px;height:{bar_h}px;background:{colr}"></div>' if n else f'<div style="width:4px;height:{bar_h}px;background:#C9C7BC"></div>'
         out += (f'<div style="display:flex;align-items:center;gap:16px"><p class="lab" style="width:{label_w}px">{E(lab)}</p>{bar}'
                 f'<p class="val">{n if n else "pending"}</p></div>')
     return out + "</div>"
@@ -323,64 +323,6 @@ def s_task(st):
 </section>'''
 
 
-def s_pipeline(st):
-    def stage(n, name, text, where):
-        return (f'<div class="stage" style="padding:20px;gap:10px"><p class="stage-num">STAGE {n}</p><p class="stage-name" style="font-size:36px">{E(name)}</p>'
-                f'<p class="stage-text" style="font-size:24px">{E(text)}</p><div style="flex:1"></div><p class="pill">{E(where)}</p></div>')
-    arrow = '<x-shape kind="arrow-right" style="background:#0C7473;width:28px;height:20px;align-self:center"></x-shape>'
-    return f'''<section id="pipeline">
-<p class="eyebrow">THE PIPELINE</p>
-<h2>Six stages run as continuous parallel loops</h2>
-<div class="row" style="gap:8px;align-items:stretch">
-{stage(1, "Generate", "RFD4-Proteina designs CDR1–3 on an intact VHH.", "JapanFold")}
-{arrow}
-{stage(2, "Gate", "abguard de novo, canonical Cys, length.", "Team VM + laptop")}
-{arrow}
-{stage(3, "Score", "OpenFold3 on all; OpenDDE, ESMFold-2 on the top third.", "JapanFold")}
-{arrow}
-{stage(4, "Profile", "NanoMelt Tm, TNP, yield, liabilities.", "Laptop + team VM")}
-{arrow}
-{stage(5, "Rank", "Weighted composite, kept for comparison.", "Laptop")}
-{arrow}
-{stage(6, "Pareto", "Non-dominated fronts choose the final 20.", "Laptop")}
-</div>
-<div class="row">
-<div class="card-dark" style="flex:1;padding:24px"><p class="card-title">Always running</p><p class="card-text" style="font-size:26px">Every stage is a watch loop that takes only new designs. Five parallel workers share one file contract (denovo/CONTRACT.md); the ranking refreshes every five minutes.</p></div>
-<div class="card-dark" style="flex:1;padding:24px"><p class="card-title">Feedback</p><p class="card-text" style="font-size:26px">OpenFold3 results steer the next RFD4 waves: settings that pass the gate and score better get more jobs.</p></div>
-</div>
-{foot("Sources: denovo/CONTRACT.md and the stage READMEs. Nebius was used only for the parked framework-diversification experiments.")}
-{note("Walk left to right. The point is the order: cheap hard gates first, expensive structure scoring only on what passes, developability on the finalists, and a Pareto step last because the organisers tier a design by how many of the three properties beat trastuzumab. Everything is resumable and a job is never paid for twice. The loop is what let us look at real designs from the first half hour.")}
-</section>'''
-
-
-def s_generate(st):
-    fwc = st["fw_counts"]
-    hs = ["hs1_core", "hs2_broad", "hs3_alt_patch"]
-    rows = []
-    for f, nm in (("bcii10", "hNbBCII10-FGLA"), ("capla", "Caplacizumab-like")):
-        rows.append([nm] + [st["by_fw_hs"].get((f, h), 0) for h in hs])
-    item = lambda k, v: f'<div class="col" style="gap:6px"><p class="card-title">{E(k)}</p><p class="muted">{E(v)}</p></div>'  # noqa: E731
-    return f'''<section id="generate">
-<p class="eyebrow">GENERATION</p>
-<h2>RFD4 designs the loops and keeps the framework</h2>
-<div class="row" style="gap:48px">
-<div class="col" style="flex:3;gap:22px">
-{item("Why an intact framework", "hNbBCII10-FGLA is the scaffold RFantibody and Germinal fixed after expression tests. A caplacizumab-like VHH adds camelid hallmarks.")}
-{item("Competition built in", "The framework sits where trastuzumab’s VH sits in the 1N8Z crystal, so a binder in this pose overlaps trastuzumab by construction. The pose is rigid: one binding mode per design.")}
-{item("Hotspots from the crystal", "19 HER2 residues within 4.5 Å of trastuzumab, grouped into three hotspot sets: core, broad and alternate patch.")}
-{item("Cheap enough to be wide", "High-recycle antibody recipe, 60 steps, 8 designs per job. About $0.002 per design, so the queue, not money, is the limit.")}
-</div>
-<div class="col" style="flex:2;gap:20px">
-<div class="card"><p class="num">{st["n_designs"]}</p><p class="cap">RFD4 designs generated so far</p></div>
-<p class="small">Designs per framework and hotspot set</p>
-{table(["Framework", "core", "broad", "alt"], rows, [46, 18, 18, 18], fs=24)}
-</div>
-</div>
-{foot("Sources: denovo/s1_design/decisions.md, denovo/targets/epitope.json, results/denovo/designs_rfd4jf.csv.")}
-{note("Choices and why. Intact framework: it carries the stability we want and it is the scaffold the field already validated, and the organisers said fully new CDRs should land below 70% identity. Pose anchored on trastuzumab’s VH: this is how epitope competition is built in, and also the limit, because every design shares one rigid binding mode and the hosted model gives no confidence score. Cost is negligible, so we generated hundreds and let the gates decide.")}
-</section>'''
-
-
 def s_gate(st):
     bins = st["gate_bins"]
     items = [(lab, f"n = {n}", (100 * k / n) if n else None, pct(k, n), "#0C7473") for lab, k, n in bins]
@@ -408,156 +350,228 @@ def s_gate(st):
 </section>'''
 
 
-def s_rules(st):
-    nb = st.get("nb9")
-    nbtxt = f"Median {nb[0]:.0f} of 9 over {nb[1]} designs; the parent scaffold scores 6." if nb else "Scoring pending."
-    def b(k, v, free=False):
-        c = "box-free" if free else "box"
-        return f'<div class="{c}" style="width:250px;padding:12px 16px"><p class="box-k">{E(k)}</p><p class="box-v">{E(v)}</p></div>'
-    cdr2 = "".join([b("pos 1", "A D G N S T"), b("pos 2", "free", True), b("pos 3", "free", True), b("pos 4", "G"), b("pos 5", "A G S T"), b("pos 6", "I N S T")])
-    cdr3 = "".join([b("N1", "not Y W V F L I"), b("N2", "L or T"), b("middle", "free", True), b("C3", "F H L Y"), b("C2", "not F L Y"), b("C1", "Y or W")])
-    hard = lambda t, x: f'<div class="card" style="flex:1;padding:20px;gap:6px"><p class="card-title" style="font-size:28px">{E(t)}</p><p class="small">{E(x)}</p></div>'  # noqa: E731
-    return f'''<section id="rules" style="gap:28px">
-<p class="eyebrow">HARD RULES AND SEQUENCE RULES</p>
-<h2>Four hard rules, then a nine-rule sequence score</h2>
-<div class="row" style="gap:20px">
-{hard("Length", "At most 250 aa")}
-{hard("No unpaired Cys", "An odd Cys count fails")}
-{hard("Canonical disulfide", "Cys 23 and 104 present")}
-{hard("Numbering", "Immunum confidence ≥ 0.1")}
+def collect2(st):
+    """Final-state additions: validation, HER2-gap check, OpenDDE pose check, coverage counts, final list, boxplot data."""
+    D = rd("designs_rfd4jf.csv")
+    ids = set(D.design_id) if D is not None else set()
+    st["n_loop"] = int(D.generator.astype(str).str.contains("loop").sum()) if D is not None and "generator" in D else 0
+    poses = set()
+    if D is not None and "params_json" in D:
+        for s in D.params_json.dropna():
+            try:
+                poses.add(json.loads(s).get("pose"))
+            except Exception:
+                pass
+    st["poses"] = sorted(p for p in poses if p)
+    V = rd("validity.csv")
+    st["val"] = None
+    if V is not None:
+        v = V[V.design_id.isin(ids)]
+        g = lambda c: int(v[c].sum()) if c in v else 0  # noqa: E731
+        st["val"] = {"n": len(v), "ok": g("val_ok"), "motif": g("val_motif_bad"), "severe": g("val_clash_severe"), "odd": g("val_cys_odd"),
+                     "lowc": g("val_low_complexity"), "mism": g("val_seq_mismatch") + g("val_fr_not_intact") + g("val_her2_seq_changed")}
+    G = rd("gapcheck.csv")
+    st["gap"] = None
+    if G is not None and "gap_anchor_atoms_lt3" in G:
+        gg = G[G.design_id.isin(ids)]
+        if len(gg):
+            st["gap"] = (int((gg.gap_anchor_atoms_lt3 > 0).sum()), len(gg))
+    P = rd("dde_pose_check.csv")
+    st["pose"] = None
+    st["pose_special"] = None
+    if P is not None:
+        p = P[P.design_id.isin(ids)]
+        if len(p):
+            st["pose"] = {"n": len(p), "rmsd": float(p.chk_pose_rmsd.median()), "pred": float(p.chk_pred_epi_frac.median()),
+                          "des": float(p.chk_design_epi_frac.median()), "fold": float(p.chk_fold_rmsd.median())}
+        sp = P[P.design_id.eq("bcii10-rfd4jf-s201016-006")]
+        if len(sp):
+            r = sp.iloc[0]
+            st["pose_special"] = {"rmsd": float(r.chk_pose_rmsd), "pred": float(r.chk_pred_epi_frac), "des": float(r.chk_design_epi_frac)}
+    L = rd("leaderboard.csv")
+    st["cov"] = {}
+    st["box"] = None
+    S = rd("submission_top20_pareto.csv")
+    top = list(S.design_id) if S is not None else []
+    if L is not None:
+        l = L[(L.is_control == 0) & L.design_id.isin(ids)]
+        cnt = lambda c: int(l[c].notna().sum()) if c in l else 0  # noqa: E731
+        st["cov"] = {"vmof3": cnt("vmof3_pair_iptm"), "vmesm2": cnt("vmesm2_pair_iptm"), "dde": cnt("orth_dde_iptm"), "tm": cnt("nm_tm"),
+                     "tnp": cnt("tnp_n_red"), "yield": cnt("my_yield"), "strict": int(l.gate_strict.sum()) if "gate_strict" in l else 0,
+                     "vm": int(l.gate_vm.sum()) if "gate_vm" in l else 0}
+        box = {}
+        for key, col in (("yield", "my_yield"), ("tm", "nm_tm"), ("ipsae", "orth_dde_ipsae_chn15")):
+            if col in l:
+                a = l[["design_id", col]].dropna()
+                box[key] = (a[col].tolist(), a[a.design_id.isin(top)][col].tolist())
+        st["box"] = box
+        kri = L[L.design_id.str.startswith("ctl-kri") & L.of3_iptm.notna()] if "of3_iptm" in L else None
+        st["kri"] = (float(kri.of3_iptm.max()), len(kri)) if kri is not None and len(kri) else None
+    st["top"] = None
+    if S is not None and len(S):
+        cnt = {}
+        for x in S["flags"].fillna(""):
+            for f in x.split(";"):
+                if f:
+                    cnt[f] = cnt.get(f, 0) + 1
+        st["top"] = {"n": len(S), "flags": cnt, "fw": S.framework.value_counts().to_dict(), "front": S.pareto_rank.value_counts().sort_index().to_dict(),
+                     "rows": S.head(6).to_dict("records"), "ids": top}
+    return st
+
+
+def box_panel(vals, top, w=520, h=420):
+    """One boxplot panel (all designs) with the selected designs as diamonds; no text inside the svg."""
+    if len(vals) < 5:
+        return '<p class="muted">pending</p>'
+    a = np.array(vals, float)
+    lo, hi = float(a.min()), float(a.max())
+    pad = 24
+    yp = lambda v: pad + (1 - (v - lo) / (hi - lo or 1)) * (h - 2 * pad)  # noqa: E731
+    q1, md, q3 = np.percentile(a, [25, 50, 75])
+    iqr = q3 - q1
+    wl, wh = a[a >= q1 - 1.5 * iqr].min(), a[a <= q3 + 1.5 * iqr].max()
+    cx = w / 2
+    rng = np.random.default_rng(1)
+    svg = f'<svg aria-label="Boxplot of {len(a)} designs with {len(top)} selected designs marked" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+    svg += f'<rect x="1" y="1" width="{w - 2}" height="{h - 2}" fill="#FBFAF6" stroke="#D7D5CA" stroke-width="2"/>'
+    for v in a:
+        svg += f'<circle cx="{cx + rng.normal(0, 38):.1f}" cy="{yp(v):.1f}" r="3" fill="#9AA5B1" fill-opacity="0.35"/>'
+    svg += (f'<line x1="{cx}" y1="{yp(wl):.1f}" x2="{cx}" y2="{yp(q1):.1f}" stroke="#4F5C69" stroke-width="3"/>'
+            f'<line x1="{cx}" y1="{yp(q3):.1f}" x2="{cx}" y2="{yp(wh):.1f}" stroke="#4F5C69" stroke-width="3"/>'
+            f'<line x1="{cx - 18}" y1="{yp(wl):.1f}" x2="{cx + 18}" y2="{yp(wl):.1f}" stroke="#4F5C69" stroke-width="3"/>'
+            f'<line x1="{cx - 18}" y1="{yp(wh):.1f}" x2="{cx + 18}" y2="{yp(wh):.1f}" stroke="#4F5C69" stroke-width="3"/>'
+            f'<rect x="{cx - 52}" y="{yp(q3):.1f}" width="104" height="{max(2.0, yp(q1) - yp(q3)):.1f}" fill="#E8ECF0" fill-opacity="0.75" stroke="#4F5C69" stroke-width="3"/>'
+            f'<line x1="{cx - 52}" y1="{yp(md):.1f}" x2="{cx + 52}" y2="{yp(md):.1f}" stroke="#12212F" stroke-width="5"/>')
+    for v in top:
+        x, y = cx + rng.normal(0, 20), yp(v)
+        svg += f'<path d="M {x - 11:.1f} {y:.1f} L {x:.1f} {y - 11:.1f} L {x + 11:.1f} {y:.1f} L {x:.1f} {y + 11:.1f} Z" fill="#C2410C" stroke="#FBFAF6" stroke-width="2"/>'
+    return svg + "</svg>"
+
+
+def s_pipeline(st):
+    def stage(n, name, text, where):
+        return (f'<div class="stage" style="padding:20px;gap:10px"><p class="stage-num">STAGE {n}</p><p class="stage-name" style="font-size:36px">{E(name)}</p>'
+                f'<p class="stage-text" style="font-size:24px">{E(text)}</p><div style="flex:1"></div><p class="pill">{E(where)}</p></div>')
+    arrow = '<x-shape kind="arrow-right" style="background:#0C7473;width:28px;height:20px;align-self:center"></x-shape>'
+    return f'''<section id="pipeline">
+<p class="eyebrow">THE PIPELINE</p>
+<h2>Six stages, run as continuous parallel loops</h2>
+<div class="row" style="gap:8px;align-items:stretch">
+{stage(1, "Generate", "RFD4-Proteina on two intact frameworks. Now stopped.", "JapanFold")}
+{arrow}
+{stage(2, "Validate", "Sequence, structure, clash and HER2-loop checks.", "Laptop")}
+{arrow}
+{stage(3, "Gate", "abguard de novo, Cys, CDR3 12–18 aa, validity.", "Laptop + team VM")}
+{arrow}
+{stage(4, "Score", "VM OpenFold3 and ESMFold-2 rank; OpenDDE gates.", "Team VM + JapanFold")}
+{arrow}
+{stage(5, "Profile", "NanoMelt, TNP, ESMC yield, nine rules.", "Laptop + team VM")}
+{arrow}
+{stage(6, "Rank", "Gates, flags, then Pareto on four axes.", "Laptop")}
 </div>
-<div class="col" style="gap:10px">
-<p class="card-title" style="font-size:30px">Nine rules for CDR2 and CDR3, from the monoyield paper (same hNbBCII10 scaffold)</p>
-<p class="lab">CDR2: six residues at scaffold positions 55–60</p>
-<div class="row" style="gap:12px">{cdr2}</div>
-<p class="lab">CDR3: counted from both ends of the loop</p>
-<div class="row" style="gap:12px">{cdr3}</div>
+<div class="row">
+<div class="card-dark" style="flex:1;padding:24px"><p class="card-title">Always running</p><p class="card-text" style="font-size:26px">Every stage was a watch loop that took only new designs, so scoring started while generation was still going. Five parallel workers shared one file contract.</p></div>
+<div class="card-dark" style="flex:1;padding:24px"><p class="card-title">Validation fed back</p><p class="card-text" style="font-size:26px">Checks found a duplicate-seed bug (69% repeated designs), invalid capla designs and a gap in HER2 inside the epitope; each was fixed or gated out.</p></div>
 </div>
-<p class="small">{E(nbtxt)} The rules are exploratory: fitted on the paper’s own data and 5–13 aa CDR3s. We keep the framework’s C-A-A and F42 intact because CDR3 packs on them. Zero-Cys designs lose Tm.</p>
-{foot("Source: monoyield paper, Fig. 5h and Methods; denovo/s4_props/nanobody_rules.py; denovo/s2_rules/rules.py.")}
-{note("Why each rule. Length and unpaired Cys are the organisers’ rules. The canonical disulfide is ours: abguard does not require it, but a VHH without it loses a lot of melting temperature, and thermostability is one of the three judged properties. The nine rules come from the monoyield paper: they relate CDR2 and CDR3 residues to monomeric yield on the very scaffold we use. They are exploratory, derived on the paper’s own dataset, so they carry a weight of only 5 percent in the ranking.")}
+{foot("Sources: denovo/CONTRACT.md decisions, stage READMEs and decisions.md files, denovo/validation/.")}
+{note("Walk left to right. The order is deliberate: cheap hard gates first, expensive structure scoring only on what passes, developability on the finalists, and a Pareto step last because the organisers tier a design by how many of the three properties beat trastuzumab. Everything is resumable and no job was paid for twice. Validation was added mid-day after it found a duplicate-seed bug; it paid for itself.")}
 </section>'''
 
 
-def s_binding(st):
-    o = st["of3"]
-    gates = st["gates"]
-    names = {"of3": "OpenFold3", "dde": "OpenDDE-abag", "esm2": "ESMFold-2"}
-    rows = []
-    for k in ("of3", "dde", "esm2"):
-        g = gates.get(k)
-        if g:
-            rows.append([names[k], f"{g.get('auc_vhh_real', float('nan')):.2f}", f"{100 * g.get('recall_cognate_vhh', 0):.0f}%"])
-    strip = dot_strip([
-        (f"Framework-only decoys (n = {len(o['decoy'])})", o["decoy"], "#6C7783", med(o["decoy"])),
-        (f"RFD4 designs (n = {len(o['design'])})", o["design"], "#0C7473", med(o["design"])),
-        ("Trastuzumab Fv (positive control)", o["tz"], "#B4620A", med(o["tz"])),
-    ], 0.0, 0.6, svg_w=640, label_w=300, row_h=110, fmt="{:.1f}") if o["design"] else '<p class="muted">OpenFold3 scoring pending.</p>'
-    md = f"{o['med_d']:.2f}" if o["med_d"] is not None else "–"
-    mc = f"{o['med_c']:.2f}" if o["med_c"] is not None else "–"
-    tz = f"{o['tz_v']:.2f}" if o["tz_v"] is not None else "–"
-    return f'''<section id="binding">
-<p class="eyebrow">INDEPENDENT BINDING EVIDENCE</p>
-<h2>Folding scores are filters, calibrated on decoys</h2>
+def s_generate(st):
+    fw = st["fw_counts"]
+    rows = [["Caplacizumab-like", fw.get("capla", 0)], ["hNbBCII10-FGLA", fw.get("bcii10", 0)]]
+    item = lambda k, v: f'<div class="col" style="gap:6px"><p class="card-title" style="font-size:32px">{E(k)}</p><p class="muted" style="font-size:27px">{E(v)}</p></div>'  # noqa: E731
+    return f'''<section id="generate">
+<p class="eyebrow">GENERATION</p>
+<h2>RFD4 designs the loops and keeps the framework</h2>
 <div class="row" style="gap:48px">
-<div class="col" style="width:1000px;gap:10px">
-<p class="lab">OpenFold3 interface confidence (ipTM) against HER2 domain IV; the bar marks the median</p>
-{strip}
+<div class="col" style="flex:3;gap:22px">
+{item("Two intact frameworks", "hNbBCII10-FGLA is the scaffold RFantibody and Germinal fixed after expression tests. A caplacizumab-like VHH adds camelid hallmarks. CDR1–3 are designed.")}
+{item("Competition built in", "The framework sits where trastuzumab’s VH sits in 1N8Z, in one of two rigid poses, so a binder in these poses overlaps trastuzumab by construction. It is also a limit.")}
+{item("A loop-aware set", f"{st['n_loop']} designs on a modelled HER2 that fills the unresolved loop (residues 581–590), so the chain has no break.")}
+{item("Reasonable lengths", "CDR3 designed per framework, with the final IMGT block capped at 12–18 aa; BoltzGen designs were the length reference. About $0.002 per design.")}
+</div>
+<div class="col" style="flex:2;gap:20px">
+<div class="card"><p class="num">{st["n_designs"]:,}</p><p class="cap">unique RFD4 designs on JapanFold</p></div>
+{table(["Framework", "Designs"], rows, [66, 34], fs=24)}
+<div class="card-dark" style="padding:24px"><p class="card-text" style="font-size:26px">Validation found that 69% of an early wave were duplicate seeds. It was fixed, and only unique designs count here.</p></div>
+</div>
+</div>
+{foot("Sources: denovo/s1_design/decisions.md, denovo/targets/epitope.json, results/denovo/designs_rfd4jf.csv, CONTRACT.md decisions.")}
+{note("Choices and why. Intact frameworks: stability and a validated scaffold; the organisers said new CDRs should land below 70 percent identity. Pose anchored on trastuzumab’s VH: this is how epitope competition is built in, and also the limit, because every design shares one of two rigid poses and the hosted model gives no confidence score. The loop-aware set uses a modelled HER2 because 1N8Z lacks residues 581 to 590. Cost is negligible, so we generated widely and let validation and the gates decide. Final count is read from the designs file.")}
+</section>'''
+
+
+def s_validate(st):
+    v = st["val"]
+    gp = st["gap"]
+    item = lambda k, t: f'<div class="col" style="gap:4px"><p class="card-title" style="font-size:30px">{E(k)}</p><p class="muted" style="font-size:26px">{E(t)}</p></div>'  # noqa: E731
+    if v:
+        mism = "No sequence, framework or HER2 mismatches." if v["mism"] == 0 else f"{v['mism']} sequence or framework mismatches."
+        checks = [
+            item("Sequence and structure agree", f"{mism} Covalent geometry and the framework’s fixed part hold."),
+            item("Conditioned group held", f"{v['motif']} capla designs lost the conditioned group and are invalid."),
+            item("Clashes, Cys, complexity", f"{v['severe']} severe clashes, {v['odd']} odd-Cys designs and {v['lowc']} low-complexity loops are flagged or gated."),
+            item("Only two rigid binding modes", f"Poses {', '.join(st['poses']) or 'p0, p1'}: framework and HER2 are held rigid, so every design shares one of two poses."),
+        ]
+        big = (f'<div class="card"><p class="num">{v["ok"]:,}</p><p class="cap">of {v["n"]:,} checked designs are valid</p></div>')
+    else:
+        checks, big = [item("Validation", "pending")], ""
+    gtxt = (f"{pct(*gp)}" if gp else "–")
+    return f'''<section id="validate">
+<p class="eyebrow">VALIDITY CHECKS</p>
+<h2>We checked the designs themselves before trusting any score</h2>
+<div class="row" style="gap:48px">
+<div class="col" style="flex:3;gap:20px">
+{"".join(checks)}
+</div>
+<div class="col" style="flex:2;gap:20px">
+{big}
+<div class="card"><p class="num-amber">{E(gtxt)}</p><p class="cap">of designs conflict with the anchors of the unresolved HER2 loop 581–590, which sits inside the epitope. They are gated out.</p></div>
+</div>
+</div>
+{foot("Sources: denovo/validation/ (validate.py, gap_check.py, summary.txt), results/denovo/validity.csv and gapcheck.csv. Top 10 also inspected in PyMOL.")}
+{note("Validation was a separate pass over every design: does the sequence match the structure, is the framework intact, did the conditioned part stay where it was put, are there clashes, odd cysteines or low-complexity loops. It found the duplicate-seed bug and the caplacizumab-like designs that lost the conditioned group early on. The HER2 gap check matters biologically: residues 581 to 590 are missing in the crystal and sit inside trastuzumab’s epitope, so a design whose anchors collide with that loop cannot be trusted. Counts are read from the validity and gap-check files.")}
+</section>'''
+
+
+def s_scoring(st):
+    cov, po, kri = st["cov"], st["pose"], st.get("kri")
+    rows = [
+        ["OpenFold3 OpenBind, HER2 template, no MSA", "Team VM", "Ranked: iPTM and ipSAE (15 Å)"],
+        ["ESMFold-2", "Team VM", "Ranked: iPTM and ipSAE"],
+        ["OpenDDE-abag", "JapanFold", "Gate: iPTM and ipSAE ≥ decoy 95th percentile; missing fails"],
+        ["JapanFold OpenFold3", "JapanFold", "Not ranked: untemplated, looks like decoys"],
+    ]
+    cnt = f"Scored so far: OpenFold3 on {cov.get('vmof3', 0)} designs, ESMFold-2 on {cov.get('vmesm2', 0)}, OpenDDE on {cov.get('dde', 0)}."
+    if po:
+        ptxt = (f"OpenDDE’s pose is a median {po['rmsd']:.0f} Å from the designed pose, and {po['pred']:.0%} of the HER2 residues it contacts lie in the trastuzumab epitope, "
+                f"against {po['des']:.0%} for the designed poses. Re-checked independently, not a bug. Its fold of the VHH itself is consistent (scRMSD median {po['fold']:.1f} Å).")
+    else:
+        ptxt = "Pose check pending."
+    ktxt = (f"Krisha’s branch, templated Boltz-2 and OpenFold3-OB: 1 of 120 designs pose-consistent. Her six VHHs through our tools: best OpenFold3 ipTM {kri[0]:.2f}. "
+            "Recipe matters: templated OpenFold3 median 0.36 against 0.11 for our untemplated runs." if kri else "External reference pending.")
+    return f'''<section id="scoring">
+<p class="eyebrow">INDEPENDENT BINDING EVIDENCE</p>
+<h2>The VM runs rank; JapanFold only gates</h2>
+<div class="row" style="gap:48px">
+<div class="col" style="width:840px;gap:16px">
+{table(["Scorer", "Where", "Role"], rows, [40, 20, 40], fs=24)}
+<p class="small">{E(cnt)} Decoys are framework-only VHHs; every gate is set from them.</p>
 </div>
 <div class="col" style="flex:1;gap:16px">
-<p class="card-title">How well each scorer separates real pairs</p>
-{table(["Model", "AUC", "Recall"], rows, [52, 24, 24], fs=24)}
-<p class="small">AUC on real VHH–antigen pairs against 34 non-binders. Recall is measured at the gate set on 46 decoys, using 10 crystal VHH pairs.</p>
+<div class="card-dark" style="padding:24px"><p class="card-title" style="font-size:30px">OpenDDE does not support epitope preservation</p><p class="card-text" style="font-size:24px">{E(ptxt)}</p></div>
+<div class="card" style="padding:24px"><p class="card-title" style="font-size:30px">External reference</p><p class="card-text" style="font-size:24px">{E(ktxt)}</p></div>
 </div>
 </div>
-<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="body">Medians: decoys {mc}, designs {md}, trastuzumab Fv {tz}. {o["pass"]} of {o["n"]} scored designs clear the OpenFold3 gate so far.</p></div>
-{foot("Sources: denovo/s3_score/calibration.md, gates.json; results/denovo/score_of3.csv; research report (ipTM ranks binders weakly).")}
-{note("Honest reading: the trastuzumab Fv, a real binder, scores about four times the decoys, so the pipeline can see a good complex. The scorers are weak on real VHH pairs, so an AUC of about 0.65 is what we should expect and why gates are set from decoys, not from published thresholds. At this snapshot our designs look like decoys in OpenFold3. We do not claim binding; we say which designs are most consistent across models, on the right epitope, and developable, and the assay is the judge.")}
+<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">Binding evidence is computational and weak. Scores are filters, not affinity measurements.</p></div>
+{foot("Sources: denovo/s3_score/, denovo/vm_templated/, denovo/validation/dde_pose_check.py, results/denovo/dde_pose_check.csv, leaderboard.csv.")}
+{note("What changed late in the day. JapanFold scores are not ranked any more: untemplated runs score our designs like decoys. The ranked binding axis comes from OpenFold3 OpenBind with the HER2 template and no MSA, which is the upstream recipe, and from ESMFold-2, both run on the team VM. OpenDDE exists only on JapanFold, so it is a gate with a threshold from the decoys; a missing score fails. The honest finding is that OpenDDE places the VHH in a different spot from the designed pose, so passing its gate does not show epitope preservation. We checked it independently to rule out a numbering bug.")}
 </section>'''
 
 
-def s_develop(st):
-    tm = st["tm"]
-    rows = [
-        ("BCII10-based designs", tm["bcii10"], "#0C7473", med(tm["bcii10"])),
-        ("Caplacizumab-like designs", tm["capla"], "#B4620A", med(tm["capla"])),
-        ("Reference nanobodies", tm["ref"], "#6C7783", med(tm["ref"])),
-    ]
-    rows = [(f"{a} (n = {len(v)})", v, c, m) for a, v, c, m in rows if len(v)]
-    strip = dot_strip(rows, 55, 80, svg_w=470, label_w=250, row_h=104, nticks=6, fmt="{:.0f}") if rows else '<p class="muted">NanoMelt results pending.</p>'
-    tool_rows = [
-        ["NanoMelt", "Apparent Tm", "Laptop, mirrored on VM"],
-        ["TNP", "Red and amber developability flags", "Laptop, mirrored on VM"],
-        ["ESMC-Nb models", "Monomeric yield, monomer/dimer ratio", "Team VM (6B model)"],
-        ["Liabilities", "NG, DG, N-glyc, unpaired Cys, charge", "Laptop"],
-    ]
-    def stat(n, cap):
-        big = f'<p class="num" style="font-size:64px">{n}</p>' if n else '<p class="num-amber" style="font-size:44px;line-height:1.4">pending</p>'
-        return f'<div class="card" style="flex:1;padding:20px;gap:4px">{big}<p class="cap" style="font-size:24px">{E(cap)}</p></div>'
-    return f'''<section id="develop">
-<p class="eyebrow">DEVELOPABILITY</p>
-<h2>Melting temperature, yield and liabilities are predicted</h2>
-<div class="row" style="gap:48px">
-<div class="col" style="width:880px;gap:18px">
-{table(["Tool", "Predicts", "Runs on"], tool_rows, [22, 46, 32], fs=24)}
-<div class="row" style="gap:12px">{stat(st["tm"]["n"], "with NanoMelt Tm")}{stat(st["n_tnp"], "with TNP flags")}{stat(st["n_yield"], "with yield")}</div>
-<p class="small">TNP and yield run on the top third by OpenFold3 consensus, where they cost minutes per design.</p>
-</div>
-<div class="col" style="flex:1;gap:10px">
-<p class="lab">NanoMelt predicted Tm in °C; the bar marks the median</p>
-{strip}
-</div>
-</div>
-{foot("Sources: denovo/s4_props/README.md, results/denovo/props.csv. NanoMelt is a prediction with several °C of error and a non-commercial licence.")}
-{note("These are predictions, so they act as filters and tie-breakers, not as measurements. NanoMelt gives an apparent Tm; the reference nanobodies show where well-behaved VHHs sit on the same scale. TNP flags developability outliers; the ESMC-based models predict monomeric yield. The heavy tools only run on the finalists. Comparing a VHH Tm with trastuzumab’s is not apples to apples, which is why Tm is one objective in the Pareto front rather than a pass-fail test.")}
-</section>'''
-
-
-def s_live(st):
-    n = st["n_designs"]
-    full = st["par"]["n_complete"] if st.get("par") else st["n_cov50"]
-    rows = [
-        ("Designed", n, "#6C7783"),
-        ("Rules checked", st["n_rules"], "#6C7783"),
-        ("abguard says de novo", st["n_denovo"], "#0C7473"),
-        ("Gate + 2-point margin", st["n_gate_strict"], "#0C7473"),
-        ("OpenFold3 scored", st["of3"]["n"], "#0C7473"),
-        ("Orthogonal models", st["n_orth"], "#0C7473"),
-        ("NanoMelt Tm", st["tm"]["n"], "#B4620A"),
-        ("TNP + yield", st["n_yield"], "#B4620A"),
-        ("Fully measured", full, "#12212F"),
-    ]
-    cand = st["cand"]
-    if cand:
-        trs = []
-        for c in cand[:7]:
-            trs.append([str(c["design_id"]).replace("-rfd4jf", ""), c.get("framework", ""),
-                        f"{int(c['pareto_rank'])}" if "pareto_rank" in c and pd.notna(c.get("pareto_rank")) else "–",
-                        str(c.get("weakest", "–")), f"{c['nm_tm']:.1f}" if pd.notna(c.get("nm_tm")) else "–"])
-        right = (f'<p class="card-title" style="font-size:30px">Designs with complete evidence: {st.get("cand_n", len(cand))}, best 7 shown</p>'
-                 + table(["Design", "Base", "Front", "Weakest", "Tm °C"], trs, [38, 17, 13, 18, 14], fs=24)
-                 + '<p class="small">Front and weakest objective are within-run percentiles.</p>')
-    else:
-        right = ('<div class="card"><p class="card-title">Candidates: pending</p><p class="card-text">A design is listed only when OpenFold3, Tm and yield exist for it and it passes the gate. '
-                 f'{full} designs have that so far.</p></div>')
-    return f'''<section id="live">
-<p class="eyebrow">THE LIVE FUNNEL</p>
-<h2>Where the designs are right now</h2>
-<div class="row" style="gap:48px">
-<div class="col" style="width:800px;gap:14px">
-{hbars(rows, max_w=300, label_w=340)}
-</div>
-<div class="col" style="flex:1;gap:12px">
-{right}
-</div>
-</div>
-<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">Stages run in parallel, so later bars are still filling in.</p></div>
-{foot("Sources: results/denovo/rules.csv, score_of3.csv, score_orth.csv, props.csv, leaderboard_pareto.csv.")}
-{note("This slide is rebuilt from the result files. Read it as a funnel: each bar is the number of RFD4 designs that reached that stage. The candidate table appears only for designs with complete evidence, so an early list is never built on one score. Percentiles are within this run, not against trastuzumab, so they order the designs but do not say they beat it.")}
-</section>'''
-
-
-def pareto_scatter(par, w=800, h=360):
+def pareto_scatter(par, w=800, h=330):
     """bind vs therm percentile, coloured by Pareto front; front 1 outlined, selected designs marked with a diamond."""
     pad = 20
     xp = lambda v: pad + v * (w - 2 * pad)  # noqa: E731
@@ -568,7 +582,7 @@ def pareto_scatter(par, w=800, h=360):
            f'<rect x="{pad}" y="{pad}" width="{w - 2 * pad}" height="{h - 2 * pad}" fill="#FBFAF6" stroke="#D7D5CA" stroke-width="2"/>'
            f'<line x1="{xp(0.5)}" y1="{pad}" x2="{xp(0.5)}" y2="{h - pad}" stroke="#E3E1D7" stroke-width="2"/>'
            f'<line x1="{pad}" y1="{yp(0.5)}" x2="{w - pad}" y2="{yp(0.5)}" stroke="#E3E1D7" stroke-width="2"/>')
-    for b, t, r, sel in sorted(par["pts"], key=lambda p: -p[2]):  # later fronts first, front 1 on top
+    for b, t, r, sel in sorted(par["pts"], key=lambda p: -p[2]):
         stroke = ' stroke="#12212F" stroke-width="3"' if r == 1 else ""
         svg += f'<circle cx="{xp(b):.1f}" cy="{yp(t):.1f}" r="{11 if sel else 8}" fill="{col(r)}" fill-opacity="0.85"{stroke}/>'
     for b, t, r, sel in par["pts"]:
@@ -590,80 +604,146 @@ def legend_item(kind, label):
 
 def s_ranking(st):
     par = st["par"]
-    w = st["weights"]
     if par and len(par["pts"]) >= 5:
         legend = ('<div style="display:flex;gap:20px;align-items:center">' + legend_item("f1", "Front 1") + legend_item("f2", "Front 2")
                   + legend_item("f3", "Front 3") + legend_item("f4", "Later") + legend_item("sel", "Selected") + "</div>")
         fr = " / ".join(str(v) for v in par["fronts"][:5])
         left = (f'<div class="col" style="width:830px;gap:8px"><p class="lab">Binding (x) against melting temperature (y), percentiles within this run</p>'
-                f'{legend}{pareto_scatter(par)}</div>')
-        under = (f"{par['n_pop']} gate-passing designs; {len(par['pts'])} have both axes measured and are plotted; "
-                 f"front sizes {fr}; {par['n_complete']} fully measured. ")
+                f'{legend}{pareto_scatter(par)}<p class="small">{par["n_pop"]} designs in the Pareto step, {len(par["pts"])} plotted; fronts {fr}; {par["n_complete"]} fully measured.</p></div>')
     else:
         left = ('<div class="card" style="width:830px"><p class="card-title">Pareto chart: pending</p>'
-                '<p class="card-text">It appears once binding and melting-temperature evidence exist for at least five gate-passing designs.</p></div>')
-        under = ""
-    objs = ", ".join(par["used"]) if par and par["used"] else "pending"
-    dropped = ", ".join(par["dropped"]) if par and par["dropped"] else "none"
-    item = lambda k, v: f'<div class="col" style="gap:4px"><p class="card-title" style="font-size:30px">{E(k)}</p><p class="muted" style="font-size:26px">{E(v)}</p></div>'  # noqa: E731
-    npop = par["n_pop"] if par else "–"
-    right = f'''<div class="col" style="flex:1;gap:16px">
-{item("1 · Population", f"{npop} designs pass the hard gate; controls never rank.")}
-{item("2 · Objectives, all maximised", f"Used: {objs}. Dropped for low coverage: {dropped}. Each is a within-run percentile.")}
-{item("3 · Missing data", "An unmeasured design scores 0 on that objective, so it never beats a measured one.")}
-{item("4 · The list", "Fronts in order; the weakest objective breaks ties; no near-duplicate CDR3; at most half from one framework and hotspot group.")}
+                '<p class="card-text">It appears once binding and melting-temperature evidence exist for at least five eligible designs.</p></div>')
+    item = lambda k, v: f'<div class="col" style="gap:4px"><p class="card-title" style="font-size:28px">{E(k)}</p><p class="small">{E(v)}</p></div>'  # noqa: E731
+    right = f'''<div class="col" style="flex:1;gap:14px">
+{item("1 · Gates: eligibility, missing = fail", "abguard de novo, canonical Cys, CDR3 block 12–18 aa, no severe clash or HER2-loop conflict, no homopolymer; the OpenDDE gate.")}
+{item("2 · Flags: review items, never exclude", "Below decoy, N-glyc or Cys in a CDR, clash, low complexity, TNP red or amber, low nine-rule score, OpenDDE scRMSD above 1.5 Å.")}
+{item("3 · Four axes, one Pareto", "Binding 50%, NanoMelt Tm 20%, TNP 15%, yield with nine rules 15%; within-run percentiles. An unmeasured design never beats a measured one.")}
+{item("4 · The order", "Eligible, complete evidence, Pareto tier, fewest flags, best binding.")}
 </div>'''
     return f'''<section id="ranking">
 <p class="eyebrow">STAGE 6 · CHOOSING THE 20 SLOTS</p>
-<h2>Pareto dominance picks the list, not one weighted score</h2>
+<h2>Gates, flags, then Pareto dominance</h2>
 <div class="row" style="gap:48px">
 {left}
 {right}
 </div>
-<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small" style="width:1380px">{E(under)}Percentiles are within this run, not against trastuzumab, and the proxies are filters, not affinity measurements.</p></div>
-{foot("Sources: denovo/pareto.py (docstring), denovo/rank.py, results/denovo/leaderboard_pareto.csv and submission_top20_pareto.csv.")}
-{note("Why Pareto: the organisers tier a design by how many of the three judged properties beat trastuzumab, and S needs all three. A weighted sum lets a very strong binder with a poor melting temperature outrank a balanced design, but the weakest objective is what loses the tier. So we sort the gate-passing designs into non-dominated fronts and break ties inside a front by the design’s worst objective percentile, which favours balanced designs. Bind blends OpenFold3 consensus with OpenDDE and ESMFold-2 and is an affinity proxy; the epitope objective uses overlap with trastuzumab’s contacts; the Tm objective is NanoMelt. The weighted composite " + f"(bind {w['bind']:.2f}, comp {w['comp']:.2f}, Tm {w['therm']:.2f}, yield {w['yield']:.2f}, dev {w['dev']:.2f}, nine-rule {w['rules']:.2f}; missing evidence counts as a below-median prior)" + " stays as a comparison list. Honest limits: percentiles are relative to this run, and none of these proxies measures affinity.")}
+<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">Percentiles are within this run, not against trastuzumab; the proxies are filters, not affinity measurements.</p></div>
+{foot("Sources: denovo/pareto.py, denovo/rank.py, CONTRACT.md decisions 15:12 and 15:20, results/denovo/leaderboard_pareto.csv.")}
+{note("Why Pareto: the organisers tier a design by how many of the three judged properties beat trastuzumab, and S needs all three. A weighted sum lets a strong binder with a poor melting temperature outrank a balanced design. So eligibility is a typed gate, the review items are flags that never exclude, and the four axes are sorted into non-dominated fronts, with fewest flags and best binding as tie-breakers. Absolute thresholds assume a templated oracle that none of our designs reach, so we use the adverse tail of our own decoys instead.")}
 </section>'''
 
 
-def s_dropped(st):
-    bg = st["bg_n"]
-    fd = st["fwdiv_n"]
+def s_live(st):
+    c = st["cov"]
+    v = st["val"] or {"ok": 0}
+    full = st["par"]["n_complete"] if st.get("par") else 0
     rows = [
-        ["Framework diversification", "Organisers said new CDRs should land under 70%. We measured it: true for one framework, not the other, and length decides. Variants parked" + (f" ({fd})." if fd else "."), "gate_drivers.md"],
-        ["BoltzGen nanobody designs", "Raw designs have no cysteines" + (f" ({bg} designs)" if bg else "") + ", so no canonical disulfide. Stopped to focus on RFD4; its running jobs were cancelled.", "parked_boltzgen*.csv"],
-        ["RFD4 on the team VM", "Ruled out: JapanFold is the only RFD4 route. One container that had started was stopped.", "CONTRACT.md"],
-        ["ipSAE at the 10 Å cutoff", "Zero for every complex, even trastuzumab’s Fv. 15 and 20 Å variants added.", "score_of3.csv"],
-        ["First NanoMelt runs", "Failed on the 8 GB laptop GPU and in a VM script. Fixed; " + f"{st['tm']['n']} designs now have a Tm.", "props.csv"],
+        ("Designed", st["n_designs"], "#6C7783"),
+        ("Valid structure", v["ok"], "#6C7783"),
+        ("abguard says de novo", c.get("vm", 0), "#0C7473"),
+        ("Pass every gate", c.get("strict", 0), "#0C7473"),
+        ("OpenFold3 on the VM", c.get("vmof3", 0), "#0C7473"),
+        ("ESMFold-2 on the VM", c.get("vmesm2", 0), "#0C7473"),
+        ("OpenDDE gate scored", c.get("dde", 0), "#0C7473"),
+        ("NanoMelt Tm", c.get("tm", 0), "#B4620A"),
+        ("TNP flags", c.get("tnp", 0), "#B4620A"),
+        ("Predicted yield", c.get("yield", 0), "#B4620A"),
+        ("Fully measured", full, "#12212F"),
     ]
-    return f'''<section id="dropped">
-<p class="eyebrow">WHAT WE TRIED AND DROPPED</p>
-<h2>Five things that did not survive contact with data</h2>
-{table(["What", "Why it was dropped", "Evidence"], rows, [22, 55, 23], fs=24)}
-{foot("Sources: denovo/CONTRACT.md decisions, stage decisions.md files, results/denovo/parked_*.csv.")}
-{note("Reasoning is the largest judging weight, so this slide is deliberate. Each row is a decision we reversed because of a measurement or a constraint, not a failure we hid. The first row is the clearest example: we built a framework diversifier, then measured the gate and found the framework did not need to change.")}
+    t = st.get("top")
+    if t:
+        trs = [[str(r["design_id"]).replace("-rfd4jf", ""), str(r.get("framework", "")), str(int(r["pareto_rank"])), str(int(r["n_flags"]))] for r in t["rows"]]
+        right = ('<p class="card-title" style="font-size:30px">The final list, first six of ' + f'{t["n"]}' + '</p>'
+                 + table(["Design", "Base", "Front", "Flags"], trs, [44, 20, 16, 20], fs=24)
+                 + '<p class="small">Counts on the left are designs that reached each stage; they are not all gate-passers.</p>')
+    else:
+        right = '<div class="card"><p class="card-title">Final list: pending</p></div>'
+    return f'''<section id="live">
+<p class="eyebrow">THE FUNNEL</p>
+<h2>Where the designs ended up</h2>
+<div class="row" style="gap:48px">
+<div class="col" style="width:860px;gap:10px">
+{hbars(rows, max_w=280, label_w=340, bar_h=34, gap=9)}
+</div>
+<div class="col" style="flex:1;gap:12px">
+{right}
+</div>
+</div>
+<div class="row" style="align-items:center;gap:20px">{tag("live")}<p class="small">Evidence is uneven: scoring covers fewer designs than generation by design, since the gate runs first.</p></div>
+{foot("Sources: results/denovo/designs_rfd4jf.csv, validity.csv, rules.csv, leaderboard.csv, leaderboard_pareto.csv, submission_top20_pareto.csv.")}
+{note("Read it as a funnel of RFD4 designs reaching each stage. Generation stopped; scoring covered what the gate let through, so later bars are shorter by design, and OpenDDE and the VM runs cover different subsets. The right side is the final list in rank order, with the number of flags each carries.")}
 </section>'''
 
 
-def s_risks(st):
-    nk = st["nearest_known"]
-    nktxt = (f"Identity to the nearest known VHH is {nk[0]:.2f}–{nk[1]:.2f} in our 183,567-domain panel; the organisers said new CDRs should land under 70%."
-             if nk else "Identity to the nearest known VHH is pending.")
-    card = lambda t, b: f'<div class="card" style="flex:1;padding:24px;gap:8px"><p class="card-title" style="font-size:30px">{E(t)}</p><p class="card-text" style="font-size:26px">{E(b)}</p></div>'  # noqa: E731
-    return f'''<section id="risks" style="gap:24px">
-<p class="eyebrow">RISKS</p>
-<h2>What can go wrong, and the outcome we expect</h2>
-<div class="row">
-{card("Weak scores", "OpenFold3 separates real VHH pairs from decoys only modestly (AUC 0.65), and our designs score like decoys so far.")}
-{card("Novelty is unverifiable", nktxt)}
+def s_dist(st):
+    b = st["box"] or {}
+    pan = [("Predicted monomeric yield", "ESMC-Nb monoyield, log10 mg/L", "yield"), ("NanoMelt predicted Tm", "°C", "tm"),
+           ("OpenDDE-abag ipSAE", "chain-length d0, 15 Å cutoff", "ipsae")]
+    cols = ""
+    for title, unit, k in pan:
+        vals, top = b.get(k, ([], []))
+        m = f"median {np.median(vals):.2f}" if len(vals) else "pending"
+        tm_ = f"; selected median {np.median(top):.2f}" if len(top) else ""
+        cols += (f'<div class="col" style="width:520px;gap:6px"><p class="card-title" style="font-size:30px">{E(title)}</p><p class="small">{E(unit)}</p>'
+                 f'{box_panel(vals, top)}<p class="small">n = {len(vals)}, {E(m)}{E(tm_)}</p></div>')
+    return f'''<section id="dist">
+<p class="eyebrow">DEVELOPABILITY AND BINDING DISTRIBUTIONS</p>
+<h2>Where the final 20 sit among all designs</h2>
+<div class="row" style="gap:52px">{cols}</div>
+<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">Diamonds are the final 20. Yield and Tm are predictions; ipSAE is the OpenDDE gate score.</p></div>
+{foot("Sources: results/denovo/leaderboard.csv, submission_top20_pareto.csv; denovo/validation/boxplots.py makes the same figure.")}
+{note("Each panel is every scored design as grey dots with a box for the quartiles and the final 20 as orange diamonds. The figure shows where the selected designs sit relative to all designs on each axis, so a reader can see whether the list leans on one axis. NanoMelt and monoyield are predictions with several degrees or log units of error, and the nine-rule score feeds the yield axis.")}
+</section>'''
+
+
+def s_final(st):
+    t = st["top"]
+    if not t:
+        return '<section id="final"><p class="eyebrow">THE FINAL LIST</p><h2>Final list: pending</h2></section>'
+    names = {"below_decoy": "below decoy", "clash": "clash", "dde_fold_rmsd": "OpenDDE scRMSD > 1.5 Å", "cys_in_cdr": "Cys in CDR", "tnp_amber2": "TNP amber ×2", "low_complexity": "low complexity"}
+    rows = [(names.get(k, k), v, "#B4620A" if k == "below_decoy" else "#6C7783") for k, v in sorted(t["flags"].items(), key=lambda kv: -kv[1])]
+    n = t["n"]
+    below = t["flags"].get("below_decoy", 0)
+    fwtxt = ", ".join(f"{v} {k}" for k, v in t["fw"].items())
+    sp = st["pose_special"]
+    inlist = "bcii10-rfd4jf-s201016-006" in t["ids"]
+    qtxt = (f"bcii10-rfd4jf-s201016-006 is the only design whose OpenDDE pose matches the designed pose ({sp['rmsd']:.1f} Å); its contacts fall in the epitope {sp['pred']:.0%} against {sp['des']:.0%} designed. "
+            f"It is {'on' if inlist else 'not on'} the final list. Open question: is it worth a slot?") if sp else "Open question: pending."
+    return f'''<section id="final">
+<p class="eyebrow">THE FINAL LIST</p>
+<h2>Twenty designs, with their weaknesses shown</h2>
+<div class="row" style="gap:48px">
+<div class="col" style="width:820px;gap:12px">
+<p class="lab">Flags carried by the {n} selected designs</p>
+{hbars(rows, max_w=300, label_w=330, bar_h=34, gap=10)}
+<p class="small">{E(fwtxt)}; Pareto front sizes in the list: {E(", ".join(f"{int(k)}: {v}" for k, v in t["front"].items()))}.</p>
 </div>
-<div class="row">
-{card("One binding mode", "Hosted RFD4 holds the framework and HER2 rigid and does not disclose its checkpoint. A VHH that cannot bind in the trastuzumab-VH pose has no second chance.")}
-{card("An affinity gap", "Trastuzumab binds at 0.03–0.18 nM. De novo VHHs in the literature reach tens to hundreds of nM, with 4–22% hit rates per design.")}
+<div class="col" style="flex:1;gap:16px">
+<div class="card-dark" style="padding:24px"><p class="card-title" style="font-size:30px">{below} of {n} are below the decoy line</p><p class="card-text" style="font-size:26px">Binding evidence is weak and computational only. We expect A- or B-tier, not S.</p></div>
+<div class="card" style="padding:24px"><p class="card-title" style="font-size:30px">One open question</p><p class="card-text" style="font-size:24px">{E(qtxt)}</p></div>
 </div>
-<div class="card-dark" style="padding:24px;gap:8px"><p class="card-title" style="font-size:32px">Expected outcome (our inference): A- or B-tier</p><p class="card-text" style="font-size:26px">Epitope competition and thermostability are plausible. Beating trastuzumab’s affinity is the unlikely third.</p></div>
-{foot("Sources: denovo/s3_score/calibration.md, denovo/s2_rules/gate_drivers.md, research/denovo_vhh_research.md (Germinal, RFantibody, BoltzGen hit rates).")}
-{note("We would rather state these than have a reviewer find them. The affinity gap is the main reason we expect A or B tier rather than S: the literature reports tens to hundreds of nanomolar for de novo VHHs, while the trastuzumab reference is sub-nanomolar. The novelty risk is one we cannot close from here: the VM tool does not implement the jury sentence about identity to any known antibody.")}
+</div>
+{foot("Sources: results/denovo/submission_top20_pareto.csv, dde_pose_check.csv.")}
+{note("Plain statement: the list is the best of what we made by our own filters, not evidence of binding. Nineteen of twenty are below the decoy line on at least half of the measured iPTM and ipSAE values, which is why the flag is shown rather than hidden. The open question is a judgment call: one design reproduces the designed pose in OpenDDE, which is the closest thing we have to independent support for a designed binding mode.")}
+</section>'''
+
+
+def s_limits(st):
+    po = st["pose"]
+    rows = [
+        ["Framework diversification", "Organisers said new CDRs land under 70%. We measured a length effect, so we filter instead.", "gate_drivers.md"],
+        ["BoltzGen designs", "Raw designs have no Cys. Stopped to focus on RFD4; kept as the CDR3 length reference.", "parked_boltzgen*.csv"],
+        ["RFD4 on the team VM", "Ruled out. RFD4 ran only on JapanFold.", "CONTRACT.md"],
+        ["JapanFold scores for ranking", "Untemplated and decoy-like. Demoted: only OpenDDE remains, as a gate.", "score_of3.csv"],
+        ["OpenDDE as epitope evidence", (f"Its pose is {po['rmsd']:.0f} Å from the designed pose." if po else "Pose check pending.") + " It does not show epitope preservation.", "dde_pose_check.csv"],
+    ]
+    return f'''<section id="limits" style="gap:24px">
+<p class="eyebrow">WHAT WE DROPPED, AND THE RISKS</p>
+<h2>Decisions we reversed, and the outcome we expect</h2>
+{table(["What", "Why", "Evidence"], rows, [24, 54, 22], fs=24)}
+<div class="card-dark" style="padding:24px;gap:8px"><p class="card-title" style="font-size:32px">Expected outcome (our inference): A- or B-tier</p><p class="card-text" style="font-size:26px">Epitope competition and thermostability are plausible. Trastuzumab binds at 0.03–0.18 nM; de novo VHHs in the literature reach tens to hundreds of nM, so beating its affinity is the unlikely third.</p></div>
+{foot("Sources: stage decisions.md files, CONTRACT.md, research/denovo_vhh_research.md (Germinal, RFantibody, BoltzGen hit rates).")}
+{note("Reasoning is the largest judging weight, so this slide is deliberate. Each row is a decision reversed because of a measurement or a constraint. The risks that remain: our scorers are weak on real VHH pairs, the VM novelty tool does not implement the jury sentence about identity to any known antibody, every design shares one of two rigid poses, and the affinity gap to a sub-nanomolar antibody is large.")}
 </section>'''
 
 
@@ -677,27 +757,108 @@ def s_value(st):
 <div class="col" style="flex:1;gap:28px">
 {item("Who needs it", "Teams that want a small binder at HER2 domain IV for imaging or diagnostics, or a building block for a biparatopic pair with a non-competing VHH. Cell-free production keeps iteration cheap.")}
 {item("Honest limit on value", "Not differentiated as a therapy: it blocks the site that trastuzumab and its conjugates use. The HER2 VHH patent estate is crowded; we read abstracts only, so this is no freedom-to-operate view.")}
-{item("The reusable part", "The gate, calibration, profiling and ranking steps work for any target: swap the target files and the hotspot sets.")}
+{item("The reusable part", "Gates, calibration on decoys, validation, profiling and Pareto ranking work for any target: swap the target files and the hotspot sets.")}
 </div>
 <div class="col" style="flex:1;gap:20px">
 <div class="card"><p class="card-title">Reproduce it</p>
-<p class="body" style="font-size:26px">denovo/CONTRACT.md defines every stage’s inputs and outputs. Each stage folder has a README with its run command. Every score in results/denovo/ traces to a cached job id.</p></div>
-<div class="card-dark"><p class="card-title">Refresh the ranking</p>
-<p class="card-text" style="font-size:26px">baseline/.venv/bin/python denovo/rank.py<br>baseline/.venv/bin/python denovo/pareto.py</p></div>
-<div class="row" style="gap:16px"><div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">{E(spent)}</p><p class="cap">JapanFold spend so far, cap $65</p></div>
-<div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">5</p><p class="cap">parallel workers, one file contract</p></div></div>
+<p class="body" style="font-size:26px">Branch moritz of the team repo: denovo/ (code, stage READMEs, CONTRACT.md), the Claude skill .claude/skills/denovo-vhh-pipeline, and results_denovo/ (every score with its job id). No credentials.</p></div>
+<div class="card-dark"><p class="card-title">Rebuild the ranking</p>
+<p class="card-text" style="font-size:26px">denovo/.venv/bin/python denovo/rank.py<br>denovo/.venv/bin/python denovo/pareto.py</p></div>
+<div class="row" style="gap:16px"><div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">{E(spent)}</p><p class="cap">JapanFold spend, cap $65</p></div>
+<div class="card" style="flex:1;padding:24px"><p class="num" style="font-size:64px">{st["n_designs"]:,}</p><p class="cap">designs generated and validated</p></div></div>
 </div>
 </div>
-{foot("Sources: research/denovo_vhh_research.md Q6 (inference, abstract-level patent reading); denovo/CONTRACT.md.")}
-{note("User fit and path to value, with the caveats: the value case is an inference from the literature, not a market study. The reusable part is the real asset for a method-first reading: a pipeline that gates on the organisers’ own rule, calibrates its scorers on decoys and reports what it cannot verify. Spend is read from the JapanFold balance at build time.")}
+{foot("Sources: research/denovo_vhh_research.md Q6 (inference, abstract-level patent reading); denovo/CONTRACT.md; denovo/s0_packaging/README.md.")}
+{note("User fit and path to value, with the caveats: the value case is an inference from the literature, not a market study. The reusable part is the real asset for a method-first reading: a pipeline that gates on the organisers’ own rule, validates its own designs, calibrates its scorers on decoys and reports what it cannot verify. Spend is read from the JapanFold balance at build time.")}
 </section>'''
 
 
-ORDER = [("cover", s_cover), ("task", s_task), ("pipeline", s_pipeline), ("generate", s_generate), ("gate", s_gate), ("rules", s_rules),
-         ("binding", s_binding), ("develop", s_develop), ("live", s_live), ("ranking", s_ranking), ("dropped", s_dropped),
-         ("risks", s_risks), ("value", s_value)]
-SECTIONS = {"s1": ("The task and the approach", "cover"), "s2": ("Design choices and the gate", "generate"),
-            "s3": ("Evidence so far", "binding"), "s4": ("Limits, value and reproducibility", "dropped")}
+def _pose_summary(df, pose, scr, pq):
+    """Medians and counts of one scorer's pose-recovery columns (designs only)."""
+    if df is None or not len(df):
+        return None
+    f = lambda c: float(df[c].median()) if c in df and df[c].notna().any() else None  # noqa: E731
+    return {"n": int(len(df)), "pose": f(pose), "le20": int((df[pose] <= 20).sum()) if pose in df else 0, "le10": int((df[pose] <= 10).sum()) if pose in df else 0,
+            "scr": f(scr), "scr3": int((df[scr] <= 3).sum()) if scr in df else 0, "pq": f(pq)}
+
+
+def collect3(st):
+    """Pose recovery of the scorers on the full HER2 domain (results/denovo/pose_check_vm.csv) and on the cropped HER2 539-607 re-run
+    (results/denovo/crop/of3_crop.csv: vmof3c_*, crop/dde_crop.csv: dde_c_*). Missing files -> None, the slide then says "pending"."""
+    D = rd("designs_rfd4jf.csv")
+    ids = set(D.design_id) if D is not None else set()
+    st["posechk"], st["crop"], st["crop_same"] = {}, {}, {}
+    A = rd("pose_check_vm.csv")
+    if A is not None:
+        A = A[A.design_id.isin(ids)]
+        for key in ("vmof3", "vmesm2", "opendde"):
+            st["posechk"][key] = _pose_summary(A[A.scorer == key], "pose_rmsd", "scrmsd", "pdockq2")
+    O, Dc = rd("crop/of3_crop.csv"), rd("crop/dde_crop.csv")
+    if O is not None:
+        O = O[O.design_id.isin(ids)]
+        st["crop"]["vmof3"] = _pose_summary(O, "vmof3c_pose_rmsd", "vmof3c_scrmsd", "vmof3c_pdockq2")
+    if Dc is not None:
+        Dc = Dc[Dc.design_id.isin(ids)]
+        st["crop"]["opendde"] = _pose_summary(Dc, "dde_c_pose_rmsd", "dde_c_scrmsd", "dde_c_pdockq2")
+    # like for like: the cropped set is a prioritised subset, so also report the full-domain numbers on exactly the same designs
+    if A is not None:
+        for key, df, col in (("vmof3", O, "vmof3c_pose_rmsd"), ("opendde", Dc, "dde_c_pose_rmsd")):
+            if df is None or col not in df or not len(df):
+                continue
+            both = set(df.dropna(subset=[col]).design_id) & set(A[A.scorer == key].design_id)
+            if both:
+                full = A[(A.scorer == key) & A.design_id.isin(both)].pose_rmsd
+                crop = df[df.design_id.isin(both)].set_index("design_id")[col].reindex(sorted(both))
+                st["crop_same"][key] = {"n": len(both), "full": float(full.median()), "crop": float(crop.median()),
+                                        "full20": int((full <= 20).sum()), "crop20": int((crop <= 20).sum())}
+    return st
+
+
+def s_pose(st):
+    pc, cr, same = st.get("posechk") or {}, st.get("crop") or {}, st.get("crop_same") or {}
+    name = {"vmof3": "OpenFold3 OpenBind, template, no MSA (VM)", "vmesm2": "ESMFold-2 (VM)", "opendde": "OpenDDE-abag (JapanFold)"}
+    fm = lambda v, d=0: "–" if v is None else f"{v:.{d}f}"  # noqa: E731
+
+    def row(label, where, r):
+        if not r:
+            return [label, where, "pending", "", "", "", ""]
+        return [label, where, f"{r['n']}", fm(r["pose"]), f"{r['le20']} of {r['n']}", fm(r["scr"], 1), fm(r["pq"], 2)]
+    rows = [row(name[k], "full 489–607", pc.get(k)) for k in ("vmof3", "vmesm2", "opendde")]
+    rows += [row(name[k].split(" (")[0], "cropped 539–607", cr.get(k)) for k in ("vmof3", "opendde")]
+    if pc.get("vmof3") and pc["vmof3"]["scr"] is not None:
+        ftxt = (f"Without an MSA, OpenFold3 misfolds the VHH itself (median scRMSD {pc['vmof3']['scr']:.1f} Å, {pc['vmof3']['scr3']} of {pc['vmof3']['n']} within 3 Å), "
+                "so its interface scores sit on a wrong VHH. ESMFold-2 and OpenDDE fold the VHH as designed but place it elsewhere. No scorer reproduces the designed pose.")
+    else:
+        ftxt = "Pose comparison pending."
+    parts = []
+    for key, lab in (("vmof3", "OpenFold3"), ("opendde", "OpenDDE")):
+        if key in same:
+            r = same[key]
+            parts.append(f"{lab} on the same {r['n']} designs: pose median {r['full']:.0f} Å on the full domain, {r['crop']:.0f} Å cropped; within 20 Å {r['full20']} against {r['crop20']}.")
+    ctxt = " ".join(parts) if parts else "Cropped re-run pending: HER2 residues 489–538 removed so the models have less room to place the VHH somewhere random."
+    return f'''<section id="pose">
+<p class="eyebrow">DOES ANY SCORER REPRODUCE THE DESIGNED POSE?</p>
+<h2>Pose recovery on the full HER2 domain and on a cropped HER2</h2>
+<div class="row" style="gap:48px">
+<div class="col" style="width:1060px;gap:16px">
+{table(["Scorer", "HER2", "Designs", "Pose Å", "≤ 20 Å", "scRMSD Å", "pDockQ2"], rows, [34, 17, 10, 9, 12, 10, 8], fs=24)}
+<p class="small">Pose = VHH CA RMSD to the designed VHH after fitting the predicted HER2 on the designed HER2; medians over designs. Cropped = HER2 539–607, which keeps every epitope residue.</p>
+</div>
+<div class="col" style="flex:1;gap:16px">
+<div class="card-dark" style="padding:24px"><p class="card-title" style="font-size:30px">Full domain</p><p class="card-text" style="font-size:24px">{E(ftxt)}</p></div>
+<div class="card" style="padding:24px"><p class="card-title" style="font-size:30px">Cropped re-run</p><p class="card-text" style="font-size:24px">{E(ctxt)}</p></div>
+</div>
+</div>
+<div class="row" style="align-items:center;gap:20px">{tag("prelim")}<p class="small">The binding scores are filters of unknown validity, not pose or affinity predictors.</p></div>
+{foot("Sources: denovo/validation/pose_check_vm.py, denovo/vm_templated/make_crop.py and collect_crop.py, denovo/s3_score/run_crop.py; results/denovo/pose_check_vm.csv, crop/of3_crop.csv, crop/dde_crop.csv.")}
+{note("The open question was whether the templated OpenFold3 reproduces the designed binding pose better than the other scorers, in which case the others would be dropped from the ranking. It does not on the full domain, so none was dropped. The cropped re-run asks a different question: if the models cannot place the VHH on the far side of the domain, do they find the designed pose? The table shows both runs side by side, and the card compares the full and cropped runs on exactly the same designs, because the cropped set is a prioritised subset (gate passers first). Whether the cropped scores enter the ranking is a separate, recorded decision.")}
+</section>'''
+
+
+ORDER = [("cover", s_cover), ("task", s_task), ("pipeline", s_pipeline), ("generate", s_generate), ("validate", s_validate), ("gate", s_gate),
+         ("scoring", s_scoring), ("pose", s_pose), ("ranking", s_ranking), ("live", s_live), ("dist", s_dist), ("final", s_final), ("limits", s_limits), ("value", s_value)]
+SECTIONS = {"s1": ("The task and the approach", "cover"), "s2": ("Design, validation and the novelty gate", "generate"),
+            "s3": ("Evidence, ranking and the final list", "scoring"), "s4": ("Limits, value and reproducibility", "limits")}
 
 
 def lint(sid, txt):
@@ -714,7 +875,7 @@ def lint(sid, txt):
 
 
 def main():
-    st = collect()
+    st = collect3(collect2(collect()))
     SLIDES.mkdir(parents=True, exist_ok=True)
     bad = False
     for sid, fn in ORDER:
@@ -741,8 +902,8 @@ def main():
     idx_path.write_text(json.dumps(idx, indent=1))
     files = {f"project/slides/{s}.html": f"project/slides/{s}.html" for s, _ in ORDER}
     plan = {"url": URL, "root": str(PROJ.parent), "file_path": str(PROJ / "slides" / "cover.html"),
-            "files": {k: v for k, v in files.items() if k != "project/slides/cover.html"},
-            "note": "first publish also sends project/deck.json and project/deck.css; a refresh sends the slide files only"}
+            "files": {**{k: v for k, v in files.items() if k != "project/slides/cover.html"}, "project/deck.json": "project/deck.json"},
+            "note": "deck.json is included because the slide order changed (new 'pose' slide); deck.css only on the first publish"}
     (HERE / "publish_plan.json").write_text(json.dumps(plan, indent=1))
     print(f"built {len(ORDER)} slides at {TS}: designs={st['n_designs']} gate_strict={st['n_gate_strict']} of3={st['of3']['n']} "
           f"tm={st['tm']['n']} cand={len(st['cand'])} lint={'FAIL' if bad else 'ok'}")

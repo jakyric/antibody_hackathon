@@ -1,7 +1,7 @@
 """Parse the Nebius protenix-v2 result of `ptx-top` into results/denovo/score_ptx.csv (+ report.md).
 
     python3 ~/.claude/skills/nebius-scientific-ai/python3 denovo/s3d_protenix/finish.py            # fetches every finished run into results/ptx-runs/<label>
-    baseline/.venv/bin/python denovo/s3d_protenix/parse_ptx.py [--src results/ptx-runs]
+    denovo/.venv/bin/python denovo/s3d_protenix/parse_ptx.py [--src results/ptx-runs]
 
 Per design: median over the samples of every metric, plus the best sample (highest ranking_score) and the spread.
 Geometry (epitope overlap, trastuzumab competition proxy) comes from S3's `denovo/s3_score/geom.py`, imported read-only by

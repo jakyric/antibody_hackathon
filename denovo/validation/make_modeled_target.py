@@ -1,7 +1,7 @@
 """Modelled HER2 domain IV target WITHOUT the chain break: AlphaFold DB model of P04626 (domain IV, residues 489-607 in the crystal's
 mature numbering = AF 511-629), superposed onto the 1N8Z crystal HER2 (denovo/targets/her2_domIV.cif) so the VHH framework poses
 that were anchored on trastuzumab's VH stay valid. One chain A, residues 1-119 (resi k = HER2 488+k), all heavy atoms, B-factor = pLDDT.
-Run: baseline/.venv/bin/python denovo/validation/make_modeled_target.py   -> denovo/targets/her2_domIV_modeled.cif
+Run: denovo/.venv/bin/python denovo/validation/make_modeled_target.py   -> denovo/targets/her2_domIV_modeled.cif
 """
 import json
 import os

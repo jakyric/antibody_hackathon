@@ -8,7 +8,7 @@ shows confidence scores rank binders weakly, so every gate is set from decoys an
 
 ```bash
 export JAPANFOLD_API_KEY=...                                  # never printed or logged
-PY=baseline/.venv/bin/python
+PY=denovo/.venv/bin/python
 $PY denovo/s3_score/make_calib.py                              # controls (results/denovo/designs_control.csv) + Fv calibration set
 $PY denovo/s3_score/make_vhh_calib.py                          # + real VHH-antigen pairs from Smorodina et al. (needs data/smorodina/)
 $PY denovo/s3_score/run_s3.py calib --models of3,dde,esm2      # score the calibration complexes

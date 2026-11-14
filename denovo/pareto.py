@@ -1,7 +1,7 @@
 """S6, the last step: Pareto scoring on top of the leaderboard.
 
-    baseline/.venv/bin/python denovo/pareto.py                 # writes leaderboard_pareto.csv, submission_top20_pareto.csv
-    baseline/.venv/bin/python denovo/pareto.py --objectives bind,comp,therm --top 20
+    denovo/.venv/bin/python denovo/pareto.py                 # writes leaderboard_pareto.csv, submission_top20_pareto.csv
+    denovo/.venv/bin/python denovo/pareto.py --objectives bind,comp,therm --top 20
 
 Why Pareto, not just the weighted composite: the organisers tier a design by HOW MANY of the three judged properties
 (affinity, epitope preservation, thermostability) beat trastuzumab, and S-tier needs all of them. A weighted sum lets a

@@ -5,7 +5,7 @@ Nothing runs on the team VM; JapanFold is not used.
 
 ## Run
 ```bash
-PY=baseline/.venv/bin/python
+PY=denovo/.venv/bin/python
 $PY denovo/s3d_protenix/build_input.py          # nebius-runs/ptxtop-input.json (38 designs + 4 controls) + manifest.csv
 python3 ~/.claude/skills/nebius-scientific-ai/forge.py submit protenix-v2 \
   --entry 'protenix-input|protenix-input-json/v1|nebius-runs/ptxtop-input.json|application/json' \

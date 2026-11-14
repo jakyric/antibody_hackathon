@@ -1,6 +1,6 @@
 """Pull the VM's templated OpenFold3 (HER2-only template, no MSA) and ESMFold-2 outputs and write results/denovo/score_vmof3.csv.
 
-    baseline/.venv/bin/python denovo/vm_templated/collect.py        # rsyncs scores only (no structures), parses, writes the CSV
+    denovo/.venv/bin/python denovo/vm_templated/collect.py        # rsyncs scores only (no structures), parses, writes the CSV
 Columns: vmof3_* from OpenFold3 (iptm = interface pTM of the whole complex, pair_iptm = VHH-HER2 chain-pair ipTM (max over the two HER2
 fragments), ptm, plddt, min_ipae / mean_ipae over the VHH-HER2 interface, ipsae_chn15 = ipSAE with the chain-length d0 and a 15 A PAE
 cutoff as in S3), vmesm2_* from ESMFold-2 (same fields where its output has them). Keyed by design_id; controls have ctl- ids.

@@ -3,7 +3,7 @@ chain break / numbering. Predicted complex: chain A = VHH, chain B = HER2 domain
 489-580 (resi 1-92), chain B = VHH, chain C = HER2 591-607 (resi 1-17). HER2 residues are matched BY HER2 NUMBER (A: 488+resi, C: 590+resi, predicted
 B: 488+resi), Kabsch fit on the common HER2 CA atoms, the same transform applied to the predicted VHH CA atoms. Also: VHH-only fit (scRMSD), and where
 the predicted VHH touches HER2 (fraction of contacted HER2 residues inside trastuzumab's epitope).
-Run: baseline/.venv/bin/python denovo/validation/dde_pose_check.py   -> results/denovo/dde_pose_check.csv"""
+Run: denovo/.venv/bin/python denovo/validation/dde_pose_check.py   -> results/denovo/dde_pose_check.csv"""
 import glob
 import json
 import os

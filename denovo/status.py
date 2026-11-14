@@ -1,7 +1,7 @@
 """Funnel view of the continuously running pipeline: how many designs reached each stage, per generator,
 how the controls (known positives / decoys) sit relative to the designs, and the JapanFold balance.
 
-    baseline/.venv/bin/python denovo/status.py        # prints and writes results/denovo/status.md
+    denovo/.venv/bin/python denovo/status.py        # prints and writes results/denovo/status.md
 """
 from __future__ import annotations
 

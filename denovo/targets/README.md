@@ -7,4 +7,4 @@
 * `epitope.json`: HER2 residues within 4.5 A of trastuzumab Fv heavy atoms (19 residues, from the crystal, not
   from literature lists) and three hotspot sets: hs1_core (6 most-contacted of the dominant patch), hs2_broad (12 most-contacted),
   hs3_alt_patch (6 of the other patch).
-Regenerate with `baseline/.venv/bin/python denovo/targets/make_targets.py`.
+Regenerate with `denovo/.venv/bin/python denovo/targets/make_targets.py`.

@@ -29,7 +29,7 @@ trastuzumab's VH); CDR lengths are drawn from the requested ranges; every design
 ## Run
 
 ```bash
-PY=baseline/.venv/bin/python
+PY=denovo/.venv/bin/python
 export JAPANFOLD_API_KEY=...                                       # never printed or logged
 $PY denovo/s1_design/prep_inputs.py                                # once: frameworks/*.json, inputs/*.cif (needs denovo/targets/READY)
 $PY denovo/s1_design/prep_caa.py                                   # once: wave-2 inputs with C104-A105-A106 kept fixed (grafts A105/A106 onto capla)

@@ -72,3 +72,19 @@ chosen before looking at design scores, so it is not tuned on them.
 * Budget: stage cap $25. Scoring is cheap (OF3 about $0.0025 per target); the wall-clock limit is the JapanFold account queue, which serialises our jobs.
 * Bugs found and fixed on the way (kept here because they would bite a re-run): `designs_boltzgen_metrics.csv` matches the `designs_*.csv` glob and has no `generator` column (S3 filters
   such rows; `dn_common.load_designs` still returns them); `results.json` in a JapanFold archive is a list, S3 stores its own copy as `s3_results.json`.
+
+## 14 Nov 16:45, OpenDDE-abag on the cropped HER2 (539-607), `run_crop.py` + `crop_compare.py`
+
+Why: on the full 119-aa domain OpenDDE docks the VHH on the far side of HER2 (pose median 44 A from the designed pose, 0% epitope contact). User: crop
+the first ~50 residues so the model cannot place the VHH somewhere random. Crop = HER2 539-607 (69 aa, contiguous, incl. the unresolved 581-590 loop):
+539 is the first residue that severs no disulfide (Cys522-Cys538 both removed), and all epitope residues (557-605) are kept.
+Ran 170 targets (150 designs: 47 gate_strict + 103 best-binding eligible; 20 controls: 12 ctl-fwrand decoys, ctl-bcii10-wt, ctl-kri) in 5 jobs, $0.63.
+Files: `results/denovo/crop/dde_crop.csv` (columns `dde_c_*`), raw structures `results/denovo/crop/s3_raw/ddec/<job>/`, job-name cache in `results/denovo/jobs/`.
+Result (103 designs that also have a full-domain pose): pose RMSD median 44.1 -> 33.7 A; pose <= 10 A: 0 -> 1 (<= 20 A: 4 -> 10); scRMSD unchanged (1.02 A);
+iPTM 0.47 -> 0.45; pDockQ2 0.054 -> 0.027; epitope contact fraction of the touched HER2 residues 0.00 -> 0.39. Rank correlation full vs crop is low
+(Spearman pose 0.12, iPTM 0.26, pDockQ2 0.24), so the full-domain scores did not carry over. Poses recovered (<= 10 A): capla-rfd4jf-s408040-006 (7.8 A, iPTM 0.56,
+ipSAE 0.26), capla-rfd4jf-s2400-007 (6.2 A, but iPTM 0.32, ipSAE 0.01); nothing near the 1.3 A of bcii10-rfd4jf-s201016-006, which was not in the crop set (it fails the identity gate).
+Decoys (12 framework-only, ctl-fwrand) on the crop, 95th percentile: iPTM 0.530, ipSAE 0.154, ipSAE chn15 0.411, pDockQ2 0.078. 42 of 150 designs are above both
+iPTM and ipSAE thresholds; 19 of the 47 gate_strict designs. Controls: ctl-kri-* median iPTM 0.53 (max 0.94), ctl-bcii10-wt iPTM 0.38 (decoy level).
+Caveats: the crop removes where the VHH can go, so the epitope contact rises for every VHH including decoys (decoy median 0.31); 150 designs only; one sample/seed;
+capla-rfd4jf-s409040-004 has scRMSD 40.6 A (misfolded VHH, iPTM 0.85 is not credible).

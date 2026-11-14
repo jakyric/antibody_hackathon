@@ -67,7 +67,8 @@ Pareto list meaningful once about 50 designs are fully measured. The JapanFold f
    bf16 batch at a time and skips a cycle if less than 28 GB GPU memory is free. Never kill or touch other people's processes or containers.
 4. **No RFD4-Proteina (or other design models) on a shared VM** without permission; design runs on JapanFold.
 5. **No git push** unless the user asks; commit only specific paths.
-6. Report honestly: scores are filters; OpenFold3 on JapanFold is untemplated with MSA (see `references/failure-modes.md`) and is near decoy level on these designs.
+6. Report honestly: scores are filters; OpenFold3 on JapanFold is untemplated with MSA and near decoy level on these designs, the VM's templated OpenFold3 (no MSA) misfolds the VHH, and **no scorer reproduces the designed pose** (`results_denovo/pose_check_vm.csv`; see `references/failure-modes.md`). Never present iPTM/ipSAE as binding evidence.
+7. **Never run `props.py --ids ...` on the default output** (it rewrites `props.csv` and drops all other rows). Add profiled designs with `run_vm.sh` + `denovo/s4_props/merge_side.py`.
 
 ## 6. Reading the results
 
@@ -91,7 +92,7 @@ Pareto list meaningful once about 50 designs are fully measured. The JapanFold f
 
 ## 8. Overview slides
 
-`denovo/slides/build_slides.py --plan` regenerates the 13 slide files from the result files and prints the publish plan (see `denovo/slides/README.md`); publish with the
+`denovo/slides/build_slides.py --plan` regenerates the 14 slide files from the result files and prints the publish plan (see `denovo/slides/README.md`); publish with the
 Artifact tool to the same URL. Numbers are read from the result files, anything without evidence shows "pending".
 
 ## 9. If something goes wrong
@@ -100,9 +101,18 @@ Read `references/failure-modes.md` first (JapanFold backlog, OpenFold3 decoy-lev
 zero-Cys designs, pandas read-only sort, sshd resets on the shared VM, and how each was handled). `bash denovo/run_pipeline.sh status` and the logs in `denovo/.run/` and
 `denovo/s3_score/watch.log` come before any guesswork.
 
+## 10. Optional re-scoring: VM OpenFold3 / ESMFold-2, pose check, cropped HER2
+
+Only with the user's explicit yes for the shared VM (`PIPELINE_VM_HOST`, `PIPELINE_VM_KEY`; GPU shared, workers wait while < 20 GB is free).
+
+* Pose check: `python denovo/validation/pose_check_vm.py` compares VM OpenFold3, VM ESMFold-2 and OpenDDE with the designed pose (`results_denovo/pose_check_vm.csv`). Run it before trusting any binding score.
+* Cropped HER2 (539-607) re-run, to limit random placement: `denovo/vm_templated/make_crop.py`, workers `run_vm_crop.sh` on the VM, `collect_crop.py`, and `denovo/s3_score/run_crop.py` for OpenDDE on JapanFold.
+  Commands and rationale are in `denovo/README.md`; results land in `results_denovo/crop/` (read them there, do not assume they improve the ranking).
+* New profiled designs: `merge_side.py` (see rule 7).
+
 ## References
 
 * `references/architecture.md`: stages, files, data contract between stages, timeline and budgets
 * `references/gate-analysis.md`: what the abguard track gate measures and why length drives it
 * `references/decision-log.md`: every choice, the evidence, what was rejected
-* `references/failure-modes.md`: problems met during the hackathon and their fixes
+* `references/failure-modes.md`: problems met during the hackathon and their fixes (including the pose-check and `props.py --ids` traps)

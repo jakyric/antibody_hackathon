@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """S1a: JapanFold rfd4 (RFD4-Proteina) VHH design against HER2 domain IV on a fixed framework. Resumable.
 
-  baseline/.venv/bin/python denovo/s1_design/prep_inputs.py          # once: frameworks + placed inputs
-  baseline/.venv/bin/python denovo/s1_design/run_design.py --reps 3 --workers 12     # wave 1
-  baseline/.venv/bin/python denovo/s1_design/run_design.py --reps 10                 # wave 2 (re-uses wave-1 jobs)
-  baseline/.venv/bin/python denovo/s1_design/run_design.py --dry-run                 # print the grid, cost nothing
+  denovo/.venv/bin/python denovo/s1_design/prep_inputs.py          # once: frameworks + placed inputs
+  denovo/.venv/bin/python denovo/s1_design/run_design.py --reps 3 --workers 12     # wave 1
+  denovo/.venv/bin/python denovo/s1_design/run_design.py --reps 10                 # wave 2 (re-uses wave-1 jobs)
+  denovo/.venv/bin/python denovo/s1_design/run_design.py --dry-run                 # print the grid, cost nothing
 
 One JOB = 8 designs (API max) for one grid cell: framework x hotspot set x CDR3 length range x pose x repeat.
 Every job name is stable, so re-running never pays twice (dn_common.JapanFold.submit job cache, results/denovo/jobs/).

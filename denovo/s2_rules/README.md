@@ -21,7 +21,7 @@ scaffold). Measured on the first 96 real RFD4 designs (BCII10 framework, new CDR
 known antibody** (median 0.80, range 0.76-0.87), and only 51/96 are classed `de_novo` by the VM abguard (identity to trastuzumab VH < 70 %,
 median 0.696). See `decisions.md` for the evidence and what abguard really checks.
 
-## Setup (once; everything already done on this machine)
+## Setup (in this repository `bash denovo/setup.sh` and `--panel` do this; the manual steps are kept for reference)
 
 ```bash
 cd denovo/s2_rules
@@ -40,7 +40,7 @@ abguard reference CDRH3s (610,109) are copied from the VM wheel: `cache/abguard_
 ## Run
 
 ```bash
-PY=denovo/s2_rules/.venv/bin/python
+PY=denovo/.venv/bin/python
 $PY denovo/s2_rules/rules.py                        # one-shot over all results/denovo/designs_*.csv -> results/denovo/rules.csv
 $PY denovo/s2_rules/rules.py --no-vm                # same without ssh (abguard_* columns empty)
 $PY denovo/s2_rules/rules.py --watch --interval 120 --until 15:45          # incremental watcher (new/changed design_ids only)

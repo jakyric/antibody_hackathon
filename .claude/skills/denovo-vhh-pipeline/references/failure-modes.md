@@ -15,3 +15,8 @@
 | cancelled generator still shows in tables | its files matched `designs_*.csv` | move them to `parked_*.csv`; `rank.py` and `status.py` also filter known parked generators |
 | pkill in a shell script kills your own shell | `pkill -f` matches the calling command line | stop by pid files (`denovo/.run/*.pid`) or `touch denovo/STOP` |
 | Two modules named `common` | `optimization/baseline/common.py` vs the pipeline's helpers | the pipeline imports `dn_common` (the file `common.py` is a shim) |
+| VM OpenFold3 (HER2 template, no MSA) "reproduces" nothing: scRMSD median 12 A, pLDDT about 62 | without an MSA the VHH itself is misfolded, so the interface scores sit on a wrong VHH | do not rank on OpenFold3 alone; check `denovo/validation/pose_check_vm.py` (`results_denovo/pose_check_vm.csv`): no scorer (VM OpenFold3, VM ESMFold-2, OpenDDE) recovers the designed pose (medians 37-44 A) |
+| VM prediction CIFs give a wrong HER2 mapping (0 common residues) | VM CIFs keep HER2's original numbers (489..) in `auth_seq_id` and use 1..N in `label_seq_id`; the design CIFs use 1..N per chain | read `label_seq_id` for VM structures; match HER2 residues by HER2 number, never by position |
+| `props.csv` lost about 1,500 rows | `props.py --ids <subset>` on the default output rewrites the file with only those rows | never run it on the default `--out`; recover from the VM run folders; use `run_vm.sh` + `denovo/s4_props/merge_side.py` (side files `props_nm.csv`, `props_tnpvm.csv`, `props_my.csv`) |
+| pandas missing in the PyMOL env | the PyMOL conda env has numpy but no pandas | `validation/make_pymol_*.py` use only csv + numpy; run them with the PyMOL env (`micromamba run -p $PYMOL_ENV pymol -cq ...`), everything else with the pipeline venv |
+

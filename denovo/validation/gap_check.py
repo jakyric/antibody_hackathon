@@ -6,7 +6,7 @@ Two questions, answered with numbers:
     domain IV on the design's HER2 (chains A+C, CA atoms), keep the 581-590 loop atoms and count VHH heavy atoms close to them.
     Calibration: the same numbers for trastuzumab's Fv from 1N8Z (a real binder that sits next to the gap).
 The AF loop is ONE plausible conformer of a flexible loop, so 'clash' = incompatible with that conformer, not proof of a real clash.
-Run: baseline/.venv/bin/python denovo/validation/gap_check.py   -> results/denovo/gapcheck.csv
+Run: denovo/.venv/bin/python denovo/validation/gap_check.py   -> results/denovo/gapcheck.csv
 """
 import glob
 import json

@@ -1,5 +1,5 @@
 """Boxplots of predicted monomeric yield (ESMC-Nb monoyield), NanoMelt Tm and OpenDDE-abag ipSAE over all designs, with the final
-top-20 list marked. Run: baseline/.venv/bin/python denovo/validation/boxplots.py  -> results/denovo/boxplots_yield_tm_ipsae.png"""
+top-20 list marked. Run: denovo/.venv/bin/python denovo/validation/boxplots.py  -> results/denovo/boxplots_yield_tm_ipsae.png"""
 import numpy as np
 import pandas as pd
 import matplotlib

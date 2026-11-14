@@ -1,10 +1,10 @@
 """S3 runner: refold VHH + HER2 domain IV complexes on JapanFold with OpenFold3 (primary) and orthogonal models,
 parse every structure/PAE into interface metrics, and keep score_of3.csv / score_orth.csv up to date.
 
-  baseline/.venv/bin/python denovo/s3_score/run_s3.py score  --models of3,dde,esm2   # everything unscored now
-  baseline/.venv/bin/python denovo/s3_score/run_s3.py watch  --models of3,dde,esm2   # loop: poll designs_*.csv
-  baseline/.venv/bin/python denovo/s3_score/run_s3.py calib  --models of3,dde,esm2   # calibration complexes only
-  baseline/.venv/bin/python denovo/s3_score/run_s3.py assemble                         # rebuild the CSVs from raw metrics
+  denovo/.venv/bin/python denovo/s3_score/run_s3.py score  --models of3,dde,esm2   # everything unscored now
+  denovo/.venv/bin/python denovo/s3_score/run_s3.py watch  --models of3,dde,esm2   # loop: poll designs_*.csv
+  denovo/.venv/bin/python denovo/s3_score/run_s3.py calib  --models of3,dde,esm2   # calibration complexes only
+  denovo/.venv/bin/python denovo/s3_score/run_s3.py assemble                         # rebuild the CSVs from raw metrics
 
 Re-running is free: jobs are cached by content hash (dn_common.JapanFold.submit) and parsed metrics are append-only in
 results/denovo/s3_raw/metrics.jsonl. The key is read from JAPANFOLD_API_KEY and never printed.
@@ -39,7 +39,7 @@ CALIB = HERE / "calib_set.csv"
 GATES = HERE / "gates.json"
 LOCK = threading.Lock()
 
-HER2 = (ROOT / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
+HER2 = (ROOT / "optimization" / "baseline" / "refold_inputs" / "her2_domIV.txt").read_text().strip()   # UniProt P04626 489-607
 HEWL = ("KVFGRCELAAAMKRHGLDNYRGYSLGNWVCAAKFESNFNTQATNRNTDGSTDYGILQINSRWWCNDGRTPGSRNLCNIPCSALLSSDITASVNCAKKIVS"
         "DGNGMNAWVAWRNRCKGTDVQAWIRGCRL")                                                 # hen egg-white lysozyme, decoy antigen
 assert len(HER2) == 119
@@ -376,10 +376,10 @@ def score(models, items, workers=6, max_fail=2):
 
 # ------------------------------------------------------------------ scoring tables
 STOP_FILE = ROOT / "denovo" / "STOP"
-STOP_HHMM = (15, 40)                      # after this (local CET) only loop-aware designs are launched
+STOP_HHMM = tuple(int(x) for x in __import__("os").environ.get("PIPELINE_S3_UNTIL", "15:40").split(":"))                      # after this (local CET) only loop-aware designs are launched
 HARD_STOP_HHMM = (15, 52)                 # nothing new is launched after this; in-flight jobs are drained
 LOOP_GEN = "rfd4jf-loop"                  # S1a's loop-aware designs: scored first, and allowed until HARD_STOP_HHMM
-BUDGET = 25.0                             # USD of JapanFold credit this stage may spend
+BUDGET = float(__import__("os").environ.get("PIPELINE_BUDGET_S3", "25"))                            # USD of JapanFold credit this stage may spend
 DEFAULT_METRIC = {"of3": ("ipae_tm", "high")}   # used for percentiles until calibrate.py writes gates.json
 OF3_CONSENSUS = (("ipsae_chn15", "high"), ("ipae_tm", "high"), ("min_ipae", "low"), ("iptm", "high"))   # a-priori triple; see decisions.md
 PREF = {mk: MODELS[mk][1] for mk in MODELS}

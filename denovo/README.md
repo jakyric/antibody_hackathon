@@ -49,7 +49,7 @@ Settings are environment variables with safe defaults (deadline `PIPELINE_UNTIL`
 | S4 properties | `s4_props/` | NanoMelt Tm (CPU), TNP flags, monoyield (optional, shared-VM GPU), sequence liabilities, nine CDR2/CDR3 rules | `props.csv` |
 | S5 leaderboard | `rank.py` | weighted composite with explicit priors; gates; `rank_reason` per design | `leaderboard.csv` |
 | S6 Pareto | `pareto.py` | non-dominated sorting over bind / epitope / Tm / yield / developability, weakest-objective tie-break, CDR3 and framework diversity | `leaderboard_pareto.csv`, **`submission_top20_pareto.csv`** |
-| overview | `slides/` | rebuilds a 13-slide overview deck from the result files | |
+| overview | `slides/` | rebuilds a 14-slide overview deck from the result files | |
 
 The contract between stages (file names, columns, budgets, timeline, decisions) is in [`CONTRACT.md`](CONTRACT.md). Each stage folder has a README and a
 `decisions.md` with the evidence behind its choices, including what was rejected.
@@ -69,12 +69,46 @@ The contract between stages (file names, columns, budgets, timeline, decisions) 
 * **BoltzGen `nanobody-anything` (JapanFold).** The hosted protocol designs with Cys excluded, so every design lacked the canonical disulfide; stopped to focus on RFD4.
 * **RFD4-Proteina on a shared VM (Apheris Foundry image).** Ruled out by the team (shared GPU).
 * **Framework diversification (S2).** Built and tested, then cancelled: the organisers said fully new CDRs land under 70%, and the gate analysis shows the measured effect is length.
-* **Templated OpenFold3 on the VM.** Stopped before it ran; Nebius and JapanFold OpenFold3 accept no template (only Chai-1 on Nebius does).
+* **Templated OpenFold3 on JapanFold / Nebius.** They accept no template (only Chai-1 on Nebius does), so the templated OpenFold3 (OpenBind weights, HER2 template, no MSA) runs on the shared VM GPU (`vm_templated/`, opt-in); JapanFold scorers are kept for reference and are not used in the ranking.
+
+## Validity and pose findings (what the checks showed)
+
+* **Validity checks** (`validation/validate.py`, `selfconsist.py`, `gap_check.py` -> `results_denovo/validity.csv`, `gapcheck.csv`): sequence/structure consistency of the RFD4
+  outputs, severe clashes, odd Cys, loss of the conditioned framework/HER2 group, and distance to the unresolved HER2 loop 581-590 (it sits inside the epitope; designs whose VHH
+  conflicts with the loop anchors are gated out). All designs share one of two rigid poses by construction.
+* **No scorer reproduces the designed binding pose** (`validation/pose_check_vm.py` -> `results_denovo/pose_check_vm.csv`, 16:27 check: pose RMSD = VHH CA after fitting the predicted
+  HER2 on the designed HER2). Templated OpenFold3 without an MSA (VM): median 41 A, none within 20 A, and it misfolds the VHH itself (median scRMSD 12.3 A, only 2 of 401 within 3 A).
+  ESMFold-2 (VM): median 37 A. OpenDDE-abag: median 44 A, 26 of 768 within 20 A, but it folds the VHH as designed (scRMSD <= 3 A for almost all). The three pose errors are
+  uncorrelated, so the binding scores (iPTM, ipSAE) are filters of unknown validity, not pose or affinity predictors. OpenDDE touches the trastuzumab epitope in about 0% of
+  predictions versus about 90% of the designed poses (independently re-checked, not a numbering bug).
+* The ranking therefore keeps the VM OpenFold3 + ESMFold-2 binding axis and uses OpenDDE as a gate; see `CONTRACT.md` (DECISION 16:27).
+
+## Cropped-HER2 re-run (HER2 539-607)
+
+Goal: limit the models' freedom to place the VHH somewhere random. Residues 489-538 (the first ~50 of the 119-aa domain) are removed; 539 is the first residue that severs no
+disulfide (Cys538-Cys522 are both dropped) and every epitope residue (557-605) is kept. The 581-590 gap stays as in the full run. Results: see `results_denovo/crop/`
+(`set.csv` = designs and controls, `of3_crop.csv`, `dde_crop.csv`).
+
+```bash
+denovo/.venv/bin/python denovo/vm_templated/make_crop.py --n 150     # crop/set.csv, cropped template, OpenFold3 query chunks (gate passers first, then best-binding eligible, controls)
+# VM (ask the user first; GPU is shared): upload crop/ to the VM work dir and start N workers, each claims chunks by mkdir lock and waits while < 20 GB GPU memory is free:
+#   for i in 1 2 3 4; do nohup bash crop/run_vm_crop.sh > crop/w$i.log 2>&1 < /dev/null & done        (touch crop/STOP stops them)
+denovo/.venv/bin/python denovo/vm_templated/collect_crop.py --loop 240   # rsync scores + structures, pose / scRMSD / pDockQ2 / ipSAE -> results/denovo/crop/of3_crop.csv
+denovo/.venv/bin/python denovo/s3_score/run_crop.py                  # OpenDDE-abag on the cropped HER2 (JapanFold, cached by job name) -> results/denovo/crop/dde_crop.csv
+```
+
+VM host and key come from `PIPELINE_VM_HOST` / `PIPELINE_VM_KEY`. Whether the crop is used for ranking is a decision recorded in `CONTRACT.md`, not automatic.
+
+## Side files and re-running a subset
+
+`rank.py` merges three side files next to `props.csv`: `props_nm.csv` (NanoMelt Tm), `props_tnpvm.csv` (TNP flags), `props_my.csv` (monoyield). Add new rows from a `run_vm.sh` run with
+`python denovo/s4_props/merge_side.py <run out dir>` (appends only designs not yet present). **Never run `props.py --ids ...` against the default output**: a restricted run rewrites
+`props.csv` and drops every row not in `--ids` (this lost about 1,500 rows once; the values were recovered from the VM run folders). Use a separate `--out` or `run_vm.sh` + `merge_side.py`.
 
 ## Results snapshot
 
 `results_denovo/` (created by `run_pipeline.sh final` or the packaging sync) holds the leaderboard, the Pareto list, the funnel and the per-design tables of the last run,
-with a README giving the timestamp and row counts. No structures or job ids are stored.
+with a README giving the timestamp and row counts, plus the validation, VM-score, side-file and cropped-HER2 tables (`snapshot_extra.py`). No structures, PyMOL sessions or job ids are stored; regenerate the session with `validation/make_pymol_dde_compare.py` (needs a conda env with PyMOL, e.g. `$PYMOL_ENV`).
 
 ## Limitations (read before trusting a number)
 

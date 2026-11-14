@@ -1,6 +1,6 @@
 """Calibrate every scorer against controls and decoys, choose per-model gates, report per generator.
 
-  baseline/.venv/bin/python denovo/s3_score/calibrate.py            # writes calib_scores.csv, gates.json, calibration.md
+  denovo/.venv/bin/python denovo/s3_score/calibrate.py            # writes calib_scores.csv, gates.json, calibration.md
 
 Families (all scored with exactly the same pipeline as the designs):
   fv-spr   trastuzumab Fv variants vs HER2: measured SPR binders (KD <= 10 nM) vs 'no reportable KD'

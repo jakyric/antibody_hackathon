@@ -49,7 +49,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
 ## Rules for all workers
 
 1. **Secrets**: never print, log, commit or copy `JAPANFOLD_API_KEY` or the file at `$NEBIUS_CREDS`. Test
-   presence with `[ -n "$VAR" ]`. Never open the access kit's credentials file.
+   presence with `[ -n "$VAR" ]`. Never open the hackathon credentials file.
 2. **No duplicate paid jobs**: every submit goes through a job-id cache file in `results/denovo/jobs/`
    (`common.cached_job`). Re-running a script follows the existing job. After a timeout, recover the job id,
    do not resubmit. Send long jobs early, then do other work while they run.
@@ -57,7 +57,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
    this pipeline <= $65, keep >= $20 in reserve. Per worker: S1a $15, S1c $15, S3 $25, S2 $3, S4 $0 (use local + VM).
    `GET /v1/credits` before and after big batches; stop and report if a batch would exceed the worker's cap.
    rfd4 costs about $0.014 per job (up to 8 designs per job).
-4. **VM etiquette** (ssh to the shared VM, host and key from `PIPELINE_VM_HOST` / `PIPELINE_VM_KEY`, H100 shared with teammates, already busy):
+4. **VM etiquette** (`ssh -i $PIPELINE_VM_KEY $PIPELINE_VM_HOST`, H100 shared with teammates, already busy):
    work only under `~/moritz/` (S1b: `~/moritz/denovo_s1b`, S4: `~/moritz/monoyield-predictor`, S2: `~/moritz/denovo_s2`);
    one GPU container/process at a time per worker; check `nvidia-smi` first; use bf16 where available; do not kill
    or touch other users' processes or directories; no `docker system prune`; no sudo.
@@ -67,7 +67,7 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
    `decisions.md` log (what you chose, the evidence, what you rejected). Be honest about weak evidence.
 7. **Smoke first, then scale**: prove the path on 1-2 inputs, say so in README, then run the real batch.
    Do not claim a score means binding; scores are filters, and calibration against controls/decoys is the point.
-8. Use `baseline/.venv/bin/python` (pandas/numpy/scipy/sklearn) unless you need a micromamba env
+8. Use `denovo/.venv/bin/python` (pandas/numpy/scipy/sklearn) unless you need a micromamba env
    (`tnp`, `nanomelt`, `flashabb` exist; see `tools/README.md`). Install nothing system-wide.
 9. Final report (your last message, <= 300 words): what exists and works, exact run commands, output paths and
    row counts, key numbers, what failed or is weak, what you recommend the orchestrator does next. Nothing else.
@@ -83,6 +83,33 @@ Per-stage outputs are keyed by `design_id`, one row per design (or per design x 
 | 15:40 | S3 stops launching; 15:45 S4/S2 rules stop; drain in-flight work |
 | 15:50 | final `rank.py`, `submission_top20.csv`, rationale; 16:02 hard deadline |
 `touch denovo/STOP` stops every watch loop.
+
+## DECISION 17:0x: cropped HER2 (539-607) re-run; the OpenDDE gate and the binding axis now use it
+
+User: crop HER2 to a smaller domain (drop roughly residues 1-50 of the 119-aa domain) and re-run OpenFold3 (VM GPU) and OpenDDE (JapanFold), so the
+models cannot place the VHH somewhere random. Crop = HER2 539-607 (69 aa, loop 581-590 kept contiguous for OpenDDE; for OpenFold3 chain C 539-580 + chain D
+591-607 with a cropped template). 539 is the first residue that severs no disulfide (Cys522-Cys538 both removed); every epitope residue (557-605) is kept.
+Set = 47 strict-gate designs + the 103 best-binding eligible + 20 controls (`vm_templated/make_crop.py`, `run_vm_crop.sh`, `collect_crop.py`, `s3_score/run_crop.py`,
+results/denovo/crop/). Findings: OpenDDE on the crop: pose RMSD median 34 A (full 44), epitope contact fraction 0.39 (full 0.0), 10 designs <= 20 A (full 4), one
+<= 10 A (capla-rfd4jf-s408040-006, 7.8 A); decoy p95 iPTM 0.527 / ipSAE 0.152. OpenFold3 on the crop: no gain (pose median ~50 A, none <= 20 A, scRMSD ~13 A:
+the VHH is still misfolded without an MSA). Crop and full scores correlate only weakly (Spearman 0.1-0.4). Ranking change (`rank.py`): `gate_dde` = crop OpenDDE iPTM and
+ipSAE >= the crop decoy p95 (full-HER2 gate kept as `gate_dde_full`, `RANK_GATE=full` restores it), crop OpenFold3 (`vmof3c`) joins the binding axis next to full OpenFold3
+and ESMFold-2. 43 designs pass the strict gate.
+Jakob's `jakob` branch (jakyric/antibody_hackathon) checked: same model (opendde-abag) and the same HER2 domain IV construct; his redesigned trastuzumab Fvs recover the crystal pose
+(201/517 with ipTM >= 0.9, all within 3 A, median 1.2 A). Re-run with OUR settings (`validation/jakob_check.py`): paired Fv 14/20 within 3 A (median 2.2 A), the same VHs as a single
+chain 0/20 within 10 A (median 29 A, ipTM 0.28). So the settings are not the cause: success needs the paired antibody (and is near-wild-type, a likely training complex); ours is a lone
+VHH with new CDRs, ipTM carries no pose information there (Spearman 0.08, 0 of 6 designs with ipTM >= 0.9 within 10 A).
+
+## DECISION 16:27: templated OpenFold3 does NOT reproduce the designed pose, so no scorer is dropped for ranking
+
+User's rule: if the templated VM OpenFold3 recovers the designed binding pose better than the other scorers, rank on it alone. Checked with
+`denovo/validation/pose_check_vm.py` (results/denovo/pose_check_vm.csv; pose RMSD = VHH CA after fitting the predicted HER2 on the designed HER2,
+scRMSD = VHH-only fit, pDockQ2 as in dde_pdockq2.py). Result on 401 OF3 / 74 ESMFold-2 / 477 OpenDDE predictions: OF3 pose RMSD median 41 A, none
+<= 20 A (best 28 A), scRMSD median 12.3 A (only 2 of 401 <= 3 A; median pLDDT 62: without an MSA it misfolds the VHH), pDockQ2 median 0.01;
+ESMFold-2 pose median 37 A (5 of 74 <= 20 A, HER2 fit 5.5 A because HER2 is not templated), scRMSD <= 3 A for all 74; OpenDDE pose median 44 A
+(26 of 768 <= 20 A), scRMSD <= 3 A for 457 of 477, pDockQ2 median 0.02 (p90 0.21). Pose RMSDs of the three scorers are uncorrelated (Spearman |rho| <= 0.23).
+So the condition is not met: ranking is unchanged (VM OF3 + VM ESMFold-2 binding axis, OpenDDE gate). Honest reading: no scorer recovers the designed
+poses, the OF3 interface scores sit on a misfolded VHH, and none of the binding scores is validated as a pose or affinity predictor.
 
 ## DECISION 15:20: ranking on three axes with typed gates and flags
 
