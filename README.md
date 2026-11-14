@@ -40,7 +40,7 @@ separate submission tables — because the rules are not interchangeable.
 | Novelty rule | CDRH3 under 70 % identity to trastuzumab, and more than 2 mutations from every provided CDRH3 | under 70 % identity to a known antibody |
 | What we submit | 10 scFv / paired designs | 6 VHH designs |
 | `abguard` novelty class | `novel` | `de_novo` |
-| Where it lives | `results/CANDIDATES.md`, `results/SUBMISSION.csv` | `results/denovo/` (kept out of this repository: designs are not shared) |
+| Where it lives | `results/CANDIDATES.md`, `results/SUBMISSION.csv` | `results/denovo/README.md`, `results/denovo/denovo_submission.csv` |
 
 **Why the separation is not cosmetic.** Our first de novo attempt designed all six CDRs on
 trastuzumab's own Fv framework. Every CDR was new, so it looked de novo — but `abguard` measures
@@ -69,6 +69,7 @@ which changed what we submitted.
 | --- | --- | --- |
 | Our binder model is good — AUROC 0.983 | Against measured SPR it scores +0.16, worse than edit distance's +0.23 | **Removed binding from the ranking entirely** |
 | StaB-ddG can order our designs | +0.38 overall, but **+0.14 [−0.26, +0.53]** at the 4–5 mutations our designs sit at | **Did not run it on the candidates** |
+| Folding confidence can rank our designs | Five models, one panel, one template, one seed: the number of our 20 designs scored above trastuzumab is **0 to 14** depending on the model. On 101 measured variants Boltz-2 interface ipTM gives **+0.35 [+0.17, +0.53]**, edit distance **+0.50 [+0.34, +0.62]** | **Did not rank on it.** Used it only to check the epitope, with the one model that passes a crystal-structure control |
 | R66G is a free thermostability win | Its own paper reports a 2.4× affinity loss; an independent group installed that residue *to gain* affinity | **Submitted matched pairs instead of stabilising everything** |
 | Our novelty check covers the dataset | It assumed all 525,063 CDR-H3s are 10-mers. **21 are not**, and those were silently skipped | **Rewrote it to measure edit distance exhaustively** |
 | Our cysteine filter works | It counted across the whole molecule; the rule is per domain | **Fixed; an odd count in each chain is now caught** |
@@ -133,6 +134,70 @@ measured both ways, "medium" binds *tighter* than "high", and the FACS class pre
 **Consequence, and this is the central judgment call: we do not rank these ten on binding.** All ten sit at
 4 mutations, so edit distance — the only scorer that transferred — is constant across them and orders
 nothing. We say so in the table rather than inventing a column.
+
+### 1.1b Five folding models, five different answers
+
+Before ranking on any folding score, we asked whether it can order variants whose affinity is already
+known. The panel is SPR variants spread across the measured range plus trastuzumab as the baseline, with
+every model given the same panel, the same template and the same seed.
+
+**On 101 variants with a measured KD**, both signals are clear of zero, and the ordering between them is
+the point:
+
+| Signal | n | Spearman vs −log KD | 95% CI |
+| --- | ---: | ---: | --- |
+| edit distance to trastuzumab | 101 | **+0.50** | [0.34, 0.62] |
+| Boltz-2 interface ipTM | 101 | **+0.35** | [0.17, 0.53] |
+
+Co-folding confidence does carry real affinity signal — at n = 25 every interval still touched zero and we
+could not have said that. It is still beaten by counting mutations.
+
+**The count that "beats trastuzumab" is a property of the model, not of the designs.** Same 20 designs,
+same template, same seed:
+
+| Model | Trastuzumab's interface ipTM | Designs scored above it |
+| --- | ---: | ---: |
+| Boltz-2 | 0.94 | **0 of 20** |
+| OpenFold3 OpenBind | 0.21 | 2 of 20 |
+| Protenix v2 | 0.37 | 6 of 20 |
+| ESMFold2 | 0.25 | 7 of 20 |
+| Boltz-1 | 0.12 | **14 of 20** |
+
+Zero to fourteen, out of the same twenty. Pairwise agreement between models on our designs runs +0.02 to
++0.18; OpenFold3 against Protenix is +0.02, which is nothing. A team that runs one folding model and
+reports the count is reporting its model choice.
+
+**The tie-break is a question with a known answer.** Trastuzumab's epitope on HER2 is in the crystal
+structure 1N8Z: 19 residues with a heavy atom within 4.5 Å of the antibody. We asked each model to predict
+the trastuzumab complex and measured how much of that epitope it recovers — no confidence score involved,
+just which residues ended up in contact.
+
+| Model | Epitope recovered vs the crystal (Jaccard) |
+| --- | ---: |
+| **Boltz-2** | **1.00** |
+| Boltz-1 | 0.29 |
+| Protenix v2 | 0.26 |
+| OpenFold3 OpenBind | 0.10 |
+| ESMFold2 | 0.07 |
+
+Stable at 4.0, 4.5 and 5.0 Å and across two seeds. So we do not average five opinions: we use the one
+model that gets the checkable case right, and it is the one that answers zero.
+
+The caveat matters. Every templated model was handed the same template, which already places HER2, so this
+measures whether a model stays consistent with a structure it was given — not whether it could find the
+epitope unaided. Three models were handed the same help and lost the epitope anyway, so it does
+discriminate, but it is not evidence that Boltz-2 would find a novel one.
+
+**What this bought us.** Epitope preservation is one of the three judged axes, and we had only an
+assumption about it. With Boltz-2 it is a prediction with a number: our designs keep a median **0.95** of
+trastuzumab's epitope, worst case 0.85. Across the calibration variants that measure has no relationship
+with affinity (Spearman −0.02) and never drops below 0.86 — variants of trastuzumab bind the same patch
+whether they bind it tightly or weakly. Epitope and affinity are separate questions and this answers only
+the first.
+
+Reproduce it with `scripts/fold_panel.py`, `fold_queries.py`, `fold_run.sh`, `fold_analyse.py` and
+`epitope.py`; the tables are in `results/folding/` and `results/epitope/`, and the full reasoning is
+section 7, 8 and 10 of [FINDINGS.md](FINDINGS.md).
 
 ### 1.2 StaB-ddG: tested, and rejected for ranking
 
@@ -310,6 +375,26 @@ distributed by the organisers at `s3://apheris-oslo-hackathon/data/`. We do not 
 a file is missing, every script that needs it says which file and where to put it rather than failing
 obscurely.
 
+### 2.1d Re-running the folding comparison
+
+This needs the organisers' HER2 example (one `refold-prepare` run gives the template and a reference
+`queries.json`; the template leaves out the ten CDR-H3 residues, so it fits any 10-residue loop) and the two
+public tables. Each model runs in its own container image, and every run goes through `tools/record_run.py`.
+
+```bash
+# copy the reference queries and template from the refold-prepare output into runs/panel/
+python scripts/fold_panel.py --out runs/panel        # 24 measured variants + trastuzumab + our designs
+python scripts/fold_queries.py --panel runs/panel/panel.csv \
+    --reference runs/panel/reference_queries.json --out runs/panel/queries_all.json
+bash scripts/fold_sweep.sh 42 boltz2 openfold3-of3ob protenix-v2 boltz1 esmfold2
+python scripts/fold_analyse.py     # calibration vs measured KD, agreement, comparison with trastuzumab
+python scripts/epitope.py          # contact epitope vs the crystal structure, per model
+```
+
+The 101-variant calibration is the same recipe with `--n-calib 100 --no-designs --out runs/panel-big` and
+`bash scripts/fold_big.sh`; `scripts/fold_replicate.sh` repeats the panel with another seed to measure the
+noise between runs. Do not skip that last one: a single seed moved our headline correlation by 0.07.
+
 ### 2.2 One command that says whether we pass
 
 ```bash
@@ -383,6 +468,19 @@ asserts that none survive.
 - A cysteine filter counted cysteines across the **whole molecule** when the rule applies per domain.
 - `novelty-report` does **not** reflect `--reference-db`; only `team-validate` enforces it. Reading a
   novelty report as evidence about prior art nearly produced a false all-clear.
+
+- Two folding panels reused the same identifiers for different variants: `calib-05` is one sequence with one
+  KD in the small panel and another in the large one. Reading 101 new structures against the small panel's
+  KD values returned a Spearman of +0.19 — a plausible number built from mismatched rows, and it sat on this
+  branch for a while. Each run now carries its own panel, and a test pins it.
+- A replicate run launched as "seed 43" actually ran seed 42: the shell dropped the variable and the script
+  fell back to its default. It returned scores identical to three decimals. We caught it because the
+  agreement was too perfect; the real replicate (seed 77) moved the headline correlation from +0.41 to +0.34.
+- The publish step reported success while `.gitignore` silently excluded `results/`, so for a while only the
+  code had gone out. It now stops and names any listed file that git would ignore.
+- Our first thermostability recommendation, the VH44–VL100 disulfide, was written up before it had been run
+  through the gate. The gate rejects it (`unpaired_cysteine`), and our own note had even claimed the cysteine
+  parity was fine — true for the whole molecule, false per domain. Gate first, recommendation second.
 
 The first two returned clean answers to the wrong question. That is why the gate reports `unknown` for
 anything it cannot verify locally, never a pass, and why every gate run includes a control that must fail.
@@ -496,7 +594,9 @@ binding axis. That is a low bar and an honest one, and it is the first number we
 | `scripts/r66_contacts.py` | Arg66 geometry measured in 1N8Z |
 | `scripts/r66g_analyse.py` | Matched-pair epitope and interface analysis against seed noise |
 | `scripts/stabddg_analyse.py` | The StaB-ddG validation |
-| `scripts/epitope.py`, `fold_analyse.py`, `fold_queries.py` | Folding panel, epitope and confidence analysis |
+| `scripts/fold_panel.py`, `fold_queries.py` | The folding panel: measured variants, the baseline and our designs, with identical input for every model |
+| `scripts/fold_run.sh`, `fold_sweep.sh`, `fold_big.sh`, `fold_replicate.sh` | Run one model, sweep several, the 101-variant calibration, and a second seed |
+| `scripts/fold_analyse.py`, `epitope.py` | Calibration against measured KD, agreement between models, and contact epitope against the crystal |
 | `tools/record_run.py`, `tools/scan_repo.py` | Run provenance; secret and size scanning |
 | `tests/` | Tests for all of the above |
 

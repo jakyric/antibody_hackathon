@@ -266,8 +266,9 @@ estimate is negative is not a weak ranker, it is no ranker.
 
 Twenty-five variants could not separate a real effect from noise: every
 interval touched zero. So we ran Boltz-2 over **101** variants with a measured
-KD — every one in the SPR table with a 10-residue loop, which is as many as
-the template allows.
+KD: 100 variants spread evenly across the measured range (out of the 179 in
+the SPR table that have a 10-residue loop, which is what the template fits),
+plus trastuzumab itself.
 
 | Signal | n | Spearman | 95 % CI |
 | --- | --- | --- | --- |
