@@ -4,8 +4,17 @@ A small, tested toolkit for the HER2 / trastuzumab CDRH3 problem: an entry-rule 
 a pure-numpy binder model and a two-stage ranking. Plain Python with numpy and pytest. No GPU and no
 framework, so anyone can run it.
 
-This is one person's branch of the shared repository. It holds methods and tests only: no data, no model
-outputs and no candidate lists.
+This is one person's branch of the shared repository, which is private to the team. It holds the methods,
+the tests, the measured results and the candidates, so the rest of the team can build on them. It does not
+hold the organisers' task text or data files, which are not ours to redistribute, and it holds no
+credentials.
+
+| Path | What it is |
+| --- | --- |
+| `results/SUBMISSION.csv`, `SUBMISSION.md` | The ten candidates we submit, and why each one is there |
+| `results/ranked_submission.csv`, `RANKING.md` | All twenty designs, ranked on two axes, with the sequences |
+| `results/EVIDENCE.md` | Per candidate, which claims are measured and which are expected |
+| `candidates/` | The de novo candidates |
 
 The measured numbers behind the write-up are in `results/`, so any claim in it
 can be recomputed rather than believed: `folding/calibration.csv` (does a score
