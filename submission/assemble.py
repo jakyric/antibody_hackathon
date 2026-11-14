@@ -8,6 +8,7 @@ IDs: opt-J01.., dn-M01..M07, dn-K01..K08 (a one-letter source code that only the
 """
 import argparse
 import csv
+import random
 import re
 import sys
 from pathlib import Path
@@ -30,6 +31,13 @@ for code, name in (("M", "moritz_final"), ("K", "krisha_final")):
     for j, r in enumerate(sorted(csv.DictReader(open(p)), key=lambda x: int(x["src_rank"])), 1):
         rows.append({"sequence_id": f"dn-{code}{j:02d}", "kind": r["kind"], "heavy_sequence": r["heavy_sequence"], "light_sequence": r["light_sequence"],
                      "design_description": r["design_description"], "track": "denovo"})
+# Order of the de novo rows (user decision, 14 Nov): the first four are two from each approach (M01, K01, M02, K02), the rest follows in a
+# shuffle with a fixed seed, so the CSV is reproducible.
+_dn = [r for r in rows if r["track"] == "denovo"]
+_head = [next(r for r in _dn if r["sequence_id"] == i) for i in ("dn-M01", "dn-K01", "dn-M02", "dn-K02")]
+_rest = [r for r in _dn if r not in _head]
+random.Random(14112026).shuffle(_rest)
+rows = [r for r in rows if r["track"] != "denovo"] + _head + _rest
 bad = []
 seen = {}
 for r in rows:
