@@ -29,6 +29,23 @@ def apply_salt_bridge_rule(bridge: pd.Series, pos10_mutated: pd.Series, h94_muta
     return out_
 
 
+def write_filter_report(cfg: dict, selected: set, path) -> None:
+    """One row per folded design: which criteria it passes and why it was not selected."""
+    r = cfg["rank"]
+    a = (pd.read_csv(out(cfg, "fold_scores.csv")).merge(pd.read_csv(out(cfg, "contacts.csv")), on="id")
+         .merge(pd.read_csv(out(cfg, "pose.csv")), on="id").merge(pd.read_csv(out(cfg, "scores.csv")), on="id", how="left")
+         .merge(pd.read_csv(out(cfg, "panel_meta.csv"))[["id", "cdrh3", "vernier_changes"]], on="id"))
+    a["salt_bridge_rule"] = apply_salt_bridge_rule(a.salt_bridge_r98_pos10, a.cdrh3.str[9] != WT_H3[9], a.vernier_changes.str.startswith("H94"))
+    checks = {"not docked (ipTM)": a.iptm >= r["min_iptm"], "off the crystal epitope": a.epitope_rmsd <= r["max_epitope_rmsd"],
+              "Fv-HER2 contacts lost": a.if_recall >= r["min_interface_recall"], "CDR-H3-HER2 pairs lost": a.if_h3_missing <= r["max_h3_pairs_missing"],
+              "CDR-H3-vs-rest contacts lost": (a.in_recall >= r["min_h3_rest_recall"]) & (a.in_polar_recall >= r["min_h3_rest_polar_recall"]),
+              "salt-bridge rule": a.salt_bridge_rule != "excluded"}
+    a["selected"] = a.id.isin(selected)
+    a["dropped_because"] = [", ".join(k for k, v in checks.items() if not v.loc[i]) or ("per-CDR-H3 cap or rank" if not sel else "") for i, sel in zip(a.index, a.selected)]
+    cols = ["id", "cdrh3", "vernier_changes", "selected", "dropped_because", "iptm", "ipsae", "ilis", "epitope_rmsd", "if_recall", "if_h3_missing", "in_recall", "in_polar_recall", "salt_bridge_rule"]
+    a[cols].sort_values(["selected", "ilis"], ascending=False).to_csv(path, index=False)
+
+
 def run(cfg: dict) -> None:
     r, base = cfg["rank"], cfg["design"]["base_h3"]
     meta = pd.read_csv(out(cfg, "panel_meta.csv"))
@@ -82,6 +99,7 @@ def run(cfg: dict) -> None:
             w.writerow([x["rank"], x["id"], x["cdrh3"], " ".join(m["mutation"] for m in x["mutations_vs_wt"]),
                         " ".join(x["mutations_vs_base"]), " ".join(x["vernier_mutations"]) or "none", x["opendde_iptm"], x["ipsae"],
                         x["ilis"], x["interface_recall"], x["h3_vs_rest_recall"], x["epitope_rmsd"], x["her2_rmsd"], x["salt_bridge_r98_pos10"], x["salt_bridge_rule"]])
+    write_filter_report(cfg, {x["id"] for x in recs}, final / "filter_report.csv")
     ctrl.to_csv(final / "controls.csv", index=False)
     d.to_csv(final / "all_filtered_designs.csv", index=False)
     print(f"  {len(recs)} designs written to {final} ({len({x['cdrh3'] for x in recs})} distinct CDR-H3; "
